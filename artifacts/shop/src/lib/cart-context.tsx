@@ -14,6 +14,9 @@ interface CartContextType {
   clearCart: () => void;
   itemCount: number;
   subtotal: number;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -22,18 +25,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     try {
       const saved = localStorage.getItem("cart");
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error("Failed to load cart", e);
-    }
+      if (saved) return JSON.parse(saved);
+    } catch {}
     return [];
   });
+
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(items));
   }, [items]);
+
+  // Lock body scroll when cart is open
+  useEffect(() => {
+    if (isCartOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [isCartOpen]);
 
   const addItem = (product: Product, quantity = 1) => {
     setItems((current) => {
@@ -54,10 +65,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeItem(productId);
-      return;
-    }
+    if (quantity <= 0) { removeItem(productId); return; }
     setItems((current) =>
       current.map((item) =>
         item.product.id === productId ? { ...item, quantity } : item
@@ -65,9 +73,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     );
   };
 
-  const clearCart = () => {
-    setItems([]);
-  };
+  const clearCart = () => setItems([]);
+  const openCart = () => setIsCartOpen(true);
+  const closeCart = () => setIsCartOpen(false);
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   const subtotal = items.reduce((total, item) => total + item.product.price * item.quantity, 0);
@@ -75,13 +83,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return (
     <CartContext.Provider
       value={{
-        items,
-        addItem,
-        removeItem,
-        updateQuantity,
-        clearCart,
-        itemCount,
-        subtotal,
+        items, addItem, removeItem, updateQuantity, clearCart,
+        itemCount, subtotal,
+        isCartOpen, openCart, closeCart,
       }}
     >
       {children}
@@ -91,8 +95,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart() {
   const context = useContext(CartContext);
-  if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider");
-  }
+  if (context === undefined) throw new Error("useCart must be used within a CartProvider");
   return context;
 }

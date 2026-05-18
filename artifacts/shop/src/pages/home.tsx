@@ -32,7 +32,7 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
   const [giftRecipient, setGiftRecipient] = useState("");
   const [giftNote, setGiftNote] = useState("");
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const { toast } = useToast();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
@@ -104,7 +104,7 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
   const handleCart = (product: Product) => {
     addItem(product, 1);
     setCartAdded((prev) => new Set(prev).add(product.id));
-    toast({ title: "Added to bag", description: `${product.name} added.`, duration: 2000 });
+    openCart();
   };
 
   const handleGift = () => {

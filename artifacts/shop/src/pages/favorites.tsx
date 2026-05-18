@@ -9,12 +9,12 @@ const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES",
 
 export default function Favorites() {
   const { favorites, toggleFavorite, favoriteCount } = useFavorites();
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const { toast } = useToast();
 
   const handleAddToCart = (product: typeof favorites[0]) => {
     addItem(product, 1);
-    toast({ title: "Added to bag", description: product.name, duration: 1800 });
+    openCart();
   };
 
   return (

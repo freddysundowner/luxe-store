@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cart-context";
 import { FavoritesProvider } from "@/lib/favorites-context";
 import { GiftFinder } from "@/components/GiftFinder";
+import { CartDrawer } from "@/components/CartDrawer";
 import NotFound from "@/pages/not-found";
 
 // Import pages
@@ -67,6 +68,7 @@ function App() {
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <Router />
             <GiftFinder />
+            <CartDrawer />
           </WouterRouter>
           </FavoritesProvider>
         </CartProvider>

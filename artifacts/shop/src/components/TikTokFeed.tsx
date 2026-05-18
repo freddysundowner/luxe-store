@@ -26,7 +26,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   const [giftRecipient, setGiftRecipient] = useState("");
   const [giftNote, setGiftNote] = useState("");
 
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const { toggleFavorite, isFavorite, favoriteCount } = useFavorites();
   const { toast } = useToast();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
@@ -48,7 +48,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   const handleAddToCart = (product: Product) => {
     addItem(product, 1);
     setCartAdded((prev) => new Set(prev).add(product.id));
-    toast({ title: "Added to bag", description: `${product.name} added.`, duration: 2000 });
+    openCart();
   };
 
   const handleGift = () => {

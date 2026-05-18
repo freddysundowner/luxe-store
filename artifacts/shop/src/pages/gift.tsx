@@ -145,7 +145,7 @@ export default function GiftPage() {
 
   const { data: product, isLoading } = useGetProduct(Number(id));
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const { toast } = useToast();
   const [phase, setPhase] = useState<"wrapped" | "opening" | "open">("wrapped");
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
@@ -168,7 +168,7 @@ export default function GiftPage() {
     if (!product) return;
     addItem(product, 1);
     setAddedToCart(true);
-    toast({ title: "Added to bag!", description: product.name, duration: 2000 });
+    openCart();
   };
 
   return (

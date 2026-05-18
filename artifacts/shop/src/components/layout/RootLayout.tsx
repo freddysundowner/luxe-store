@@ -17,7 +17,7 @@ interface RootLayoutProps {
 const MARQUEE_TEXT = "Free WhatsApp ordering\u2002·\u2002Curated luxury collection\u2002·\u2002New arrivals weekly\u2002·\u2002Exclusive pieces for the discerning\u2002·\u2002Free WhatsApp ordering\u2002·\u2002Curated luxury collection\u2002·\u2002New arrivals weekly\u2002·\u2002Exclusive pieces for the discerning\u2002·\u2002";
 
 export function RootLayout({ children, title, showBack, searchBar, noHeader, noMarquee }: RootLayoutProps) {
-  const { itemCount, subtotal } = useCart();
+  const { itemCount, subtotal, openCart } = useCart();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const [scrolled, setScrolled] = useState(false);
 
@@ -84,7 +84,7 @@ export function RootLayout({ children, title, showBack, searchBar, noHeader, noM
 
               {/* Right: cart */}
               <div className="flex items-center gap-3 flex-shrink-0">
-                <Link href="/cart" className="relative flex items-center p-2 -mr-2 text-zinc-500 hover:text-[#D4AF37] transition-colors">
+                <button onClick={openCart} className="relative flex items-center p-2 -mr-2 text-zinc-500 hover:text-[#D4AF37] transition-colors">
                   <ShoppingBag className="w-6 h-6" />
                   {itemCount > 0 && (
                     <>
@@ -96,7 +96,7 @@ export function RootLayout({ children, title, showBack, searchBar, noHeader, noM
                       </span>
                     </>
                   )}
-                </Link>
+                </button>
               </div>
             </div>
           </header>

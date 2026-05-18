@@ -12,7 +12,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const productId = parseInt(id || "0", 10);
   const [quantity, setQuantity] = useState(1);
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const { toast } = useToast();
 
   const { data: product, isLoading, isError } = useGetProduct(productId, {
@@ -22,7 +22,7 @@ export default function ProductDetail() {
   const handleAddToCart = () => {
     if (!product) return;
     addItem(product, quantity);
-    toast({ title: "Added to bag", description: `${quantity}x ${product.name} added to your bag.`, duration: 2000 });
+    openCart();
   };
 
   const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });

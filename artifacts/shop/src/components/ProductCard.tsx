@@ -12,7 +12,7 @@ function isNew(createdAt?: string | null) {
 }
 
 export function ProductCard({ product }: { product: Product }) {
-  const { addItem } = useCart();
+  const { addItem, openCart } = useCart();
   const { toast } = useToast();
   const productIsNew = isNew(product.createdAt);
 
@@ -20,7 +20,7 @@ export function ProductCard({ product }: { product: Product }) {
     e.preventDefault();
     if (!product.inStock) return;
     addItem(product, 1);
-    toast({ title: "Added to bag", description: `${product.name} added to your bag.`, duration: 2000 });
+    openCart();
   };
 
   const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });
