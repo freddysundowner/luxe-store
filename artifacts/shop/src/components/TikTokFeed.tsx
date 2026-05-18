@@ -283,8 +283,8 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
           {!current.inStock
             ? "Sold Out"
             : cartAdded.has(current.id)
-            ? "✓ Added to Bag"
-            : "Add to Bag →"}
+            ? "✓ Added"
+            : "Buy Now →"}
         </button>
 
       </div>

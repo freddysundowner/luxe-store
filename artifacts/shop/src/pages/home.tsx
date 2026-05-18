@@ -214,7 +214,7 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
               : "bg-[#D4AF37] text-black hover:bg-white"
           }`}
         >
-          {!current.inStock ? "Sold Out" : cartAdded.has(current.id) ? "✓ Added to Bag" : "Add to Bag →"}
+          {!current.inStock ? "Sold Out" : cartAdded.has(current.id) ? "✓ Added" : "Buy Now →"}
         </button>
       </div>
 
