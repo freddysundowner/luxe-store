@@ -1,0 +1,92 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "j9rOQgPQC_hrOEMZ1k39x"
+uri = "file://artifacts/mockup-sandbox/public/images/earbuds.jpg"
+type = "image"
+title = "white minimalist wireless earbuds flat lay clean background"
+
+[[outputs]]
+id = "TbZ4ER9N8D2N4UVHwimoP"
+uri = "file://artifacts/mockup-sandbox/public/images/hoodie.jpg"
+type = "image"
+title = "white minimalist oversized hoodie apparel flat lay clean background"
+
+[[outputs]]
+id = "RByhETAD_gp7Dd7i9V050"
+uri = "file://artifacts/mockup-sandbox/public/images/case.jpg"
+type = "image"
+title = "minimalist smart phone case clean background product shot"
+
+[[outputs]]
+id = "nuDDo54kc-nPAFRR7eUrm"
+uri = "file://artifacts/mockup-sandbox/public/images/leather-wallet.jpg"
+type = "image"
+title = "leather wallet product photography clean background"
+
+[[outputs]]
+id = "UfV0_vQp0jXgRVQT43t9D"
+uri = "file://artifacts/mockup-sandbox/public/images/coffee-maker.jpg"
+type = "image"
+title = "minimalist coffee maker product shot clean background"
+
+[[outputs]]
+id = "yxGQHuaRYxwps3XVcwfIn"
+uri = "file://artifacts/mockup-sandbox/public/images/sneakers.jpg"
+type = "image"
+title = "classic white sneakers product photography clean background"
+
+[[outputs]]
+id = "8nazwTPTds3V2l00rqwaN"
+uri = "file://artifacts/mockup-sandbox/public/images/phone-case.jpg"
+type = "image"
+title = "minimalist smart phone case product photography"
+
+[[outputs]]
+id = "QsEQDjHZqIo09hajgxcZe"
+uri = "file://artifacts/mockup-sandbox/public/images/pans.jpg"
+type = "image"
+title = "non-stick pan set product photography clean background"
+
+[[outputs]]
+id = "TQhsSubKPAoe_2xSGoxih"
+uri = "file://artifacts/mockup-sandbox/public/images/coffee.jpg"
+type = "image"
+title = "premium coffee maker machine dark background"
+
+[[outputs]]
+id = "nJyk_r52oq4TcLY7clee6"
+uri = "file://artifacts/mockup-sandbox/public/images/charger.jpg"
+type = "image"
+title = "minimalist usb-c fast charger product shot clean background"
+
+[[outputs]]
+id = "zVoUyhNtxUtAO-fv1OJbW"
+uri = "file://artifacts/mockup-sandbox/public/images/pan-set.jpg"
+type = "image"
+title = "premium non-stick cooking pan set kitchenware"
+
+[[outputs]]
+id = "kRL5K9_yqTcbKxHMtWm5t"
+uri = "file://artifacts/mockup-sandbox/public/images/pan.jpg"
+type = "image"
+title = "black non-stick pan set premium kitchenware"
+
+[[outputs]]
+id = "huoWZjd2mJ9xmNy3B6DgH"
+uri = "file://artifacts/mockup-sandbox/public/images/lamp.jpg"
+type = "image"
+title = "minimalist desk lamp product shot clean background"
+
+[[outputs]]
+id = "sdRW7q_WxS2UZS7-YTEZB"
+uri = "file://artifacts/mockup-sandbox/public/images/smart-watch.jpg"
+type = "image"
+title = "modern sleek smart watch with black band product shot"
+
+[[outputs]]
+id = "MFKkoZYWc-QGkGgkdPme0"
+uri = "file://artifacts/mockup-sandbox/public/images/watch.jpg"
+type = "image"
+title = "luxury mechanical watch gold and black dark background"
