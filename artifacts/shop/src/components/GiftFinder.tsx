@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Sparkles, X, Send, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { registerGiftFinder } from "@/lib/gift-finder-trigger";
 
 interface Message {
   role: "user" | "assistant";
@@ -30,9 +31,8 @@ export function GiftFinder() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const handler = () => setOpen(true);
-    window.addEventListener("open-gift-finder", handler);
-    return () => window.removeEventListener("open-gift-finder", handler);
+    registerGiftFinder(() => setOpen(true));
+    return () => registerGiftFinder(() => {});
   }, []);
 
   useEffect(() => {

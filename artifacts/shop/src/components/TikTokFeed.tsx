@@ -54,7 +54,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   };
 
   const handleGift = () => {
-    window.dispatchEvent(new CustomEvent("open-gift-finder"));
+    import("@/lib/gift-finder-trigger").then(m => m.triggerGiftFinder());
   };
 
   const handleShare = (product: Product) => {

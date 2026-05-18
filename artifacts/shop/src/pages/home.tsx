@@ -84,7 +84,7 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
   };
 
   const handleGift = () => {
-    window.dispatchEvent(new CustomEvent("open-gift-finder"));
+    import("@/lib/gift-finder-trigger").then(m => m.triggerGiftFinder());
   };
 
   const handleShare = (product: Product) => {
