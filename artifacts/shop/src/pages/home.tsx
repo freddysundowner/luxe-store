@@ -5,8 +5,8 @@ import {
   MessageCircle, Share2
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
-import { RootLayout } from "@/components/layout/RootLayout";
 import { ProductCard } from "@/components/ProductCard";
+import { StoreLogo } from "@/components/StoreLogo";
 import { TikTokFeed } from "@/components/TikTokFeed";
 import {
   useListProducts, getListProductsQueryKey,
@@ -348,13 +348,34 @@ export default function Home() {
   }
 
   return (
-    <RootLayout searchBar={searchBar}>
+    <div className="fixed inset-0 bg-[#0a0a0a] flex flex-col" style={{ zIndex: 100 }}>
+      {/* Floating cart */}
+      <Link
+        href="/cart"
+        className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-[#0a0a0a]/80 backdrop-blur border border-zinc-800 rounded-full px-3 py-2 text-zinc-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-all"
+      >
+        <ShoppingBag className="w-4 h-4" />
+        {itemCount > 0 && (
+          <span className="bg-[#D4AF37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+            {itemCount}
+          </span>
+        )}
+      </Link>
+
       {/* ── Desktop: 3-column TikTok layout ── */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar — Filters */}
         <aside className="w-48 shrink-0 bg-zinc-950 border-r border-zinc-900 flex flex-col overflow-y-auto">
           <div className="p-4 flex flex-col gap-6 flex-1">
-            {/* Search hint (desktop) */}
+            {/* Logo */}
+            <Link href="/" className="inline-flex">
+              <StoreLogo />
+            </Link>
+
+            {/* Search bar */}
+            <div>{searchBar}</div>
+
+            {/* Search hint */}
             {(search || aiQuery) && (
               <div className="bg-zinc-900/60 border border-zinc-800 rounded px-3 py-2">
                 <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1">
@@ -569,6 +590,6 @@ export default function Home() {
           </div>
         </div>
       </div>
-    </RootLayout>
+    </div>
   );
 }
