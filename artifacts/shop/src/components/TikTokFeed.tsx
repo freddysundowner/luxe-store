@@ -70,15 +70,19 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
 
   const sendGiftViaWhatsApp = () => {
     if (!giftProduct) return;
-    const productUrl = `${window.location.origin}/product/${giftProduct.id}`;
     const storeName = settings?.storeName || "Luxe Store";
     const price = fmt.format(giftProduct.price);
     const to = giftRecipient.trim() ? giftRecipient.trim() : "you";
-    const note = giftNote.trim() ? `\n\n"${giftNote.trim()}"` : "";
+    const params = new URLSearchParams();
+    if (giftRecipient.trim()) params.set("recipient", giftRecipient.trim());
+    if (giftNote.trim()) params.set("note", giftNote.trim());
+    params.set("store", storeName);
+    const giftUrl = `${window.location.origin}/gift/${giftProduct.id}?${params.toString()}`;
+    const notePreview = giftNote.trim() ? `\n\n"${giftNote.trim()}"` : "";
     const message =
       `🎁 Hey ${to}! I'd love to gift you something special.\n\n` +
-      `*${giftProduct.name}*\n${price} — from ${storeName}${note}\n\n` +
-      `Check it out: ${productUrl}`;
+      `*${giftProduct.name}*\n${price} — from ${storeName}${notePreview}\n\n` +
+      `Unwrap your gift here: ${giftUrl}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
     setGiftProduct(null);
   };

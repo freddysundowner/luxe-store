@@ -11,6 +11,7 @@ import Home from "@/pages/home";
 import CategoryPage from "@/pages/category";
 import ProductDetail from "@/pages/product";
 import Cart from "@/pages/cart";
+import GiftPage from "@/pages/gift";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products/index";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/category/:id" component={CategoryPage} />
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/cart" component={Cart} />
+      <Route path="/gift/:id" component={GiftPage} />
       
       {/* Admin Auth */}
       <Route path="/admin" component={AdminLogin} />
