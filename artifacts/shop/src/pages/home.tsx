@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "wouter";
 import {
   Search, Sparkles, X, Heart, ShoppingBag, RefreshCw,
@@ -217,11 +217,6 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
 export default function Home() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
-  const [aiMode, setAiMode] = useState(false);
-  const [aiQuery, setAiQuery] = useState("");
-  const [aiProducts, setAiProducts] = useState<Product[] | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < 768 : false
   );
@@ -239,15 +234,12 @@ export default function Home() {
   });
 
   const { data: products, isLoading: isLoadingProducts, isError, refetch } = useListProducts(
-    {
-      categoryId: selectedCategory,
-      search: aiMode ? undefined : search || undefined,
-    },
+    { categoryId: selectedCategory, search: search || undefined },
     {
       query: {
         queryKey: getListProductsQueryKey({
           categoryId: selectedCategory,
-          search: aiMode ? undefined : search || undefined,
+          search: search || undefined,
         }),
       },
     }
@@ -259,84 +251,14 @@ export default function Home() {
     { query: { queryKey: getListProductsQueryKey({}) } }
   );
 
-  const runAiSearch = async (q: string) => {
-    if (!q.trim()) { setAiProducts(null); return; }
-    setAiLoading(true);
-    try {
-      const res = await fetch("/api/ai/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q }),
-      });
-      const data = await res.json();
-      setAiProducts(data.products ?? []);
-    } catch {
-      setAiProducts([]);
-    } finally {
-      setAiLoading(false);
-    }
-  };
+  const clearSearch = () => setSearch("");
 
-  useEffect(() => {
-    if (!aiMode || !aiQuery.trim()) { setAiProducts(null); return; }
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => runAiSearch(aiQuery), 700);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [aiQuery, aiMode]);
-
-  const clearSearch = () => { setSearch(""); setAiQuery(""); setAiProducts(null); };
-  const handleSearchChange = (v: string) => (aiMode ? setAiQuery(v) : setSearch(v));
-  const currentSearchValue = aiMode ? aiQuery : search;
-
-  const displayProducts: Product[] = useMemo(() => {
-    if (aiMode && aiProducts !== null) return aiProducts;
-    return [...(products ?? [])].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
-  }, [aiMode, aiProducts, products]);
-
-  const isLoading = aiMode ? aiLoading : isLoadingProducts;
-
-  const searchBar = (
-    <div className="flex items-center gap-2 w-full">
-      <div className="relative flex-1 group">
-        {aiMode ? (
-          <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#D4AF37] pointer-events-none" />
-        ) : (
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 group-focus-within:text-[#D4AF37] transition-colors pointer-events-none" />
-        )}
-        <input
-          type="search"
-          placeholder={aiMode ? "e.g. gift for a tech lover under $30…" : "Search collection..."}
-          className={`w-full pl-10 pr-8 py-2.5 rounded-full text-sm placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all ${
-            aiMode
-              ? "bg-zinc-900/80 border border-[#D4AF37]/30 text-zinc-200 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]/50"
-              : "bg-zinc-900/60 border border-zinc-800 text-zinc-200 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-          }`}
-          value={currentSearchValue}
-          onChange={(e) => handleSearchChange(e.target.value)}
-        />
-        {currentSearchValue && (
-          <button
-            onClick={clearSearch}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        )}
-      </div>
-      <button
-        onClick={() => { setAiMode(!aiMode); clearSearch(); }}
-        title={aiMode ? "Keyword search" : "AI smart search"}
-        className={`shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-full text-[10px] uppercase tracking-widest border transition-all duration-300 ${
-          aiMode
-            ? "bg-[#D4AF37] text-black border-[#D4AF37] font-medium"
-            : "bg-transparent text-zinc-500 border-zinc-800 hover:border-zinc-600 hover:text-zinc-300"
-        }`}
-      >
-        <Sparkles className="w-3 h-3" />
-        <span className="hidden sm:inline">AI</span>
-      </button>
-    </div>
+  const displayProducts: Product[] = useMemo(
+    () => [...(products ?? [])].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)),
+    [products]
   );
+
+  const isLoading = isLoadingProducts;
 
   // ── Mobile: true full-screen TikTok (bypasses RootLayout header) ──────────
   if (isMobile) {
@@ -372,54 +294,31 @@ export default function Home() {
               <StoreLogo />
             </Link>
 
-            {/* Search bar — full-width sidebar layout */}
-            <div className="flex flex-col gap-1">
-              <div className="relative group w-full">
-                {aiMode ? (
-                  <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#D4AF37] pointer-events-none" />
-                ) : (
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-600 group-focus-within:text-[#D4AF37] transition-colors pointer-events-none" />
-                )}
-                <input
-                  type="search"
-                  placeholder={aiMode ? "Describe what you want…" : "Search collection..."}
-                  className={`w-full pl-9 pr-7 py-2 rounded-full text-xs placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all ${
-                    aiMode
-                      ? "bg-zinc-900/80 border border-[#D4AF37]/30 text-zinc-200 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]/50"
-                      : "bg-zinc-900/60 border border-zinc-800 text-zinc-200 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
-                  }`}
-                  value={currentSearchValue}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                />
-                {currentSearchValue && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-              <button
-                onClick={() => { setAiMode(!aiMode); clearSearch(); }}
-                className={`self-end flex items-center gap-1 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded transition-all ${
-                  aiMode
-                    ? "text-[#D4AF37] bg-[#D4AF37]/10"
-                    : "text-zinc-600 hover:text-zinc-400"
-                }`}
-              >
-                <Sparkles className="w-2.5 h-2.5" />
-                {aiMode ? "AI on" : "AI search"}
-              </button>
+            {/* Search bar */}
+            <div className="relative group w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-600 group-focus-within:text-[#D4AF37] transition-colors pointer-events-none" />
+              <input
+                type="search"
+                placeholder="Search collection..."
+                className="w-full pl-9 pr-7 py-2 rounded-full text-xs placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all bg-zinc-900/60 border border-zinc-800 text-zinc-200 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+              {search && (
+                <button
+                  onClick={clearSearch}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
             </div>
 
             {/* Search hint */}
-            {(search || aiQuery) && (
+            {search && (
               <div className="bg-zinc-900/60 border border-zinc-800 rounded px-3 py-2">
-                <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1">
-                  {aiMode ? "AI Search" : "Searching"}
-                </p>
-                <p className="text-xs text-zinc-300 truncate">{currentSearchValue}</p>
+                <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-1">Searching</p>
+                <p className="text-xs text-zinc-300 truncate">{search}</p>
                 <button
                   onClick={clearSearch}
                   className="text-[9px] text-zinc-600 hover:text-[#D4AF37] mt-1 transition-colors"
@@ -538,23 +437,14 @@ export default function Home() {
             {/* Header row */}
             <div className="flex items-center justify-between mb-5">
               <div>
-                {aiMode && aiQuery ? (
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" />
-                    <span className="text-[10px] uppercase tracking-widest text-zinc-500">
-                      AI Results for "{aiQuery}"
-                    </span>
-                  </div>
-                ) : (
-                  <p className="text-[10px] uppercase tracking-widest text-zinc-500">
-                    {selectedCategory
-                      ? categories?.find((c) => c.id === selectedCategory)?.name
-                      : "All Products"}
-                    {!isLoading && (
-                      <span className="ml-2 text-zinc-700">· {displayProducts.length} items</span>
-                    )}
-                  </p>
-                )}
+                <p className="text-[10px] uppercase tracking-widest text-zinc-500">
+                  {selectedCategory
+                    ? categories?.find((c) => c.id === selectedCategory)?.name
+                    : "All Products"}
+                  {!isLoading && (
+                    <span className="ml-2 text-zinc-700">· {displayProducts.length} items</span>
+                  )}
+                </p>
               </div>
               <select className="bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-[#D4AF37]/30 transition-colors">
                 <option>Featured first</option>
@@ -593,23 +483,17 @@ export default function Home() {
             ) : displayProducts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-24 text-center">
                 <div className="bg-zinc-900 border border-zinc-800 p-4 mb-6 inline-flex">
-                  {aiMode ? (
-                    <Sparkles className="h-7 w-7 text-zinc-700" />
-                  ) : (
-                    <Search className="h-7 w-7 text-zinc-700" />
-                  )}
+                  <Search className="h-7 w-7 text-zinc-700" />
                 </div>
                 <h3 className="font-light text-base mb-2 text-zinc-200 uppercase tracking-wide">
                   No products found
                 </h3>
                 <p className="text-zinc-600 text-sm max-w-[240px]">
-                  {aiMode
-                    ? `No matches for "${aiQuery}". Try a different description.`
-                    : search
+                  {search
                     ? `Nothing matches "${search}"`
                     : "No products in this category yet."}
                 </p>
-                {(search || selectedCategory || (aiMode && aiQuery)) && (
+                {(search || selectedCategory) && (
                   <button
                     onClick={() => { clearSearch(); setSelectedCategory(undefined); }}
                     className="mt-6 text-[#D4AF37] text-xs uppercase tracking-widest hover:text-white transition-colors"
