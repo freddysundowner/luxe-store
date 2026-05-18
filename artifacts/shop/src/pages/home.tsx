@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "wouter";
 import {
-  Search, Sparkles, X, Gift, ShoppingBag, RefreshCw,
+  Search, Sparkles, X, Gift, Heart, ShoppingBag, RefreshCw,
   MessageCircle, Share2, Droplets, Send
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
@@ -15,6 +15,7 @@ import {
   Product,
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
+import { useFavorites } from "@/lib/favorites-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -348,6 +349,7 @@ export default function Home() {
   }, []);
 
   const { itemCount } = useCart();
+  const { favoriteCount } = useFavorites();
 
   const { data: categories, isLoading: isLoadingCategories } = useListCategories({
     query: { queryKey: getListCategoriesQueryKey() },
@@ -408,18 +410,31 @@ export default function Home() {
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] flex flex-col" style={{ zIndex: 100 }}>
-      {/* Floating cart */}
-      <Link
-        href="/cart"
-        className="fixed top-4 right-4 z-50 flex items-center gap-2 bg-[#0a0a0a]/80 backdrop-blur border border-zinc-800 rounded-full px-3 py-2 text-zinc-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-all"
-      >
-        <ShoppingBag className="w-4 h-4" />
-        {itemCount > 0 && (
-          <span className="bg-[#D4AF37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-            {itemCount}
-          </span>
-        )}
-      </Link>
+      {/* Floating top-right pills */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
+        <Link
+          href="/favorites"
+          className="flex items-center gap-1.5 bg-[#0a0a0a]/80 backdrop-blur border border-zinc-800 rounded-full px-3 py-2 text-zinc-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-all"
+        >
+          <Heart className={`w-4 h-4 transition-colors ${favoriteCount > 0 ? "fill-[#D4AF37] text-[#D4AF37]" : ""}`} />
+          {favoriteCount > 0 && (
+            <span className="bg-[#D4AF37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              {favoriteCount}
+            </span>
+          )}
+        </Link>
+        <Link
+          href="/cart"
+          className="flex items-center gap-2 bg-[#0a0a0a]/80 backdrop-blur border border-zinc-800 rounded-full px-3 py-2 text-zinc-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-all"
+        >
+          <ShoppingBag className="w-4 h-4" />
+          {itemCount > 0 && (
+            <span className="bg-[#D4AF37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+              {itemCount}
+            </span>
+          )}
+        </Link>
+      </div>
 
       {/* ── Desktop: 3-column TikTok layout ── */}
       <div className="flex-1 flex overflow-hidden">

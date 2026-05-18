@@ -1,8 +1,9 @@
 import { useState, useCallback } from "react";
-import { Link } from "wouter";
-import { Gift, MessageCircle, Share2, ShoppingBag, Sparkles, X, Send } from "lucide-react";
+import { Link, Link as WouterLink } from "wouter";
+import { Gift, Heart, MessageCircle, Share2, ShoppingBag, Sparkles, X, Send } from "lucide-react";
 import { Product, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { useCart } from "@/lib/cart-context";
+import { useFavorites } from "@/lib/favorites-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
@@ -26,6 +27,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   const [giftNote, setGiftNote] = useState("");
 
   const { addItem } = useCart();
+  const { toggleFavorite, isFavorite, favoriteCount } = useFavorites();
   const { toast } = useToast();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
@@ -164,6 +166,16 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
         <span className="text-[10px] text-white/30 uppercase tracking-widest">
           {currentIndex + 1} / {products.length}
         </span>
+        <div className="flex items-center gap-2">
+          {/* Favorites link */}
+          <WouterLink href="/favorites"
+            className="flex items-center gap-1 bg-black/50 backdrop-blur-sm border border-white/10 rounded-full px-2.5 py-1 hover:border-[#D4AF37]/40 transition-colors"
+          >
+            <Heart className={`w-3 h-3 transition-colors ${favoriteCount > 0 ? "fill-[#D4AF37] text-[#D4AF37]" : "text-white/40"}`} />
+            {favoriteCount > 0 && (
+              <span className="text-[9px] text-[#D4AF37] font-semibold leading-none">{favoriteCount}</span>
+            )}
+          </WouterLink>
         <div className="flex gap-1">
           <button
             onClick={() => navigate("down")}
@@ -180,6 +192,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
             ↓
           </button>
         </div>
+        </div>
       </div>
 
       {/* Right-side action buttons */}
@@ -187,6 +200,32 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
         className="absolute right-3 z-10 flex flex-col gap-4"
         style={{ bottom: "210px" }}
       >
+        {/* Heart / favourite */}
+        <button
+          onClick={() => {
+            toggleFavorite(current);
+            toast({
+              title: isFavorite(current.id) ? "Removed from saved" : "Saved!",
+              description: current.name,
+              duration: 1500,
+            });
+          }}
+          className="flex flex-col items-center gap-1"
+        >
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-200 ${
+            isFavorite(current.id)
+              ? "bg-[#D4AF37]/20 border border-[#D4AF37]"
+              : "bg-black/50 backdrop-blur-sm border border-white/10 hover:border-[#D4AF37]/40"
+          }`}>
+            <Heart className={`w-5 h-5 transition-all duration-200 ${
+              isFavorite(current.id) ? "fill-[#D4AF37] text-[#D4AF37] scale-110" : "text-white"
+            }`} />
+          </div>
+          <span className={`text-[9px] transition-colors ${isFavorite(current.id) ? "text-[#D4AF37]/80" : "text-white/35"}`}>
+            Save
+          </span>
+        </button>
+
         <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-1">
           <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/50 flex items-center justify-center shadow-xl transition-all duration-200 hover:bg-[#D4AF37]/25">
             <Gift className="w-5 h-5 text-[#D4AF37]" />

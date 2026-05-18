@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/lib/cart-context";
+import { FavoritesProvider } from "@/lib/favorites-context";
 import { GiftFinder } from "@/components/GiftFinder";
 import NotFound from "@/pages/not-found";
 
@@ -12,6 +13,7 @@ import CategoryPage from "@/pages/category";
 import ProductDetail from "@/pages/product";
 import Cart from "@/pages/cart";
 import GiftPage from "@/pages/gift";
+import Favorites from "@/pages/favorites";
 import AdminLogin from "@/pages/admin/login";
 import AdminDashboard from "@/pages/admin/dashboard";
 import AdminProducts from "@/pages/admin/products/index";
@@ -36,6 +38,7 @@ function Router() {
       <Route path="/category/:id" component={CategoryPage} />
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/cart" component={Cart} />
+      <Route path="/favorites" component={Favorites} />
       <Route path="/gift/:id" component={GiftPage} />
       
       {/* Admin Auth */}
@@ -60,10 +63,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CartProvider>
+          <FavoritesProvider>
           <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
             <Router />
             <GiftFinder />
           </WouterRouter>
+          </FavoritesProvider>
         </CartProvider>
         <Toaster />
       </TooltipProvider>
