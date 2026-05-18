@@ -168,23 +168,6 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
         </div>
       </div>
 
-      {/* Vertical dot indicators — right edge */}
-      {featured.length > 1 && (
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1.5 z-10">
-          {featured.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => !isFading && setIndex(i)}
-              className="rounded-full transition-all"
-              style={{
-                width: "4px",
-                height: i === index ? "20px" : "4px",
-                background: i === index ? "#D4AF37" : "rgba(255,255,255,0.15)",
-              }}
-            />
-          ))}
-        </div>
-      )}
 
       {/* Action buttons */}
       <div className="absolute right-10 z-10 flex flex-col gap-4" style={{ bottom: "220px" }}>
