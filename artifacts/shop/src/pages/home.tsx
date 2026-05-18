@@ -30,10 +30,7 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
   const { addItem } = useCart();
   const { toast } = useToast();
 
-  const featured = useMemo(() => {
-    const f = products.filter((p) => p.isFeatured && p.inStock);
-    return f.length > 0 ? f : products.filter((p) => p.inStock).slice(0, 6);
-  }, [products]);
+  const featured = useMemo(() => products, [products]);
 
   const current = featured.length > 0 ? featured[index] : null;
 
