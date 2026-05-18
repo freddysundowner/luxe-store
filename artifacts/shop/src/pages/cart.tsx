@@ -22,7 +22,7 @@ export default function Cart() {
 
   if (items.length === 0) {
     return (
-      <RootLayout title="Your Bag" showBack>
+      <RootLayout title="Your Bag" showBack noHeader>
         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
           <div className="w-24 h-24 bg-zinc-900 border border-zinc-800 flex items-center justify-center mb-8">
             <ShoppingBag className="w-10 h-10 text-zinc-700" />
@@ -40,7 +40,7 @@ export default function Cart() {
   }
 
   return (
-    <RootLayout title="Your Bag" showBack>
+    <RootLayout title="Your Bag" showBack noHeader>
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
         <div className="lg:grid lg:grid-cols-3 lg:gap-12">
           <div className="lg:col-span-2 space-y-4 pb-4">
