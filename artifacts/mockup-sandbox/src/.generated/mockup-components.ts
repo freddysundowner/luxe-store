@@ -4,5 +4,7 @@ export const modules: ModuleMap = {
   "./components/mockups/shop-designs/BoldMarket.tsx": () => import("../components/mockups/shop-designs/BoldMarket.tsx"),
   "./components/mockups/shop-designs/ClassicPremium.tsx": () => import("../components/mockups/shop-designs/ClassicPremium.tsx"),
   "./components/mockups/shop-designs/LuxuryDark.tsx": () => import("../components/mockups/shop-designs/LuxuryDark.tsx"),
-  "./components/mockups/shop-designs/ModernMinimal.tsx": () => import("../components/mockups/shop-designs/ModernMinimal.tsx")
+  "./components/mockups/shop-designs/ModernMinimal.tsx": () => import("../components/mockups/shop-designs/ModernMinimal.tsx"),
+  "./components/mockups/tiktok-shop/TikTokDesktop.tsx": () => import("../components/mockups/tiktok-shop/TikTokDesktop.tsx"),
+  "./components/mockups/tiktok-shop/TikTokMobile.tsx": () => import("../components/mockups/tiktok-shop/TikTokMobile.tsx")
 };
