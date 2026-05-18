@@ -16,6 +16,7 @@ import {
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyFeed } from "@/components/EmptyFeed";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
@@ -604,27 +605,13 @@ export default function Home() {
                 ))}
               </div>
             ) : displayProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center">
-                <div className="bg-zinc-900 border border-zinc-800 p-4 mb-6 inline-flex">
-                  <Search className="h-7 w-7 text-zinc-700" />
-                </div>
-                <h3 className="font-light text-base mb-2 text-zinc-200 uppercase tracking-wide">
-                  No products found
-                </h3>
-                <p className="text-zinc-600 text-sm max-w-[240px]">
-                  {search
-                    ? `Nothing matches "${search}"`
-                    : "No products in this category yet."}
-                </p>
-                {(search || selectedCategory || priceRanges.size > 0 || availability.size > 0) && (
-                  <button
-                    onClick={() => { clearSearch(); setSelectedCategory(undefined); setPriceRanges(new Set()); setAvailability(new Set()); }}
-                    className="mt-6 text-[#D4AF37] text-xs uppercase tracking-widest hover:text-white transition-colors"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
+              <EmptyFeed
+                message={search ? `Nothing matches "${search}"` : "No products found"}
+                sub={search ? "Try a different search term" : "Try adjusting your filters"}
+                onClear={(search || selectedCategory || priceRanges.size > 0 || availability.size > 0)
+                  ? () => { clearSearch(); setSelectedCategory(undefined); setPriceRanges(new Set()); setAvailability(new Set()); }
+                  : undefined}
+              />
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {displayProducts.map((product) => (

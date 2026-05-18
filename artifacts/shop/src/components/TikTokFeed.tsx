@@ -5,6 +5,7 @@ import { Product, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmptyFeed } from "@/components/EmptyFeed";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
@@ -98,10 +99,10 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   if (products.length === 0) {
     return (
       <div className="flex-1 bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-center">
-          <ShoppingBag className="w-12 h-12 text-zinc-800 mx-auto mb-3" />
-          <p className="text-zinc-600 text-sm uppercase tracking-widest">No products</p>
-        </div>
+        <EmptyFeed
+          message="No matches"
+          sub="Adjust your filters to explore the collection"
+        />
       </div>
     );
   }
