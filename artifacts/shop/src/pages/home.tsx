@@ -342,45 +342,7 @@ export default function Home() {
   if (isMobile) {
     return (
       <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 100 }}>
-        {/* Feed fills entire screen */}
-        <TikTokFeed products={displayProducts} isLoading={isLoading} topOffset={68} />
-
-        {/* Gradient overlay header — floats on top of the image */}
-        <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
-          <div
-            className="flex items-center justify-between px-4 pointer-events-auto"
-            style={{
-              paddingTop: "16px",
-              paddingBottom: "48px",
-              background: "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
-            }}
-          >
-            <Link href="/">
-              <div className="flex flex-col leading-none cursor-pointer">
-                <span
-                  className="text-[#D4AF37] font-light"
-                  style={{ fontFamily: "Georgia, serif", fontSize: "18px", letterSpacing: "0.3em" }}
-                >
-                  LUXE
-                </span>
-                <span
-                  className="text-[#D4AF37]/50"
-                  style={{ fontSize: "7px", letterSpacing: "0.4em" }}
-                >
-                  STORE
-                </span>
-              </div>
-            </Link>
-            <Link href="/cart" className="relative">
-              <ShoppingBag className="w-6 h-6 text-white" />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-          </div>
-        </div>
+        <TikTokFeed products={displayProducts} isLoading={isLoading} topOffset={12} />
       </div>
     );
   }
