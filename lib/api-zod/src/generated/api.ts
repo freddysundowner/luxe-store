@@ -244,7 +244,12 @@ export const GetSettingsResponse = zod.object({
   "whatsappNumber": zod.string(),
   "logoUrl": zod.string().nullish(),
   "currency": zod.string().optional(),
-  "currencySymbol": zod.string().optional()
+  "currencySymbol": zod.string().optional(),
+  "priceTiers": zod.array(zod.object({
+  "name": zod.string(),
+  "min": zod.number(),
+  "max": zod.number().nullish()
+})).optional()
 })
 
 
@@ -257,7 +262,12 @@ export const UpdateSettingsBody = zod.object({
   "whatsappNumber": zod.string(),
   "logoUrl": zod.string().optional(),
   "currency": zod.string().optional(),
-  "currencySymbol": zod.string().optional()
+  "currencySymbol": zod.string().optional(),
+  "priceTiers": zod.array(zod.object({
+  "name": zod.string(),
+  "min": zod.number(),
+  "max": zod.number().nullish()
+})).optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
@@ -266,7 +276,12 @@ export const UpdateSettingsResponse = zod.object({
   "whatsappNumber": zod.string(),
   "logoUrl": zod.string().nullish(),
   "currency": zod.string().optional(),
-  "currencySymbol": zod.string().optional()
+  "currencySymbol": zod.string().optional(),
+  "priceTiers": zod.array(zod.object({
+  "name": zod.string(),
+  "min": zod.number(),
+  "max": zod.number().nullish()
+})).optional()
 })
 
 

@@ -5,6 +5,7 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { PriceTier } from './priceTier';
 
 export interface StoreSettings {
   storeName: string;
@@ -15,4 +16,5 @@ export interface StoreSettings {
   logoUrl?: string | null;
   currency?: string;
   currencySymbol?: string;
+  priceTiers?: PriceTier[];
 }

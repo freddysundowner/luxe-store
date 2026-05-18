@@ -65,6 +65,13 @@ export interface ProductInput {
   isFeatured?: boolean;
 }
 
+export interface PriceTier {
+  name: string;
+  min: number;
+  /** @nullable */
+  max?: number | null;
+}
+
 export interface StoreSettings {
   storeName: string;
   /** @nullable */
@@ -74,6 +81,7 @@ export interface StoreSettings {
   logoUrl?: string | null;
   currency?: string;
   currencySymbol?: string;
+  priceTiers?: PriceTier[];
 }
 
 export interface StoreSettingsInput {
@@ -83,6 +91,7 @@ export interface StoreSettingsInput {
   logoUrl?: string;
   currency?: string;
   currencySymbol?: string;
+  priceTiers?: PriceTier[];
 }
 
 export interface AdminCredentials {

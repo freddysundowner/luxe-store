@@ -417,6 +417,17 @@ components:
         isFeatured:
           type: boolean
 
+    PriceTier:
+      type: object
+      required: [name, min]
+      properties:
+        name:
+          type: string
+        min:
+          type: number
+        max:
+          type: ["number", "null"]
+
     StoreSettings:
       type: object
       required: [storeName, whatsappNumber]
@@ -433,6 +444,10 @@ components:
           type: string
         currencySymbol:
           type: string
+        priceTiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PriceTier"
 
     StoreSettingsInput:
       type: object
@@ -450,6 +465,10 @@ components:
           type: string
         currencySymbol:
           type: string
+        priceTiers:
+          type: array
+          items:
+            $ref: "#/components/schemas/PriceTier"
 
     AdminCredentials:
       type: object

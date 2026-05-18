@@ -351,6 +351,17 @@ export default function Home() {
   const { itemCount } = useCart();
   const { favoriteCount } = useFavorites();
 
+  const { data: storeSettings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+
+  const DEFAULT_PRICE_TIERS = [
+    { name: "Under Ksh 500", min: 0, max: 500 },
+    { name: "Ksh 500 – 2,000", min: 500, max: 2000 },
+    { name: "Ksh 2,000 – 5,000", min: 2000, max: 5000 },
+    { name: "Over Ksh 5,000", min: 5000, max: null },
+  ] as const;
+  const priceTiers: Array<{ name: string; min: number; max: number | null }> =
+    (storeSettings?.priceTiers as Array<{ name: string; min: number; max: number | null }> | undefined) ?? [...DEFAULT_PRICE_TIERS];
+
   const { data: categories, isLoading: isLoadingCategories } = useListCategories({
     query: { queryKey: getListCategoriesQueryKey() },
   });
@@ -381,18 +392,17 @@ export default function Home() {
     if (priceRanges.size > 0) {
       list = list.filter(p => {
         const price = p.price;
-        return (
-          (priceRanges.has("under500")  && price < 500) ||
-          (priceRanges.has("500-2000")  && price >= 500  && price <= 2000) ||
-          (priceRanges.has("2000-5000") && price > 2000 && price <= 5000) ||
-          (priceRanges.has("over5000")  && price > 5000)
+        return priceTiers.some(tier =>
+          priceRanges.has(tier.name) &&
+          price >= tier.min &&
+          (tier.max === null || price < tier.max)
         );
       });
     }
 
     if (availability.has("instock"))  list = list.filter(p => p.inStock);
     if (availability.has("sale"))     list = list.filter(p => p.originalPrice != null && p.originalPrice > p.price);
-    if (availability.has("new"))      list = list.filter(p => p.isNew);
+    if (availability.has("new"))      list = list.filter(p => p.isFeatured);
 
     return list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
   }, [products, priceRanges, availability]);
@@ -526,26 +536,21 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Price range */}
+            {/* Price range — tiers configured in Admin › Settings */}
             <div>
               <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">Price Range</p>
               <div className="flex flex-col gap-2">
-                {([
-                  { key: "under500",  label: "Under Ksh 500" },
-                  { key: "500-2000",  label: "Ksh 500 – 2,000" },
-                  { key: "2000-5000", label: "Ksh 2,000 – 5,000" },
-                  { key: "over5000",  label: "Over Ksh 5,000" },
-                ] as const).map(({ key, label }) => (
-                  <label key={key} className="flex items-center gap-2 text-xs cursor-pointer hover:text-zinc-200 transition-colors select-none group"
-                    style={{ color: priceRanges.has(key) ? "#D4AF37" : "#71717a" }}>
+                {priceTiers.map((tier) => (
+                  <label key={tier.name} className="flex items-center gap-2 text-xs cursor-pointer hover:text-zinc-200 transition-colors select-none"
+                    style={{ color: priceRanges.has(tier.name) ? "#D4AF37" : "#71717a" }}>
                     <input type="checkbox" className="sr-only"
-                      checked={priceRanges.has(key)}
-                      onChange={() => toggleSet(setPriceRanges, key)} />
+                      checked={priceRanges.has(tier.name)}
+                      onChange={() => toggleSet(setPriceRanges, tier.name)} />
                     <span className="w-3 h-3 border rounded-sm flex-shrink-0 flex items-center justify-center transition-colors"
-                      style={{ borderColor: priceRanges.has(key) ? "#D4AF37" : "#3f3f46", background: priceRanges.has(key) ? "#D4AF37" : "transparent" }}>
-                      {priceRanges.has(key) && <span className="block w-1.5 h-1.5 bg-black rounded-sm" />}
+                      style={{ borderColor: priceRanges.has(tier.name) ? "#D4AF37" : "#3f3f46", background: priceRanges.has(tier.name) ? "#D4AF37" : "transparent" }}>
+                      {priceRanges.has(tier.name) && <span className="block w-1.5 h-1.5 bg-black rounded-sm" />}
                     </span>
-                    {label}
+                    {tier.name}
                   </label>
                 ))}
               </div>

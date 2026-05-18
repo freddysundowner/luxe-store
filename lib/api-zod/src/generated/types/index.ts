@@ -13,6 +13,7 @@ export * from './category';
 export * from './categoryInput';
 export * from './healthStatus';
 export * from './listProductsParams';
+export * from './priceTier';
 export * from './product';
 export * from './productInput';
 export * from './storeSettings';

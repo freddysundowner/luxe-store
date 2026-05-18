@@ -296,8 +296,8 @@ export default function GiftPage() {
                   </div>
                 )}
                 <div className="p-5 space-y-3">
-                  {product.category && (
-                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#D4AF37]/50">{product.category.name}</p>
+                  {product.categoryName && (
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#D4AF37]/50">{product.categoryName}</p>
                   )}
                   <h2 className="text-lg font-light text-white uppercase tracking-wide">{product.name}</h2>
                   <p className="text-[#D4AF37] text-xl font-light">{fmt.format(product.price)}</p>

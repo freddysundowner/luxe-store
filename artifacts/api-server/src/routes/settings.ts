@@ -9,6 +9,13 @@ import {
 
 const router = Router();
 
+const DEFAULT_PRICE_TIERS = [
+  { name: "Under Ksh 500", min: 0, max: 500 },
+  { name: "Ksh 500 – 2,000", min: 500, max: 2000 },
+  { name: "Ksh 2,000 – 5,000", min: 2000, max: 5000 },
+  { name: "Over Ksh 5,000", min: 5000, max: null },
+];
+
 async function getOrCreateSettings() {
   const rows = await db.select().from(storeSettingsTable).limit(1);
   if (rows.length > 0) return rows[0];
@@ -28,7 +35,10 @@ async function getOrCreateSettings() {
 
 router.get("/settings", async (req, res): Promise<void> => {
   const settings = await getOrCreateSettings();
-  res.json(GetSettingsResponse.parse(settings));
+  res.json(GetSettingsResponse.parse({
+    ...settings,
+    priceTiers: settings.priceTiers ?? DEFAULT_PRICE_TIERS,
+  }));
 });
 
 router.put("/admin/settings", async (req, res): Promise<void> => {
@@ -39,13 +49,23 @@ router.put("/admin/settings", async (req, res): Promise<void> => {
   }
 
   const existing = await getOrCreateSettings();
+  const { priceTiers, ...restData } = parsed.data;
+  const dbSet = {
+    ...restData,
+    ...(priceTiers !== undefined
+      ? { priceTiers: priceTiers.map((t) => ({ name: t.name, min: t.min, max: t.max ?? null })) }
+      : {}),
+  };
   const [updated] = await db
     .update(storeSettingsTable)
-    .set(parsed.data)
+    .set(dbSet)
     .where(eq(storeSettingsTable.id, existing.id))
     .returning();
 
-  res.json(UpdateSettingsResponse.parse(updated));
+  res.json(UpdateSettingsResponse.parse({
+    ...updated,
+    priceTiers: updated.priceTiers ?? DEFAULT_PRICE_TIERS,
+  }));
 });
 
 export default router;
