@@ -565,7 +565,7 @@ export default function Home() {
         {/* Center — Featured swiper */}
         <div className="w-[460px] shrink-0 border-r border-zinc-900 flex flex-col overflow-hidden">
           {allProducts ? (
-            <FeaturedSwiper products={allProducts} />
+            <FeaturedSwiper products={displayProducts} />
           ) : (
             <div className="flex-1 bg-[#0a0a0a] flex items-center justify-center">
               <Skeleton className="w-full h-full bg-zinc-900" />
