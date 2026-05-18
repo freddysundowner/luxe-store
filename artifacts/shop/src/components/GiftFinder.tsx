@@ -31,7 +31,7 @@ const OCCASIONS = [
 
 const RELATIONSHIPS = ["My Partner", "Mum", "Dad", "Best Friend", "Sister", "Brother", "Colleague"];
 
-const BUDGETS = ["Under $30", "$30–$75", "$75–$150", "No limit"];
+const BUDGETS = ["Under KSh 3K", "KSh 3K–8K", "KSh 8K–20K", "No limit"];
 
 export function GiftFinder() {
   const [open, setOpen] = useState(false);
