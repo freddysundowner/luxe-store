@@ -83,6 +83,16 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
     toast({ title: "Added to bag", description: `${product.name} added.`, duration: 2000 });
   };
 
+  const handleShare = (product: Product) => {
+    const url = `${window.location.origin}/product/${product.id}`;
+    if (navigator.share) {
+      navigator.share({ title: product.name, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", duration: 1500 });
+    }
+  };
+
   if (!current) {
     return (
       <div className="flex-1 flex items-center justify-center bg-[#0a0a0a]">
@@ -159,14 +169,14 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
           </div>
           <span className="text-[9px] text-white/35">{liked.has(current.id) ? "1" : "0"}</span>
         </button>
-        <button className="flex flex-col items-center gap-0.5">
-          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg">
+        <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-0.5">
+          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/40 transition-colors">
             <MessageCircle className="w-4 h-4 text-white" />
           </div>
-          <span className="text-[9px] text-white/35">12</span>
-        </button>
-        <button className="flex flex-col items-center gap-0.5">
-          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg">
+          <span className="text-[9px] text-white/35">View</span>
+        </Link>
+        <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-0.5">
+          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/40 transition-colors">
             <Share2 className="w-4 h-4 text-white" />
           </div>
           <span className="text-[9px] text-white/35">Share</span>

@@ -53,6 +53,16 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
     toast({ title: "Added to bag", description: `${product.name} added.`, duration: 2000 });
   };
 
+  const handleShare = (product: Product) => {
+    const url = `${window.location.origin}/product/${product.id}`;
+    if (navigator.share) {
+      navigator.share({ title: product.name, url }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", duration: 1500 });
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex-1 bg-[#0a0a0a]">
@@ -171,15 +181,15 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
           </span>
         </button>
 
-        <button className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl">
+        <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-1">
+          <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/40 transition-colors">
             <MessageCircle className="w-5 h-5 text-white" />
           </div>
-          <span className="text-[9px] text-white/35">Chat</span>
-        </button>
+          <span className="text-[9px] text-white/35">View</span>
+        </Link>
 
-        <button className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl">
+        <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-1">
+          <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/40 transition-colors">
             <Share2 className="w-5 h-5 text-white" />
           </div>
           <span className="text-[9px] text-white/35">Share</span>
