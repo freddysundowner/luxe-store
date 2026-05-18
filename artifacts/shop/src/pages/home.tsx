@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "wouter";
 import {
-  Search, Sparkles, X, Heart, ShoppingBag, RefreshCw,
-  MessageCircle, Share2, Droplets
+  Search, Sparkles, X, Gift, ShoppingBag, RefreshCw,
+  MessageCircle, Share2, Droplets, Send
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { ProductCard } from "@/components/ProductCard";
@@ -11,6 +11,7 @@ import { TikTokFeed } from "@/components/TikTokFeed";
 import {
   useListProducts, getListProductsQueryKey,
   useListCategories, getListCategoriesQueryKey,
+  useGetSettings, getGetSettingsQueryKey,
   Product,
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
@@ -24,11 +25,14 @@ const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES",
 function FeaturedSwiper({ products }: { products: Product[] }) {
   const [index, setIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
-  const [liked, setLiked] = useState<Set<number>>(new Set());
   const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
   const [touchStartY, setTouchStartY] = useState(0);
+  const [giftProduct, setGiftProduct] = useState<Product | null>(null);
+  const [giftRecipient, setGiftRecipient] = useState("");
+  const [giftNote, setGiftNote] = useState("");
   const { addItem } = useCart();
   const { toast } = useToast();
+  const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
   const featured = useMemo(() => products, [products]);
 
@@ -70,12 +74,26 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
     return () => el.removeEventListener("wheel", handler);
   }, [navigate]);
 
-  const toggleLike = (id: number) =>
-    setLiked((prev) => {
-      const n = new Set(prev);
-      n.has(id) ? n.delete(id) : n.add(id);
-      return n;
-    });
+  const openGiftSheet = (product: Product) => {
+    setGiftProduct(product);
+    setGiftRecipient("");
+    setGiftNote("");
+  };
+
+  const sendGiftViaWhatsApp = () => {
+    if (!giftProduct) return;
+    const productUrl = `${window.location.origin}/product/${giftProduct.id}`;
+    const storeName = settings?.storeName || "Luxe Store";
+    const price = fmt.format(giftProduct.price);
+    const to = giftRecipient.trim() ? giftRecipient.trim() : "you";
+    const note = giftNote.trim() ? `\n\n"${giftNote.trim()}"` : "";
+    const message =
+      `🎁 Hey ${to}! I'd love to gift you something special.\n\n` +
+      `*${giftProduct.name}*\n${price} — from ${storeName}${note}\n\n` +
+      `Check it out: ${productUrl}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
+    setGiftProduct(null);
+  };
 
   const handleCart = (product: Product) => {
     addItem(product, 1);
@@ -163,15 +181,11 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
 
       {/* Action buttons */}
       <div className="absolute right-10 z-10 flex flex-col gap-4" style={{ bottom: "220px" }}>
-        <button onClick={() => toggleLike(current.id)} className="flex flex-col items-center gap-0.5">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all ${
-              liked.has(current.id) ? "bg-red-500" : "bg-black/60 backdrop-blur-sm border border-white/10"
-            }`}
-          >
-            <Heart className={`w-4 h-4 ${liked.has(current.id) ? "fill-white text-white" : "text-white"}`} />
+        <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-0.5">
+          <div className="w-10 h-10 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/50 flex items-center justify-center shadow-lg transition-all hover:bg-[#D4AF37]/25">
+            <Gift className="w-4 h-4 text-[#D4AF37]" />
           </div>
-          <span className="text-[9px] text-white/35">{liked.has(current.id) ? "1" : "0"}</span>
+          <span className="text-[9px] text-[#D4AF37]/60">Gift</span>
         </button>
         <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-0.5">
           <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/40 transition-colors">
@@ -244,6 +258,56 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
           scroll · ↑ ↓ keyboard
         </span>
       </div>
+
+      {/* Gift This Sheet */}
+      {giftProduct && (
+        <>
+          <div className="absolute inset-0 z-[200] bg-black/70" onClick={() => setGiftProduct(null)} />
+          <div className="absolute bottom-0 left-0 right-0 z-[210] bg-[#0a0a0a] border-t border-[#D4AF37]/20"
+            style={{ animation: "slideUp 0.28s cubic-bezier(0.16,1,0.3,1) forwards" }}
+          >
+            <style>{`@keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent" />
+            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-0.5 bg-zinc-700 rounded-full" /></div>
+            <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-900">
+              <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
+                {giftProduct.imageUrl
+                  ? <img src={giftProduct.imageUrl} alt={giftProduct.name} className="w-full h-full object-cover" />
+                  : <Gift className="w-6 h-6 text-zinc-700 m-auto mt-4" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs uppercase tracking-wide text-zinc-300 font-light truncate">{giftProduct.name}</p>
+                <p className="text-[#D4AF37] text-sm font-light mt-0.5">{fmt.format(giftProduct.price)}</p>
+              </div>
+              <button onClick={() => setGiftProduct(null)} className="text-zinc-600 hover:text-zinc-300 transition-colors p-1">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="px-5 pt-4 pb-3 space-y-3">
+              <div>
+                <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Who's the lucky one?</label>
+                <input type="text" value={giftRecipient} onChange={(e) => setGiftRecipient(e.target.value)}
+                  placeholder="Their name (optional)"
+                  className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors" />
+              </div>
+              <div>
+                <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Personal note</label>
+                <textarea value={giftNote} onChange={(e) => setGiftNote(e.target.value)}
+                  placeholder="Add a heartfelt message… (optional)" rows={2}
+                  className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors resize-none" />
+              </div>
+            </div>
+            <div className="px-5 pb-5">
+              <button onClick={sendGiftViaWhatsApp}
+                className="w-full py-4 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors flex items-center justify-center gap-2">
+                <Send className="w-3.5 h-3.5" />Send Gift via WhatsApp
+              </button>
+              <p className="text-[9px] text-zinc-700 text-center tracking-widest uppercase mt-2">Opens WhatsApp — you pick who to send it to</p>
+            </div>
+            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" />
+          </div>
+        </>
+      )}
     </div>
   );
 }
