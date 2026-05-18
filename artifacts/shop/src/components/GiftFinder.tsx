@@ -72,13 +72,13 @@ export function GiftFinder() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-medium shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-white transition-all duration-300 ${open ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        className={`fixed bottom-6 right-6 z-[200] flex items-center gap-2 px-4 py-3 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-medium shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-white transition-all duration-300 ${open ? "opacity-0 pointer-events-none" : "opacity-100"}`}
       >
         <Gift className="w-4 h-4" />
         <span className="hidden sm:inline">Gift Finder</span>
       </button>
 
-      <div className={`fixed bottom-0 right-0 z-50 flex flex-col transition-all duration-400 ease-out
+      <div className={`fixed bottom-0 right-0 z-[200] flex flex-col transition-all duration-400 ease-out
           ${open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8 pointer-events-none"}
           w-full sm:w-[380px] sm:bottom-6 sm:right-6 h-[70dvh] sm:h-[520px]
           bg-[#0a0a0a] border border-zinc-900 shadow-[0_8px_48px_rgba(0,0,0,0.7)]`}
