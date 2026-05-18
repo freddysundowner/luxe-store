@@ -243,7 +243,7 @@ export function GiftFinder() {
                   </button>
                   <button
                     onClick={() => { setStep("chat"); setMessages([{ role: "assistant", content: "Welcome. Tell me who you're surprising — their personality, interests, and your budget. I'll find something they'll absolutely love." }]); }}
-                    className="w-full mt-2 py-2.5 text-[10px] uppercase tracking-widest text-zinc-600 hover:text-zinc-400 transition-colors"
+                    className="w-full mt-2 py-2.5 text-[10px] uppercase tracking-widest text-zinc-400 hover:text-[#D4AF37] border border-zinc-800 hover:border-[#D4AF37]/30 transition-colors"
                   >
                     Skip — just chat
                   </button>
