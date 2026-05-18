@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useState } from "react";
 import { Link } from "wouter";
-import { ShoppingBag, Store, ArrowLeft } from "lucide-react";
+import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
+import { StoreLogo } from "@/components/StoreLogo";
 
 interface RootLayoutProps {
   children: ReactNode;
@@ -58,18 +59,14 @@ export function RootLayout({ children, title, showBack, searchBar }: RootLayoutP
               <Link href="/" className="p-2 -ml-2 text-zinc-500 hover:text-[#D4AF37] transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-            ) : (
-              <div className="p-1.5">
-                {settings?.logoUrl ? (
-                  <img src={settings.logoUrl} alt="Logo" className="w-7 h-7 object-cover" />
-                ) : (
-                  <Store className="w-6 h-6 text-[#D4AF37]" />
-                )}
-              </div>
-            )}
-            <span className="text-xl tracking-[0.18em] font-light text-[#D4AF37] uppercase truncate max-w-[160px] sm:max-w-[240px] lg:max-w-none">
-              {title || settings?.storeName || "Store"}
-            </span>
+            ) : null}
+            <Link href="/" className="flex items-center">
+              {settings?.logoUrl ? (
+                <img src={settings.logoUrl} alt="Luxe Store" className="h-9 w-auto object-contain" />
+              ) : (
+                <StoreLogo />
+              )}
+            </Link>
           </div>
 
           {/* Center search */}
