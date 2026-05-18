@@ -1,168 +1,280 @@
-import React, { useState } from "react";
-import { Search, ShoppingBag } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Search, Plus, ShoppingBag, Menu, Check } from "lucide-react";
+
+const PRODUCTS = [
+  {
+    id: 1,
+    name: "Wireless Earbuds Pro",
+    category: "Electronics",
+    price: 29.99,
+    originalPrice: 59.99,
+    image: "/__mockup/images/mm-earbuds.jpg",
+  },
+  {
+    id: 2,
+    name: "Smart Phone Case",
+    category: "Electronics",
+    price: 9.99,
+    originalPrice: null,
+    image: "/__mockup/images/mm-phonecase.jpg",
+  },
+  {
+    id: 3,
+    name: "USB-C Fast Charger",
+    category: "Electronics",
+    price: 14.99,
+    originalPrice: 24.99,
+    image: "/__mockup/images/charger.jpg",
+  },
+  {
+    id: 4,
+    name: "Oversized Hoodie",
+    category: "Clothing",
+    price: 24.99,
+    originalPrice: 39.99,
+    image: "/__mockup/images/hoodie.jpg",
+  },
+  {
+    id: 5,
+    name: "Classic White Sneakers",
+    category: "Clothing",
+    price: 39.99,
+    originalPrice: null,
+    image: "/__mockup/images/sneakers.jpg",
+  },
+  {
+    id: 6,
+    name: "Coffee Maker Deluxe",
+    category: "Home & Kitchen",
+    price: 49.99,
+    originalPrice: 79.99,
+    image: "/__mockup/images/coffee-maker.jpg",
+  },
+  {
+    id: 7,
+    name: "Non-Stick Pan Set",
+    category: "Home & Kitchen",
+    price: 34.99,
+    originalPrice: null,
+    image: "/__mockup/images/pan-set.jpg",
+  },
+  {
+    id: 8,
+    name: "Silk Face Serum",
+    category: "Beauty",
+    price: 22.99,
+    originalPrice: null,
+    image: "/__mockup/images/mm-serum.jpg",
+  },
+];
+
+const CATEGORIES = ["All", "Electronics", "Clothing", "Home & Kitchen", "Beauty"];
 
 export function ModernMinimal() {
   const [activeCategory, setActiveCategory] = useState("All");
+  const [scrolled, setScrolled] = useState(false);
+  const [addedToCart, setAddedToCart] = useState<number | null>(null);
+  const [cartCount, setCartCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const categories = ["All", "Electronics", "Clothing", "Home & Kitchen", "Accessories"];
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-  const products = [
-    {
-      id: 1,
-      name: "Wireless Earbuds Pro",
-      category: "Electronics",
-      price: 49.99,
-      originalPrice: 69.99,
-      image: "/__mockup/images/earbuds.jpg",
-    },
-    {
-      id: 2,
-      name: "Oversized Hoodie",
-      category: "Clothing",
-      price: 39.99,
-      originalPrice: null,
-      image: "/__mockup/images/hoodie.jpg",
-    },
-    {
-      id: 3,
-      name: "Smart Phone Case",
-      category: "Accessories",
-      price: 19.99,
-      originalPrice: null,
-      image: "/__mockup/images/case.jpg",
-    },
-    {
-      id: 4,
-      name: "Coffee Maker Deluxe",
-      category: "Home & Kitchen",
-      price: 89.99,
-      originalPrice: 129.99,
-      image: "/__mockup/images/coffee-maker.jpg",
-    },
-    {
-      id: 5,
-      name: "Classic White Sneakers",
-      category: "Clothing",
-      price: 45.99,
-      originalPrice: 59.99,
-      image: "/__mockup/images/sneakers.jpg",
-    },
-    {
-      id: 6,
-      name: "Non-Stick Pan Set",
-      category: "Home & Kitchen",
-      price: 34.99,
-      originalPrice: null,
-      image: "/__mockup/images/pans.jpg",
-    },
-    {
-      id: 7,
-      name: "USB-C Fast Charger",
-      category: "Electronics",
-      price: 14.99,
-      originalPrice: 19.99,
-      image: "/__mockup/images/charger.jpg",
-    },
-    {
-      id: 8,
-      name: "Minimalist Desk Lamp",
-      category: "Home & Kitchen",
-      price: 29.99,
-      originalPrice: null,
-      image: "/__mockup/images/lamp.jpg",
-    },
-  ];
+  const handleAddToCart = (id: number) => {
+    setAddedToCart(id);
+    setCartCount((c) => c + 1);
+    setTimeout(() => setAddedToCart(null), 1500);
+  };
 
-  const filteredProducts = activeCategory === "All"
-    ? products
-    : products.filter(p => p.category === activeCategory);
+  const filteredProducts = PRODUCTS.filter(
+    (p) =>
+      (activeCategory === "All" || p.category === activeCategory) &&
+      p.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
-    <div className="min-h-screen bg-white text-[#111] font-sans selection:bg-[#c7a977] selection:text-white">
+    <div className="min-h-screen bg-white font-sans text-zinc-900 selection:bg-zinc-200 selection:text-zinc-900">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between">
-        <div className="text-xl tracking-tight font-medium uppercase">KONTRAST</div>
-        
-        <div className="hidden md:flex flex-1 max-w-md mx-8 items-center border-b border-gray-200 pb-1 group hover:border-gray-400 transition-colors">
-          <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-600 mr-2 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Search products..." 
-            className="w-full bg-transparent outline-none text-sm placeholder:text-gray-400"
-          />
-        </div>
+      <header
+        className={`sticky top-0 z-50 w-full bg-white transition-shadow duration-200 ${
+          scrolled ? "shadow-sm" : ""
+        }`}
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button className="md:hidden p-2 -ml-2 text-zinc-600 hover:text-zinc-900">
+                <Menu className="h-5 w-5" />
+              </button>
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zinc-900 text-white">
+                  <span className="font-bold leading-none text-sm">M</span>
+                </div>
+                <span className="hidden sm:block text-lg font-medium tracking-tight">
+                  My Drop Shop
+                </span>
+              </div>
+            </div>
 
-        <button className="relative p-2 -mr-2 hover:bg-gray-50 rounded-full transition-colors group">
-          <ShoppingBag className="w-5 h-5 text-[#111]" strokeWidth={1.5} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#c7a977] rounded-full group-hover:scale-110 transition-transform"></span>
-        </button>
+            <div className="flex flex-1 items-center justify-end md:justify-center px-4 max-w-2xl">
+              <div className="relative w-full hidden md:block">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                  <Search className="h-4 w-4 text-zinc-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-10 w-full rounded-full bg-zinc-100 pl-11 pr-4 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-200 transition-all"
+                />
+              </div>
+              <button className="md:hidden p-2 text-zinc-600 hover:text-zinc-900">
+                <Search className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="flex items-center">
+              <button className="relative p-2 text-zinc-600 hover:text-zinc-900 transition-colors">
+                <ShoppingBag className="h-5 w-5" />
+                {cartCount > 0 && (
+                  <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-zinc-900 text-[10px] font-bold text-white ring-2 ring-white">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-12">
-        {/* Categories */}
-        <div className="flex flex-wrap items-center gap-8 mb-16 overflow-x-auto pb-4 scrollbar-hide">
-          {categories.map((category) => (
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 md:py-16">
+        <div className="mb-12">
+          <h1 className="text-3xl md:text-5xl font-semibold tracking-tight text-zinc-900">
+            Our Products
+          </h1>
+          <p className="mt-3 text-zinc-400 text-lg">
+            Carefully curated essentials for your everyday life.
+          </p>
+        </div>
+
+        <div className="mb-12 flex flex-wrap gap-2">
+          {CATEGORIES.map((cat) => (
             <button
-              key={category}
-              onClick={() => setActiveCategory(category)}
-              className={`text-sm tracking-wide transition-all relative pb-1 whitespace-nowrap ${
-                activeCategory === category 
-                  ? "text-[#111] font-medium" 
-                  : "text-gray-400 hover:text-gray-800"
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`rounded-full px-5 py-2 text-sm font-medium transition-colors duration-200 ${
+                activeCategory === cat
+                  ? "bg-zinc-900 text-white"
+                  : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900"
               }`}
             >
-              {category}
-              {activeCategory === category && (
-                <span className="absolute bottom-0 left-0 w-full h-[1px] bg-[#c7a977]" />
-              )}
+              {cat}
             </button>
           ))}
         </div>
 
-        {/* Product Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-8 gap-y-16">
-          {filteredProducts.map((product) => (
-            <div key={product.id} className="group cursor-pointer">
-              <div className="aspect-[4/5] bg-gray-50 mb-6 relative overflow-hidden flex items-center justify-center">
-                <img 
-                  src={product.image} 
-                  alt={product.name}
-                  className="object-cover w-full h-full mix-blend-multiply group-hover:scale-105 transition-transform duration-700 ease-in-out"
-                />
-                
-                {/* Add to cart overlay */}
-                <div className="absolute inset-x-0 bottom-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out">
-                  <button className="w-full py-3 bg-white text-[#111] text-xs uppercase tracking-widest font-medium hover:bg-[#c7a977] hover:text-white transition-colors shadow-sm">
-                    Add to Cart
-                  </button>
+        {filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 gap-x-6 gap-y-12 md:grid-cols-3 lg:grid-cols-4 xl:gap-x-6">
+            {filteredProducts.map((product) => {
+              const discount = product.originalPrice
+                ? Math.round(
+                    ((product.originalPrice - product.price) / product.originalPrice) * 100
+                  )
+                : null;
+
+              return (
+                <div key={product.id} className="group flex flex-col bg-white rounded-t-xl hover:shadow-md transition-shadow duration-300 pb-4">
+                  <div className="relative aspect-[4/5] w-full overflow-hidden rounded-t-xl bg-zinc-50">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
+                    />
+                    
+                    {discount && (
+                      <div className="absolute right-3 top-3 z-10 rounded-full bg-zinc-900 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+                        -{discount}%
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mt-5 px-1 flex flex-1 flex-col justify-between">
+                    <div>
+                      <h3 className="text-sm font-medium text-zinc-900">
+                        {product.name}
+                      </h3>
+                      <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                        {product.category}
+                      </p>
+                    </div>
+                    
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-bold text-zinc-900">
+                          ${product.price.toFixed(2)}
+                        </span>
+                        {product.originalPrice && (
+                          <span className="text-xs text-zinc-400 line-through">
+                            ${product.originalPrice.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        onClick={() => handleAddToCart(product.id)}
+                        className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors duration-200 ${
+                          addedToCart === product.id
+                            ? "bg-zinc-900 text-white"
+                            : "bg-zinc-900 text-white hover:bg-[#D4AF37] hover:text-black"
+                        }`}
+                        aria-label="Add to cart"
+                      >
+                        {addedToCart === product.id ? (
+                          <Check className="h-4 w-4" />
+                        ) : (
+                          <Plus className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-              
-              <div className="flex flex-col space-y-1">
-                <h3 className="text-sm font-medium text-[#111]">{product.name}</h3>
-                <div className="flex items-center space-x-2 text-sm">
-                  <span className="text-gray-500">${product.price.toFixed(2)}</span>
-                  {product.originalPrice && (
-                    <span className="text-gray-300 line-through text-xs">${product.originalPrice.toFixed(2)}</span>
-                  )}
-                </div>
-              </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex min-h-[400px] flex-col items-center justify-center rounded-3xl border border-dashed border-zinc-200 bg-zinc-50/50 py-12">
+            <div className="text-zinc-300">
+              <Search className="h-12 w-12 mx-auto mb-4" strokeWidth={1.5} />
             </div>
-          ))}
-        </div>
-        
-        {filteredProducts.length === 0 && (
-          <div className="py-32 text-center text-gray-400 text-sm">
-            No products found in this category.
+            <h3 className="text-lg font-medium text-zinc-900">No products found</h3>
+            <p className="mt-1 text-sm text-zinc-500">
+              Try adjusting your search or category filters.
+            </p>
+            <button 
+              onClick={() => {
+                setSearchQuery("");
+                setActiveCategory("All");
+              }}
+              className="mt-6 rounded-full bg-zinc-900 px-6 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 transition-colors"
+            >
+              Clear filters
+            </button>
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-12 px-6 mt-16 text-center text-xs text-gray-400 uppercase tracking-widest">
-        &copy; {new Date().getFullYear()} KONTRAST. All rights reserved.
+      <footer className="border-t border-zinc-100 py-12 text-center">
+        <p className="text-xs text-zinc-400">
+          © 2025 My Drop Shop. All rights reserved.
+        </p>
       </footer>
     </div>
   );
 }
+
+export default ModernMinimal;

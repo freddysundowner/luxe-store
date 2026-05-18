@@ -90,3 +90,123 @@ id = "MFKkoZYWc-QGkGgkdPme0"
 uri = "file://artifacts/mockup-sandbox/public/images/watch.jpg"
 type = "image"
 title = "luxury mechanical watch gold and black dark background"
+
+[[outputs]]
+id = "gJZqeCYBIZ5y52Ue6C_dF"
+uri = "file://artifacts/mockup-sandbox/public/images/premium-earbuds.jpg"
+type = "image"
+title = "wireless earbuds product photography white background"
+
+[[outputs]]
+id = "mNWdZqTyn7svrKpmw_Xfg"
+uri = "file://artifacts/mockup-sandbox/public/images/premium-case.jpg"
+type = "image"
+title = "smart phone case product photography clean background"
+
+[[outputs]]
+id = "Vzk3E3xSXt0NNMAWfQTWe"
+uri = "file://artifacts/mockup-sandbox/public/images/premium-charger.jpg"
+type = "image"
+title = "usb-c fast charger product photography white background"
+
+[[outputs]]
+id = "UdxQKXfhxZNaIkzwDOnnY"
+uri = "file://artifacts/mockup-sandbox/public/images/premium-hoodie.jpg"
+type = "image"
+title = "oversized hoodie clothing flat lay clean background"
+
+[[outputs]]
+id = "51k4X7eGvoAy1DA7TrXkh"
+uri = "file://artifacts/mockup-sandbox/public/images/premium-sneakers.jpg"
+type = "image"
+title = "classic white sneakers shoes product photography clean background"
+
+[[outputs]]
+id = "AfJ8Zbs3_0aWo2RF_jHk0"
+uri = "file://artifacts/mockup-sandbox/public/images/premium-coffeemaker.jpg"
+type = "image"
+title = "coffee maker deluxe kitchen appliance product photography"
+
+[[outputs]]
+id = "EHgXkmO0kTci8Fnm4I8KU"
+uri = "file://artifacts/mockup-sandbox/public/images/luxury-earbuds.jpg"
+type = "image"
+title = "wireless earbuds premium product photography"
+
+[[outputs]]
+id = "0R1gftT8QSjDF-U70C4l1"
+uri = "file://artifacts/mockup-sandbox/public/images/premium-pans.jpg"
+type = "image"
+title = "non-stick pan set kitchenware product photography clean background"
+
+[[outputs]]
+id = "ldfTZTHn-bL51E_mNDzI3"
+uri = "file://artifacts/mockup-sandbox/public/images/luxury-case.jpg"
+type = "image"
+title = "smart phone case premium product photography"
+
+[[outputs]]
+id = "aa1uzX9QVQJB964czhihI"
+uri = "file://artifacts/mockup-sandbox/public/images/luxury-charger.jpg"
+type = "image"
+title = "usb-c fast charger premium product photography"
+
+[[outputs]]
+id = "PqHVS59v-ecQSzasUhtiw"
+uri = "file://artifacts/mockup-sandbox/public/images/premium-serum.jpg"
+type = "image"
+title = "silk face serum skincare bottle product photography clean background"
+
+[[outputs]]
+id = "pph-LpBphk0DFQZ37sUDX"
+uri = "file://artifacts/mockup-sandbox/public/images/luxury-hoodie.jpg"
+type = "image"
+title = "oversized hoodie premium fashion photography"
+
+[[outputs]]
+id = "_ZkoXaMdurCy_RO7aeKJ7"
+uri = "file://artifacts/mockup-sandbox/public/images/luxury-sneakers.jpg"
+type = "image"
+title = "classic white sneakers premium product photography"
+
+[[outputs]]
+id = "iF9swYN5NXP_sRJclJ7N9"
+uri = "file://artifacts/mockup-sandbox/public/images/luxury-coffee.jpg"
+type = "image"
+title = "coffee maker deluxe premium product photography"
+
+[[outputs]]
+id = "0_GVuHnh1V9P7naS2oSyY"
+uri = "file://artifacts/mockup-sandbox/public/images/mm-earbuds.jpg"
+type = "image"
+title = "high quality product photography of wireless earbuds pro on clean background"
+
+[[outputs]]
+id = "zVwXyVd1Xtk7i729XKz8G"
+uri = "file://artifacts/mockup-sandbox/public/images/luxury-pans.jpg"
+type = "image"
+title = "non-stick pan set premium product photography"
+
+[[outputs]]
+id = "iFrTFnCMmZEAEkJcaHJ_O"
+uri = "file://artifacts/mockup-sandbox/public/images/luxury-serum.jpg"
+type = "image"
+title = "silk face serum premium beauty product photography"
+
+[[outputs]]
+id = "Gi-d1tSZWuOQkpFcXSqLe"
+uri = "file://artifacts/mockup-sandbox/public/images/serum.jpg"
+type = "image"
+title = "Silk face serum bottle in modern minimalist setting"
+
+[[outputs]]
+id = "rTFDc6F0UvuSuEaYkAWgf"
+uri = "file://artifacts/mockup-sandbox/public/images/mm-serum.jpg"
+type = "image"
+title = "product photography of silk face serum bottle on white background"
+
+[[outputs]]
+id = "jhLpcrXWQ8s6oD1JIujlq"
+uri = "file://artifacts/mockup-sandbox/public/images/mm-phonecase.jpg"
+type = "image"
+title = "high quality product photography of smart phone case on clean background"
