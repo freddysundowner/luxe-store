@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Link } from "wouter";
 import {
   Search, Sparkles, X, Heart, ShoppingBag, RefreshCw,
-  MessageCircle, Share2, Pin
+  MessageCircle, Share2
 } from "lucide-react";
+import { useCart } from "@/lib/cart-context";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { ProductCard } from "@/components/ProductCard";
 import { TikTokFeed } from "@/components/TikTokFeed";
@@ -12,7 +13,6 @@ import {
   useListCategories, getListCategoriesQueryKey,
   Product,
 } from "@workspace/api-client-react";
-import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -222,6 +222,17 @@ export default function Home() {
   const [aiProducts, setAiProducts] = useState<Product[] | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  const { itemCount } = useCart();
 
   const { data: categories, isLoading: isLoadingCategories } = useListCategories({
     query: { queryKey: getListCategoriesQueryKey() },
@@ -327,20 +338,57 @@ export default function Home() {
     </div>
   );
 
+  // ── Mobile: true full-screen TikTok (bypasses RootLayout header) ──────────
+  if (isMobile) {
+    return (
+      <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 100 }}>
+        {/* Feed fills entire screen */}
+        <TikTokFeed products={displayProducts} isLoading={isLoading} topOffset={68} />
+
+        {/* Gradient overlay header — floats on top of the image */}
+        <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
+          <div
+            className="flex items-center justify-between px-4 pointer-events-auto"
+            style={{
+              paddingTop: "16px",
+              paddingBottom: "48px",
+              background: "linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%)",
+            }}
+          >
+            <Link href="/">
+              <div className="flex flex-col leading-none cursor-pointer">
+                <span
+                  className="text-[#D4AF37] font-light"
+                  style={{ fontFamily: "Georgia, serif", fontSize: "18px", letterSpacing: "0.3em" }}
+                >
+                  LUXE
+                </span>
+                <span
+                  className="text-[#D4AF37]/50"
+                  style={{ fontSize: "7px", letterSpacing: "0.4em" }}
+                >
+                  STORE
+                </span>
+              </div>
+            </Link>
+            <Link href="/cart" className="relative">
+              <ShoppingBag className="w-6 h-6 text-white" />
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[#D4AF37] text-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {itemCount}
+                </span>
+              )}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <RootLayout searchBar={searchBar}>
-      {/* ── Mobile search (below header) ── */}
-      <div className="md:hidden px-4 pt-4 pb-2 bg-[#0a0a0a] border-b border-zinc-900 shrink-0">
-        {searchBar}
-      </div>
-
-      {/* ── Mobile: full-screen TikTok feed ── */}
-      <div className="flex-1 flex flex-col md:hidden overflow-hidden">
-        <TikTokFeed products={displayProducts} isLoading={isLoading} />
-      </div>
-
       {/* ── Desktop: 3-column TikTok layout ── */}
-      <div className="flex-1 hidden md:flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden">
         {/* Left sidebar — Filters */}
         <aside className="w-48 shrink-0 bg-zinc-950 border-r border-zinc-900 flex flex-col overflow-y-auto">
           <div className="p-4 flex flex-col gap-6 flex-1">

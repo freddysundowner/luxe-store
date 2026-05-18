@@ -12,9 +12,10 @@ interface TikTokFeedProps {
   products: Product[];
   isLoading: boolean;
   onOpenGiftFinder?: () => void;
+  topOffset?: number;
 }
 
-export function TikTokFeed({ products, isLoading, onOpenGiftFinder }: TikTokFeedProps) {
+export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 12 }: TikTokFeedProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
@@ -105,7 +106,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder }: TikTokFeed
       </div>
 
       {/* Progress bar — top */}
-      <div className="absolute top-3 left-4 right-4 flex gap-1 z-10">
+      <div className="absolute left-4 right-4 flex gap-1 z-10" style={{ top: `${topOffset}px` }}>
         {Array.from({ length: visibleDots }).map((_, i) => (
           <button
             key={i}
@@ -124,7 +125,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder }: TikTokFeed
       </div>
 
       {/* Counter */}
-      <div className="absolute top-7 left-4 right-4 z-10 flex justify-between items-center">
+      <div className="absolute left-4 right-4 z-10 flex justify-between items-center" style={{ top: `${topOffset + 14}px` }}>
         <span className="text-[10px] text-white/30 uppercase tracking-widest">
           {currentIndex + 1} / {products.length}
         </span>
