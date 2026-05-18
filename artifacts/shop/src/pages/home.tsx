@@ -208,13 +208,11 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
           )}
         </div>
         <style>{`
-          @keyframes gift-shine {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(200%); }
+          @keyframes gift-glow {
+            0%, 100% { box-shadow: 0 0 6px rgba(212,175,55,0.3), inset 0 0 6px rgba(212,175,55,0.05); }
+            50% { box-shadow: 0 0 18px rgba(212,175,55,0.65), inset 0 0 10px rgba(212,175,55,0.1); }
           }
-          .gift-shine-bar {
-            animation: gift-shine 2s ease-in-out infinite;
-          }
+          .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
         `}</style>
         <div className="flex gap-2">
           <button
@@ -232,13 +230,10 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
           </button>
           <button
             onClick={handleGift}
-            className="relative flex-[2] overflow-hidden py-3 text-[10px] uppercase tracking-widest font-semibold border border-[#D4AF37]/50 text-[#D4AF37] hover:border-[#D4AF37] transition-colors"
+            className="gift-glow-btn flex-[2] py-3 text-[9px] uppercase tracking-widest font-semibold bg-black border border-[#D4AF37]/70 text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center justify-center gap-1"
           >
-            <span className="gift-shine-bar absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent pointer-events-none" />
-            <span className="relative flex items-center justify-center gap-1">
-              <Sparkles className="w-3 h-3" />
-              Gift
-            </span>
+            <Sparkles className="w-3 h-3 shrink-0" />
+            Find a Gift
           </button>
         </div>
       </div>
