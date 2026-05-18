@@ -326,6 +326,16 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
 export default function Home() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
+  const [priceRanges, setPriceRanges] = useState<Set<string>>(new Set());
+  const [availability, setAvailability] = useState<Set<string>>(new Set());
+
+  const toggleSet = (setter: React.Dispatch<React.SetStateAction<Set<string>>>, key: string) => {
+    setter(prev => {
+      const next = new Set(prev);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  };
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== "undefined" ? window.innerWidth < 768 : false
   );
@@ -362,10 +372,27 @@ export default function Home() {
 
   const clearSearch = () => setSearch("");
 
-  const displayProducts: Product[] = useMemo(
-    () => [...(products ?? [])].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)),
-    [products]
-  );
+  const displayProducts: Product[] = useMemo(() => {
+    let list = [...(products ?? [])];
+
+    if (priceRanges.size > 0) {
+      list = list.filter(p => {
+        const price = p.price;
+        return (
+          (priceRanges.has("under500")  && price < 500) ||
+          (priceRanges.has("500-2000")  && price >= 500  && price <= 2000) ||
+          (priceRanges.has("2000-5000") && price > 2000 && price <= 5000) ||
+          (priceRanges.has("over5000")  && price > 5000)
+        );
+      });
+    }
+
+    if (availability.has("instock"))  list = list.filter(p => p.inStock);
+    if (availability.has("sale"))     list = list.filter(p => p.originalPrice != null && p.originalPrice > p.price);
+    if (availability.has("new"))      list = list.filter(p => p.isNew);
+
+    return list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
+  }, [products, priceRanges, availability]);
 
   const isLoading = isLoadingProducts;
 
@@ -485,17 +512,24 @@ export default function Home() {
 
             {/* Price range */}
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">
-                Price Range
-              </p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">Price Range</p>
               <div className="flex flex-col gap-2">
-                {["Under $20", "$20 – $50", "$50 – $100", "Over $100"].map((range) => (
-                  <label
-                    key={range}
-                    className="flex items-center gap-2 text-xs text-zinc-500 cursor-pointer hover:text-zinc-300 transition-colors select-none"
-                  >
-                    <span className="w-3 h-3 border border-zinc-700 rounded-sm flex-shrink-0" />
-                    {range}
+                {([
+                  { key: "under500",  label: "Under Ksh 500" },
+                  { key: "500-2000",  label: "Ksh 500 – 2,000" },
+                  { key: "2000-5000", label: "Ksh 2,000 – 5,000" },
+                  { key: "over5000",  label: "Over Ksh 5,000" },
+                ] as const).map(({ key, label }) => (
+                  <label key={key} className="flex items-center gap-2 text-xs cursor-pointer hover:text-zinc-200 transition-colors select-none group"
+                    style={{ color: priceRanges.has(key) ? "#D4AF37" : "#71717a" }}>
+                    <input type="checkbox" className="sr-only"
+                      checked={priceRanges.has(key)}
+                      onChange={() => toggleSet(setPriceRanges, key)} />
+                    <span className="w-3 h-3 border rounded-sm flex-shrink-0 flex items-center justify-center transition-colors"
+                      style={{ borderColor: priceRanges.has(key) ? "#D4AF37" : "#3f3f46", background: priceRanges.has(key) ? "#D4AF37" : "transparent" }}>
+                      {priceRanges.has(key) && <span className="block w-1.5 h-1.5 bg-black rounded-sm" />}
+                    </span>
+                    {label}
                   </label>
                 ))}
               </div>
@@ -503,17 +537,23 @@ export default function Home() {
 
             {/* Availability */}
             <div>
-              <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">
-                Availability
-              </p>
+              <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">Availability</p>
               <div className="flex flex-col gap-2">
-                {["In Stock", "Sale Items", "New Arrivals"].map((opt) => (
-                  <label
-                    key={opt}
-                    className="flex items-center gap-2 text-xs text-zinc-500 cursor-pointer hover:text-zinc-300 transition-colors select-none"
-                  >
-                    <span className="w-3 h-3 border border-zinc-700 rounded-sm flex-shrink-0" />
-                    {opt}
+                {([
+                  { key: "instock", label: "In Stock" },
+                  { key: "sale",    label: "Sale Items" },
+                  { key: "new",     label: "New Arrivals" },
+                ] as const).map(({ key, label }) => (
+                  <label key={key} className="flex items-center gap-2 text-xs cursor-pointer hover:text-zinc-200 transition-colors select-none"
+                    style={{ color: availability.has(key) ? "#D4AF37" : "#71717a" }}>
+                    <input type="checkbox" className="sr-only"
+                      checked={availability.has(key)}
+                      onChange={() => toggleSet(setAvailability, key)} />
+                    <span className="w-3 h-3 border rounded-sm flex-shrink-0 flex items-center justify-center transition-colors"
+                      style={{ borderColor: availability.has(key) ? "#D4AF37" : "#3f3f46", background: availability.has(key) ? "#D4AF37" : "transparent" }}>
+                      {availability.has(key) && <span className="block w-1.5 h-1.5 bg-black rounded-sm" />}
+                    </span>
+                    {label}
                   </label>
                 ))}
               </div>
@@ -576,9 +616,9 @@ export default function Home() {
                     ? `Nothing matches "${search}"`
                     : "No products in this category yet."}
                 </p>
-                {(search || selectedCategory) && (
+                {(search || selectedCategory || priceRanges.size > 0 || availability.size > 0) && (
                   <button
-                    onClick={() => { clearSearch(); setSelectedCategory(undefined); }}
+                    onClick={() => { clearSearch(); setSelectedCategory(undefined); setPriceRanges(new Set()); setAvailability(new Set()); }}
                     className="mt-6 text-[#D4AF37] text-xs uppercase tracking-widest hover:text-white transition-colors"
                   >
                     Clear filters
