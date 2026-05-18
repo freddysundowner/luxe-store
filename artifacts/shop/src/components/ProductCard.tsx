@@ -55,8 +55,8 @@ export function ProductCard({ product }: { product: Product }) {
 
           {/* Featured badge */}
           {product.isFeatured && product.inStock && (
-            <div className="absolute top-2 left-2 p-1.5 bg-black/80 border border-[#D4AF37]/40 text-[#D4AF37]">
-              <Pin className="w-3 h-3 fill-[#D4AF37]" />
+            <div className="absolute top-3 left-3 drop-shadow-[0_2px_6px_rgba(212,175,55,0.6)]" style={{ transform: "rotate(-35deg)" }}>
+              <Pin className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
             </div>
           )}
 
