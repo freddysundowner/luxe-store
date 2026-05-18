@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Product } from "@workspace/api-client-react";
-import { ShoppingBag } from "lucide-react";
+import { ShoppingBag, Pin } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 
@@ -55,8 +55,8 @@ export function ProductCard({ product }: { product: Product }) {
 
           {/* Featured badge */}
           {product.isFeatured && product.inStock && (
-            <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/80 border border-[#D4AF37]/40 text-[10px] uppercase tracking-widest text-[#D4AF37]">
-              Featured
+            <div className="absolute top-2 left-2 p-1.5 bg-black/80 border border-[#D4AF37]/40 text-[#D4AF37]">
+              <Pin className="w-3 h-3 fill-[#D4AF37]" />
             </div>
           )}
 

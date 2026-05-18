@@ -139,7 +139,7 @@ export default function Home() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {products?.map((product) => (
+            {[...(products ?? [])].sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0)).map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
