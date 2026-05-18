@@ -49,24 +49,6 @@ export default function Home() {
 
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
 
-        {/* Featured strip — only shown when products are marked featured */}
-        {showFeatured && (
-          <div className="mb-12">
-            <p className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-5">Featured</p>
-            <ScrollArea className="w-full">
-              <div className="flex gap-5 pb-1">
-                {featuredProducts.map((product) => (
-                  <div key={product.id} className="w-52 shrink-0">
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </div>
-              <ScrollBar orientation="horizontal" className="invisible" />
-            </ScrollArea>
-            <div className="mt-10 border-t border-zinc-900" />
-          </div>
-        )}
-
         {/* Section header + categories */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-10">
           <div>
