@@ -386,6 +386,9 @@ components:
           type: boolean
         isFeatured:
           type: boolean
+        createdAt:
+          type: ["string", "null"]
+          format: date-time
 
     ProductInput:
       type: object

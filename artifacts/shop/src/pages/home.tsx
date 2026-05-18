@@ -73,19 +73,25 @@ export default function Home() {
                   <Skeleton key={i} className="h-8 w-24 rounded-full bg-zinc-900" />
                 ))
               ) : (
-                categories?.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`px-5 py-2 text-xs uppercase tracking-widest rounded-full transition-all duration-300 ${
-                      selectedCategory === category.id
-                        ? "bg-[#D4AF37] text-black font-medium"
-                        : "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
-                    }`}
-                  >
-                    {category.name}
-                  </button>
-                ))
+                categories?.map((category) => {
+                  const count = allProducts?.filter((p) => p.categoryId === category.id).length ?? 0;
+                  return (
+                    <button
+                      key={category.id}
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`px-5 py-2 text-xs uppercase tracking-widest rounded-full transition-all duration-300 ${
+                        selectedCategory === category.id
+                          ? "bg-[#D4AF37] text-black font-medium"
+                          : "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
+                      }`}
+                    >
+                      {category.name}
+                      {count > 0 && (
+                        <span className={`ml-1.5 text-[9px] opacity-60`}>({count})</span>
+                      )}
+                    </button>
+                  );
+                })
               )}
             </div>
             <ScrollBar orientation="horizontal" className="invisible" />

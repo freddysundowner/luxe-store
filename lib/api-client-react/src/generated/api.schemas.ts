@@ -44,6 +44,8 @@ export interface Product {
   isActive: boolean;
   isDropship?: boolean;
   isFeatured?: boolean;
+  /** @nullable */
+  createdAt?: string | null;
 }
 
 export interface ProductInput {

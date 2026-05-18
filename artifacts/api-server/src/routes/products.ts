@@ -16,6 +16,22 @@ import {
 
 const router = Router();
 
+const productSelect = {
+  id: productsTable.id,
+  name: productsTable.name,
+  description: productsTable.description,
+  price: productsTable.price,
+  originalPrice: productsTable.originalPrice,
+  categoryId: productsTable.categoryId,
+  imageUrl: productsTable.imageUrl,
+  inStock: productsTable.inStock,
+  isActive: productsTable.isActive,
+  isDropship: productsTable.isDropship,
+  isFeatured: productsTable.isFeatured,
+  createdAt: productsTable.createdAt,
+  categoryName: categoriesTable.name,
+} as const;
+
 function mapRow(row: {
   id: number;
   name: string;
@@ -28,6 +44,7 @@ function mapRow(row: {
   isActive: boolean;
   isDropship: boolean;
   isFeatured: boolean;
+  createdAt: Date;
   categoryName: string | null;
 }) {
   return {
@@ -43,6 +60,7 @@ function mapRow(row: {
     isActive: row.isActive,
     isDropship: row.isDropship,
     isFeatured: row.isFeatured,
+    createdAt: row.createdAt.toISOString(),
   };
 }
 
@@ -67,20 +85,7 @@ router.get("/products", async (req, res): Promise<void> => {
   }
 
   const rows = await db
-    .select({
-      id: productsTable.id,
-      name: productsTable.name,
-      description: productsTable.description,
-      price: productsTable.price,
-      originalPrice: productsTable.originalPrice,
-      categoryId: productsTable.categoryId,
-      imageUrl: productsTable.imageUrl,
-      inStock: productsTable.inStock,
-      isActive: productsTable.isActive,
-      isDropship: productsTable.isDropship,
-      isFeatured: productsTable.isFeatured,
-      categoryName: categoriesTable.name,
-    })
+    .select(productSelect)
     .from(productsTable)
     .leftJoin(categoriesTable, eq(categoriesTable.id, productsTable.categoryId))
     .where(and(...conditions))
@@ -97,20 +102,7 @@ router.get("/products/:id", async (req, res): Promise<void> => {
   }
 
   const [row] = await db
-    .select({
-      id: productsTable.id,
-      name: productsTable.name,
-      description: productsTable.description,
-      price: productsTable.price,
-      originalPrice: productsTable.originalPrice,
-      categoryId: productsTable.categoryId,
-      imageUrl: productsTable.imageUrl,
-      inStock: productsTable.inStock,
-      isActive: productsTable.isActive,
-      isDropship: productsTable.isDropship,
-      isFeatured: productsTable.isFeatured,
-      categoryName: categoriesTable.name,
-    })
+    .select(productSelect)
     .from(productsTable)
     .leftJoin(categoriesTable, eq(categoriesTable.id, productsTable.categoryId))
     .where(eq(productsTable.id, params.data.id));
@@ -125,20 +117,7 @@ router.get("/products/:id", async (req, res): Promise<void> => {
 
 router.get("/admin/products", async (req, res): Promise<void> => {
   const rows = await db
-    .select({
-      id: productsTable.id,
-      name: productsTable.name,
-      description: productsTable.description,
-      price: productsTable.price,
-      originalPrice: productsTable.originalPrice,
-      categoryId: productsTable.categoryId,
-      imageUrl: productsTable.imageUrl,
-      inStock: productsTable.inStock,
-      isActive: productsTable.isActive,
-      isDropship: productsTable.isDropship,
-      isFeatured: productsTable.isFeatured,
-      categoryName: categoriesTable.name,
-    })
+    .select(productSelect)
     .from(productsTable)
     .leftJoin(categoriesTable, eq(categoriesTable.id, productsTable.categoryId))
     .orderBy(productsTable.createdAt);
@@ -164,20 +143,7 @@ router.post("/admin/products", async (req, res): Promise<void> => {
     .returning();
 
   const [row] = await db
-    .select({
-      id: productsTable.id,
-      name: productsTable.name,
-      description: productsTable.description,
-      price: productsTable.price,
-      originalPrice: productsTable.originalPrice,
-      categoryId: productsTable.categoryId,
-      imageUrl: productsTable.imageUrl,
-      inStock: productsTable.inStock,
-      isActive: productsTable.isActive,
-      isDropship: productsTable.isDropship,
-      isFeatured: productsTable.isFeatured,
-      categoryName: categoriesTable.name,
-    })
+    .select(productSelect)
     .from(productsTable)
     .leftJoin(categoriesTable, eq(categoriesTable.id, productsTable.categoryId))
     .where(eq(productsTable.id, product.id));
@@ -215,20 +181,7 @@ router.put("/admin/products/:id", async (req, res): Promise<void> => {
   }
 
   const [row] = await db
-    .select({
-      id: productsTable.id,
-      name: productsTable.name,
-      description: productsTable.description,
-      price: productsTable.price,
-      originalPrice: productsTable.originalPrice,
-      categoryId: productsTable.categoryId,
-      imageUrl: productsTable.imageUrl,
-      inStock: productsTable.inStock,
-      isActive: productsTable.isActive,
-      isDropship: productsTable.isDropship,
-      isFeatured: productsTable.isFeatured,
-      categoryName: categoriesTable.name,
-    })
+    .select(productSelect)
     .from(productsTable)
     .leftJoin(categoriesTable, eq(categoriesTable.id, productsTable.categoryId))
     .where(eq(productsTable.id, product.id));

@@ -24,4 +24,6 @@ export interface Product {
   isActive: boolean;
   isDropship?: boolean;
   isFeatured?: boolean;
+  /** @nullable */
+  createdAt?: Date | null;
 }

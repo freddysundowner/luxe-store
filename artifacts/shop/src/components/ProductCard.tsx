@@ -4,9 +4,18 @@ import { ShoppingBag, Pin } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 
+const NEW_THRESHOLD_DAYS = 30;
+
+function isNew(createdAt?: string | null) {
+  if (!createdAt) return false;
+  const ms = Date.now() - new Date(createdAt).getTime();
+  return ms < NEW_THRESHOLD_DAYS * 24 * 60 * 60 * 1000;
+}
+
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { toast } = useToast();
+  const productIsNew = isNew(product.createdAt);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -41,6 +50,31 @@ export function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
+          {/* Gold shimmer sweep on hover */}
+          <div
+            className="absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100"
+            style={{ transition: "opacity 0.1s" }}
+          >
+            <div
+              className="absolute inset-0 w-1/3"
+              style={{
+                background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.18), transparent)",
+                animation: "none",
+              }}
+              onMouseEnter={(e) => {
+                (e.currentTarget as HTMLElement).style.animation = "shimmer 0.7s ease-out forwards";
+              }}
+            />
+          </div>
+          {/* CSS-only shimmer (no JS needed — triggers via group-hover) */}
+          <div
+            className="absolute inset-y-0 w-1/3 pointer-events-none opacity-0 group-hover:opacity-100 -left-1/3 group-hover:left-full"
+            style={{
+              background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent)",
+              transition: "left 0.75s ease-out, opacity 0.05s",
+            }}
+          />
+
           {/* Gradient overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-50 pointer-events-none" />
 
@@ -53,10 +87,27 @@ export function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
-          {/* Featured badge */}
+          {/* Featured pin */}
           {product.isFeatured && product.inStock && (
             <div className="absolute top-3 left-3 drop-shadow-[0_2px_6px_rgba(212,175,55,0.6)]" style={{ transform: "rotate(-35deg)" }}>
               <Pin className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
+            </div>
+          )}
+
+          {/* New ribbon */}
+          {productIsNew && product.inStock && !product.isFeatured && (
+            <div className="absolute top-0 left-0 overflow-hidden w-16 h-16 pointer-events-none">
+              <div
+                className="absolute bg-[#D4AF37] text-black text-[8px] font-bold uppercase tracking-widest text-center leading-none py-1"
+                style={{
+                  width: "72px",
+                  top: "14px",
+                  left: "-16px",
+                  transform: "rotate(-45deg)",
+                }}
+              >
+                New
+              </div>
             </div>
           )}
 

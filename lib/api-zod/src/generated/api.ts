@@ -112,7 +112,8 @@ export const ListProductsResponseItem = zod.object({
   "inStock": zod.boolean(),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
-  "isFeatured": zod.boolean().optional()
+  "isFeatured": zod.boolean().optional(),
+  "createdAt": zod.coerce.date().nullish()
 })
 export const ListProductsResponse = zod.array(ListProductsResponseItem)
 
@@ -136,7 +137,8 @@ export const GetProductResponse = zod.object({
   "inStock": zod.boolean(),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
-  "isFeatured": zod.boolean().optional()
+  "isFeatured": zod.boolean().optional(),
+  "createdAt": zod.coerce.date().nullish()
 })
 
 
@@ -155,7 +157,8 @@ export const ListAdminProductsResponseItem = zod.object({
   "inStock": zod.boolean(),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
-  "isFeatured": zod.boolean().optional()
+  "isFeatured": zod.boolean().optional(),
+  "createdAt": zod.coerce.date().nullish()
 })
 export const ListAdminProductsResponse = zod.array(ListAdminProductsResponseItem)
 
@@ -219,7 +222,8 @@ export const UpdateProductResponse = zod.object({
   "inStock": zod.boolean(),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
-  "isFeatured": zod.boolean().optional()
+  "isFeatured": zod.boolean().optional(),
+  "createdAt": zod.coerce.date().nullish()
 })
 
 
