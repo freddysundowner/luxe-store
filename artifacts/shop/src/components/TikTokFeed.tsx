@@ -211,9 +211,9 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
           className="absolute left-0 right-0 z-10 flex justify-center pointer-events-none"
           style={{ bottom: "197px" }}
         >
-          <div className="flex flex-col items-center gap-0.5 animate-bounce opacity-40">
-            <span className="text-white/70 text-xs">↑</span>
-            <span className="text-[8px] text-white/50 tracking-widest">swipe up</span>
+          <div className="flex flex-col items-center gap-1 animate-bounce">
+            <span className="text-white text-base drop-shadow-lg">↑</span>
+            <span className="text-[11px] text-white/90 tracking-widest font-medium drop-shadow-lg uppercase">swipe up</span>
           </div>
         </div>
       )}
