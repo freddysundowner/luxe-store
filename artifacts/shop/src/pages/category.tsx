@@ -3,7 +3,7 @@ import { useState } from "react";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { useListProducts, getListProductsQueryKey, useGetCategory, getGetCategoryQueryKey } from "@workspace/api-client-react";
 import { ProductCard } from "@/components/ProductCard";
-import { Search, Loader2, RefreshCw } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -24,8 +24,8 @@ export default function CategoryPage() {
   return (
     <RootLayout title={category?.name || "Category"} showBack>
       <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border shadow-sm">
-        <div className="p-3">
-          <div className="relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <div className="relative max-w-2xl">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
@@ -38,7 +38,7 @@ export default function CategoryPage() {
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
         {category?.description && (
           <div className="mb-6 p-4 bg-muted/50 rounded-xl text-sm text-muted-foreground">
             {category.description}
@@ -59,8 +59,8 @@ export default function CategoryPage() {
             </button>
           </div>
         ) : isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {Array.from({ length: 4 }).map((_, i) => (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="flex flex-col gap-2 bg-card border border-border rounded-lg p-2">
                 <Skeleton className="w-full aspect-square rounded-md" />
                 <Skeleton className="h-4 w-2/3" />
@@ -75,13 +75,13 @@ export default function CategoryPage() {
             </div>
             <h3 className="font-semibold text-lg mb-1">No products found</h3>
             <p className="text-muted-foreground text-sm max-w-[250px]">
-              {search 
+              {search
                 ? `We couldn't find any products matching "${search}"`
                 : "This category is currently empty."}
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {products?.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
