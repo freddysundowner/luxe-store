@@ -1,0 +1,146 @@
+import { AdminLayout } from "@/components/layout/AdminLayout";
+import { useListAdminProducts, getListAdminProductsQueryKey, useDeleteProduct } from "@workspace/api-client-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
+import { Plus, Edit, Trash2, Search, Package } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
+
+export default function AdminProducts() {
+  const [search, setSearch] = useState("");
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: products, isLoading } = useListAdminProducts({
+    query: { queryKey: getListAdminProductsQueryKey() }
+  });
+
+  const deleteMutation = useDeleteProduct({
+    mutation: {
+      onSuccess: () => {
+        toast({ title: "Product deleted" });
+        queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
+      },
+      onError: () => {
+        toast({ variant: "destructive", title: "Failed to delete product" });
+      }
+    }
+  });
+
+  const handleDelete = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      deleteMutation.mutate({ id });
+    }
+  };
+
+  const filteredProducts = products?.filter(p => 
+    p.name.toLowerCase().includes(search.toLowerCase()) || 
+    (p.categoryName && p.categoryName.toLowerCase().includes(search.toLowerCase()))
+  ) || [];
+
+  return (
+    <AdminLayout title="Products">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div className="relative w-full sm:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input 
+            placeholder="Search products..." 
+            className="pl-9"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Link href="/admin/products/new">
+          <Button className="w-full sm:w-auto gap-2">
+            <Plus className="w-4 h-4" />
+            Add Product
+          </Button>
+        </Link>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+        {isLoading ? (
+          <div className="p-8 text-center text-muted-foreground">Loading products...</div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="p-12 text-center flex flex-col items-center">
+            <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
+              <Package className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="font-semibold text-lg">No products found</h3>
+            <p className="text-muted-foreground mb-4">Add some products to your catalog.</p>
+            <Link href="/admin/products/new">
+              <Button variant="outline">Create Product</Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-16">Image</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProducts.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      <div className="w-10 h-10 rounded bg-muted overflow-hidden">
+                        {product.imageUrl ? (
+                          <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <Package className="w-5 h-5 text-muted-foreground m-2.5" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{product.name}</TableCell>
+                    <TableCell>{product.categoryName || "Uncategorized"}</TableCell>
+                    <TableCell>${product.price.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1 flex-wrap">
+                        {product.isActive ? (
+                          <Badge variant="default" className="bg-emerald-500 hover:bg-emerald-600">Active</Badge>
+                        ) : (
+                          <Badge variant="secondary">Draft</Badge>
+                        )}
+                        {!product.inStock && (
+                          <Badge variant="destructive">Out of Stock</Badge>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link href={`/admin/products/${product.id}/edit`}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDelete(product.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
+  );
+}

@@ -1,19 +1,22 @@
-# [Project name]
+# My Drop Shop
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A WhatsApp-style ecommerce storefront for selling dropshipping and own products, with a full admin panel.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/shop run dev` — run the shop frontend (port 24349)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
+- Optional env: `ADMIN_PASSWORD` — Admin panel password (default: `admin123`)
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite + Tailwind CSS + shadcn/ui
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
@@ -22,23 +25,35 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — API contract (source of truth)
+- `lib/db/src/schema/` — DB schema (categories.ts, products.ts, settings.ts)
+- `artifacts/api-server/src/routes/` — Express route handlers
+- `artifacts/shop/src/` — React frontend
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- WhatsApp-style green theme, mobile-first layout
+- Cart is client-side state; checkout sends a WhatsApp message with the order
+- Admin auth uses a simple password stored in `ADMIN_PASSWORD` env var (default: `admin123`)
+- Products have `isDropship` flag to distinguish dropshipping vs own inventory
+- Store settings (WhatsApp number, currency, store name) are managed via the admin panel
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Customer store**: Browse products by category, search, view details, add to cart, checkout via WhatsApp
+- **Admin panel**: `/admin` — manage products, categories, store settings, view dashboard stats
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Simple and easy, WhatsApp store style
+- Mobile-friendly
+- Admin section for product/category/price management
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Change the admin password by setting the `ADMIN_PASSWORD` environment variable (default is `admin123`)
+- WhatsApp checkout builds a `wa.me` URL — set the correct WhatsApp number in Admin > Settings
+- Always run codegen after changing `openapi.yaml`
 
 ## Pointers
 
