@@ -18,8 +18,8 @@ async function getOrCreateSettings() {
     .values({
       storeName: "My Shop",
       whatsappNumber: "",
-      currency: "USD",
-      currencySymbol: "$",
+      currency: "KES",
+      currencySymbol: "KSh",
     })
     .returning();
 

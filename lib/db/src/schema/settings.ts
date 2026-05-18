@@ -8,8 +8,8 @@ export const storeSettingsTable = pgTable("store_settings", {
   storeDescription: text("store_description"),
   whatsappNumber: text("whatsapp_number").notNull().default(""),
   logoUrl: text("logo_url"),
-  currency: text("currency").notNull().default("USD"),
-  currencySymbol: text("currency_symbol").notNull().default("$"),
+  currency: text("currency").notNull().default("KES"),
+  currencySymbol: text("currency_symbol").notNull().default("KSh"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

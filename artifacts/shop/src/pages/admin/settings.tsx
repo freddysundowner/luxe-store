@@ -38,8 +38,8 @@ export default function AdminSettings() {
       storeDescription: "",
       whatsappNumber: "",
       logoUrl: "",
-      currency: "USD",
-      currencySymbol: "$",
+      currency: "KES",
+      currencySymbol: "KSh",
     },
   });
 
@@ -50,8 +50,8 @@ export default function AdminSettings() {
         storeDescription: settings.storeDescription || "",
         whatsappNumber: settings.whatsappNumber,
         logoUrl: settings.logoUrl || "",
-        currency: settings.currency || "USD",
-        currencySymbol: settings.currencySymbol || "$",
+        currency: settings.currency || "KES",
+        currencySymbol: settings.currencySymbol || "KSh",
       });
     }
   }, [settings, form]);
@@ -156,7 +156,7 @@ export default function AdminSettings() {
                     <FormItem>
                       <FormLabel>Currency Code</FormLabel>
                       <FormControl>
-                        <Input placeholder="USD" {...field} />
+                        <Input placeholder="KES" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
