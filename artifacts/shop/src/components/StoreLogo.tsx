@@ -1,49 +1,48 @@
 export function StoreLogo() {
   return (
-    <svg
-      viewBox="0 0 160 44"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-label="Luxe Store"
-      className="h-9 w-auto select-none"
-    >
-      {/* Top thin rule */}
-      <line x1="0" y1="2" x2="60" y2="2" stroke="#D4AF37" strokeWidth="0.6" opacity="0.5" />
-      <line x1="100" y1="2" x2="160" y2="2" stroke="#D4AF37" strokeWidth="0.6" opacity="0.5" />
+    <div className="flex flex-col items-center leading-none select-none" style={{ gap: "3px", minWidth: "110px" }}>
+      {/* Decorative line + diamond + line */}
+      <div className="flex items-center gap-2 w-full">
+        <div style={{ height: "1px", flex: 1, background: "linear-gradient(to right, transparent, rgba(212,175,55,0.7))" }} />
+        <svg width="5" height="5" viewBox="0 0 5 5" style={{ flexShrink: 0 }}>
+          <polygon points="2.5,0 5,2.5 2.5,5 0,2.5" fill="#D4AF37" />
+        </svg>
+        <div style={{ height: "1px", flex: 1, background: "linear-gradient(to left, transparent, rgba(212,175,55,0.7))" }} />
+      </div>
 
-      {/* Diamond centrepiece on top rule */}
-      <polygon points="80,0 83,2 80,4 77,2" fill="#D4AF37" opacity="0.9" />
-
-      {/* LUXE — main wordmark */}
-      <text
-        x="80"
-        y="26"
-        textAnchor="middle"
-        fontFamily="Georgia, 'Times New Roman', serif"
-        fontSize="20"
-        fontWeight="400"
-        letterSpacing="8"
-        fill="#D4AF37"
+      {/* LUXE wordmark */}
+      <span
+        style={{
+          fontFamily: "Georgia, 'Times New Roman', serif",
+          fontSize: "28px",
+          fontWeight: 400,
+          letterSpacing: "0.4em",
+          color: "#D4AF37",
+          lineHeight: 1,
+          paddingLeft: "0.4em",
+          textShadow: "0 0 30px rgba(212,175,55,0.25)",
+        }}
       >
         LUXE
-      </text>
+      </span>
 
-      {/* Bottom thin rule */}
-      <line x1="10" y1="32" x2="150" y2="32" stroke="#D4AF37" strokeWidth="0.5" opacity="0.3" />
+      {/* Bottom rule */}
+      <div style={{ height: "1px", width: "100%", background: "rgba(212,175,55,0.25)" }} />
 
-      {/* STORE — subtitle */}
-      <text
-        x="80"
-        y="42"
-        textAnchor="middle"
-        fontFamily="'Inter', Arial, sans-serif"
-        fontSize="7"
-        fontWeight="300"
-        letterSpacing="5"
-        fill="#D4AF37"
-        opacity="0.7"
+      {/* STORE subtitle */}
+      <span
+        style={{
+          fontFamily: "'Inter', Arial, sans-serif",
+          fontSize: "9px",
+          fontWeight: 300,
+          letterSpacing: "0.5em",
+          color: "rgba(212,175,55,0.6)",
+          lineHeight: 1,
+          paddingLeft: "0.5em",
+        }}
       >
         STORE
-      </text>
-    </svg>
+      </span>
+    </div>
   );
 }
