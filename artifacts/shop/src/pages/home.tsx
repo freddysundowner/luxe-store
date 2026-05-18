@@ -372,8 +372,46 @@ export default function Home() {
               <StoreLogo />
             </Link>
 
-            {/* Search bar */}
-            <div>{searchBar}</div>
+            {/* Search bar — full-width sidebar layout */}
+            <div className="flex flex-col gap-1">
+              <div className="relative group w-full">
+                {aiMode ? (
+                  <Sparkles className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#D4AF37] pointer-events-none" />
+                ) : (
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-600 group-focus-within:text-[#D4AF37] transition-colors pointer-events-none" />
+                )}
+                <input
+                  type="search"
+                  placeholder={aiMode ? "Describe what you want…" : "Search collection..."}
+                  className={`w-full pl-9 pr-7 py-2 rounded-full text-xs placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all ${
+                    aiMode
+                      ? "bg-zinc-900/80 border border-[#D4AF37]/30 text-zinc-200 focus:ring-[#D4AF37]/40 focus:border-[#D4AF37]/50"
+                      : "bg-zinc-900/60 border border-zinc-800 text-zinc-200 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                  }`}
+                  value={currentSearchValue}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                />
+                {currentSearchValue && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                )}
+              </div>
+              <button
+                onClick={() => { setAiMode(!aiMode); clearSearch(); }}
+                className={`self-end flex items-center gap-1 text-[9px] uppercase tracking-widest px-2 py-0.5 rounded transition-all ${
+                  aiMode
+                    ? "text-[#D4AF37] bg-[#D4AF37]/10"
+                    : "text-zinc-600 hover:text-zinc-400"
+                }`}
+              >
+                <Sparkles className="w-2.5 h-2.5" />
+                {aiMode ? "AI on" : "AI search"}
+              </button>
+            </div>
 
             {/* Search hint */}
             {(search || aiQuery) && (
