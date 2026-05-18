@@ -11,11 +11,12 @@ interface RootLayoutProps {
   showBack?: boolean;
   searchBar?: ReactNode;
   noHeader?: boolean;
+  noMarquee?: boolean;
 }
 
 const MARQUEE_TEXT = "Free WhatsApp ordering\u2002·\u2002Curated luxury collection\u2002·\u2002New arrivals weekly\u2002·\u2002Exclusive pieces for the discerning\u2002·\u2002Free WhatsApp ordering\u2002·\u2002Curated luxury collection\u2002·\u2002New arrivals weekly\u2002·\u2002Exclusive pieces for the discerning\u2002·\u2002";
 
-export function RootLayout({ children, title, showBack, searchBar, noHeader }: RootLayoutProps) {
+export function RootLayout({ children, title, showBack, searchBar, noHeader, noMarquee }: RootLayoutProps) {
   const { itemCount, subtotal } = useCart();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const [scrolled, setScrolled] = useState(false);
@@ -33,15 +34,17 @@ export function RootLayout({ children, title, showBack, searchBar, noHeader }: R
       {!noHeader && (
         <>
           {/* Marquee strip */}
-          <div className="bg-[#D4AF37]/10 border-b border-[#D4AF37]/15 overflow-hidden py-1.5">
-            <div
-              className="flex whitespace-nowrap text-[10px] tracking-widest uppercase text-[#D4AF37]/60"
-              style={{ animation: "marquee 28s linear infinite" }}
-            >
-              <span>{MARQUEE_TEXT}</span>
-              <span aria-hidden>{MARQUEE_TEXT}</span>
+          {!noMarquee && (
+            <div className="bg-[#D4AF37]/10 border-b border-[#D4AF37]/15 overflow-hidden py-1.5">
+              <div
+                className="flex whitespace-nowrap text-[10px] tracking-widest uppercase text-[#D4AF37]/60"
+                style={{ animation: "marquee 28s linear infinite" }}
+              >
+                <span>{MARQUEE_TEXT}</span>
+                <span aria-hidden>{MARQUEE_TEXT}</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Header */}
           <header

@@ -29,7 +29,7 @@ export default function ProductDetail() {
 
   if (isLoading) {
     return (
-      <RootLayout showBack>
+      <RootLayout showBack noMarquee>
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-12">
             <Skeleton className="w-full aspect-square bg-zinc-900" />
@@ -47,7 +47,7 @@ export default function ProductDetail() {
 
   if (isError || !product) {
     return (
-      <RootLayout showBack>
+      <RootLayout showBack noMarquee>
         <div className="flex flex-col items-center justify-center py-24 text-center px-4">
           <h3 className="font-light text-xl mb-2 text-zinc-200 uppercase tracking-wide">Product not found</h3>
           <p className="text-zinc-600 mb-8 text-sm">The product you're looking for doesn't exist or has been removed.</p>
@@ -64,7 +64,7 @@ export default function ProductDetail() {
     : null;
 
   return (
-    <RootLayout showBack title={product.name}>
+    <RootLayout showBack noMarquee title={product.name}>
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-20">
           <div className="relative bg-zinc-900 overflow-hidden aspect-square lg:aspect-auto lg:min-h-[560px]">
