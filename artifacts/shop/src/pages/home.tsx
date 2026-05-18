@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "wouter";
 import {
   Search, Sparkles, X, Heart, ShoppingBag, RefreshCw,
@@ -23,8 +23,10 @@ const fmt = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" 
 
 function FeaturedSwiper({ products }: { products: Product[] }) {
   const [index, setIndex] = useState(0);
+  const [isFading, setIsFading] = useState(false);
   const [liked, setLiked] = useState<Set<number>>(new Set());
   const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
+  const [touchStartY, setTouchStartY] = useState(0);
   const { addItem } = useCart();
   const { toast } = useToast();
 
@@ -33,19 +35,43 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
     return f.length > 0 ? f : products.filter((p) => p.inStock).slice(0, 6);
   }, [products]);
 
-  const current = featured.length > 0 ? featured[index % featured.length] : null;
+  const current = featured.length > 0 ? featured[index] : null;
 
-  const prev = () => setIndex((i) => (i - 1 + featured.length) % featured.length);
-  const next = () => setIndex((i) => (i + 1) % featured.length);
+  const navigate = useCallback(
+    (dir: "up" | "down") => {
+      if (isFading || featured.length < 2) return;
+      setIsFading(true);
+      setTimeout(() => {
+        setIndex((i) =>
+          dir === "down" ? (i + 1) % featured.length : (i - 1 + featured.length) % featured.length
+        );
+        setIsFading(false);
+      }, 150);
+    },
+    [isFading, featured.length]
+  );
 
+  // Keyboard ↑ ↓
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") prev();
-      if (e.key === "ArrowRight") next();
+      if (e.key === "ArrowUp") navigate("up");
+      if (e.key === "ArrowDown") navigate("down");
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [featured.length]);
+  }, [navigate]);
+
+  // Mouse wheel
+  useEffect(() => {
+    const el = document.getElementById("featured-swiper");
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      navigate(e.deltaY > 0 ? "down" : "up");
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, [navigate]);
 
   const toggleLike = (id: number) =>
     setLiked((prev) => {
@@ -69,28 +95,21 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#0a0a0a]">
-      {/* Nav bar */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-900 shrink-0">
-        <button
-          onClick={prev}
-          className="text-[#D4AF37]/50 hover:text-[#D4AF37] transition-colors px-2 py-1 text-sm"
-        >
-          ◄
-        </button>
-        <span className="text-[10px] uppercase tracking-widest text-[#D4AF37]/60">
-          Featured Drops
-        </span>
-        <button
-          onClick={next}
-          className="text-[#D4AF37]/50 hover:text-[#D4AF37] transition-colors px-2 py-1 text-sm"
-        >
-          ►
-        </button>
-      </div>
-
-      {/* Card */}
-      <div className="flex-1 relative overflow-hidden">
+    <div
+      id="featured-swiper"
+      className="flex-1 relative overflow-hidden bg-black select-none"
+      style={{ touchAction: "none" }}
+      onTouchStart={(e) => setTouchStartY(e.touches[0].clientY)}
+      onTouchEnd={(e) => {
+        const diff = touchStartY - e.changedTouches[0].clientY;
+        if (Math.abs(diff) > 45) navigate(diff > 0 ? "down" : "up");
+      }}
+    >
+      {/* Full-height image */}
+      <div
+        className="absolute inset-0 transition-opacity duration-150"
+        style={{ opacity: isFading ? 0 : 1 }}
+      >
         {current.imageUrl ? (
           <img
             key={current.id}
@@ -103,109 +122,99 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
             <ShoppingBag className="w-14 h-14 text-zinc-700" />
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/15 to-transparent" />
-
-        {/* Dot indicators */}
-        {featured.length > 1 && (
-          <div className="absolute top-3 left-0 right-0 flex justify-center gap-1.5 z-10">
-            {featured.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setIndex(i)}
-                className={`rounded-full transition-all ${
-                  i === index % featured.length
-                    ? "w-5 h-1.5 bg-[#D4AF37]"
-                    : "w-1.5 h-1.5 bg-white/20"
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Action buttons */}
-        <div
-          className="absolute right-3 z-10 flex flex-col gap-4"
-          style={{ bottom: "220px" }}
-        >
-          <button
-            onClick={() => toggleLike(current.id)}
-            className="flex flex-col items-center gap-0.5"
-          >
-            <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all ${
-                liked.has(current.id)
-                  ? "bg-red-500"
-                  : "bg-black/60 backdrop-blur-sm border border-white/10"
-              }`}
-            >
-              <Heart
-                className={`w-4 h-4 ${
-                  liked.has(current.id) ? "fill-white text-white" : "text-white"
-                }`}
-              />
-            </div>
-            <span className="text-[9px] text-white/35">
-              {liked.has(current.id) ? "1" : "0"}
-            </span>
-          </button>
-          <button className="flex flex-col items-center gap-0.5">
-            <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg">
-              <MessageCircle className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-[9px] text-white/35">12</span>
-          </button>
-          <button className="flex flex-col items-center gap-0.5">
-            <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg">
-              <Share2 className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-[9px] text-white/35">Share</span>
-          </button>
-        </div>
-
-        {/* Product info overlay */}
-        <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-          {current.categoryName && (
-            <p className="text-[10px] uppercase tracking-widest text-[#D4AF37]/60 mb-1">
-              {current.categoryName}
-            </p>
-          )}
-          <Link href={`/product/${current.id}`}>
-            <h2 className="text-xl font-light uppercase tracking-wide mb-2 hover:text-[#D4AF37] transition-colors cursor-pointer leading-snug">
-              {current.name}
-            </h2>
-          </Link>
-          <div className="flex items-baseline gap-3 mb-4">
-            <span className="text-2xl text-[#D4AF37] font-light">{fmt.format(current.price)}</span>
-            {current.originalPrice != null && current.originalPrice > current.price && (
-              <span className="text-zinc-600 line-through text-sm">
-                {fmt.format(current.originalPrice)}
-              </span>
-            )}
-          </div>
-          <button
-            onClick={() => handleCart(current)}
-            disabled={!current.inStock}
-            className={`w-full py-3 text-xs uppercase tracking-widest font-semibold transition-colors ${
-              !current.inStock
-                ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-                : cartAdded.has(current.id)
-                ? "bg-zinc-800 text-[#D4AF37] border border-[#D4AF37]/40"
-                : "bg-[#D4AF37] text-black hover:bg-white"
-            }`}
-          >
-            {!current.inStock
-              ? "Sold Out"
-              : cartAdded.has(current.id)
-              ? "✓ Added to Bag"
-              : "Add to Bag →"}
-          </button>
-        </div>
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/10 to-transparent" />
       </div>
 
-      {/* Hint */}
-      <div className="py-2 text-center border-t border-zinc-900 shrink-0">
-        <span className="text-[9px] text-zinc-700 tracking-widest uppercase">
-          ◄ browse picks  ·  ← → keyboard ►
+      {/* Top label */}
+      <div className="absolute top-3 left-0 right-0 flex justify-center z-10 pointer-events-none">
+        <span className="text-[9px] uppercase tracking-widest text-[#D4AF37]/50">
+          Featured Drops
+        </span>
+      </div>
+
+      {/* Vertical dot indicators — right edge */}
+      {featured.length > 1 && (
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col gap-1.5 z-10">
+          {featured.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => !isFading && setIndex(i)}
+              className="rounded-full transition-all"
+              style={{
+                width: "4px",
+                height: i === index ? "20px" : "4px",
+                background: i === index ? "#D4AF37" : "rgba(255,255,255,0.15)",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Action buttons */}
+      <div className="absolute right-10 z-10 flex flex-col gap-4" style={{ bottom: "220px" }}>
+        <button onClick={() => toggleLike(current.id)} className="flex flex-col items-center gap-0.5">
+          <div
+            className={`w-10 h-10 rounded-full flex items-center justify-center shadow-lg transition-all ${
+              liked.has(current.id) ? "bg-red-500" : "bg-black/60 backdrop-blur-sm border border-white/10"
+            }`}
+          >
+            <Heart className={`w-4 h-4 ${liked.has(current.id) ? "fill-white text-white" : "text-white"}`} />
+          </div>
+          <span className="text-[9px] text-white/35">{liked.has(current.id) ? "1" : "0"}</span>
+        </button>
+        <button className="flex flex-col items-center gap-0.5">
+          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg">
+            <MessageCircle className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-[9px] text-white/35">12</span>
+        </button>
+        <button className="flex flex-col items-center gap-0.5">
+          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg">
+            <Share2 className="w-4 h-4 text-white" />
+          </div>
+          <span className="text-[9px] text-white/35">Share</span>
+        </button>
+      </div>
+
+      {/* Product info overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+        {current.categoryName && (
+          <p className="text-[10px] uppercase tracking-widest text-[#D4AF37]/60 mb-1">
+            {current.categoryName}
+          </p>
+        )}
+        <Link href={`/product/${current.id}`}>
+          <h2 className="text-xl font-light uppercase tracking-wide mb-2 hover:text-[#D4AF37] transition-colors cursor-pointer leading-snug">
+            {current.name}
+          </h2>
+        </Link>
+        <div className="flex items-baseline gap-3 mb-4">
+          <span className="text-2xl text-[#D4AF37] font-light">{fmt.format(current.price)}</span>
+          {current.originalPrice != null && current.originalPrice > current.price && (
+            <span className="text-zinc-600 line-through text-sm">
+              {fmt.format(current.originalPrice)}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={() => handleCart(current)}
+          disabled={!current.inStock}
+          className={`w-full py-3 text-xs uppercase tracking-widest font-semibold transition-colors ${
+            !current.inStock
+              ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+              : cartAdded.has(current.id)
+              ? "bg-zinc-800 text-[#D4AF37] border border-[#D4AF37]/40"
+              : "bg-[#D4AF37] text-black hover:bg-white"
+          }`}
+        >
+          {!current.inStock ? "Sold Out" : cartAdded.has(current.id) ? "✓ Added to Bag" : "Add to Bag →"}
+        </button>
+      </div>
+
+      {/* Scroll hint */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-1 z-20 pointer-events-none">
+        <span className="text-[8px] text-zinc-700 tracking-widest uppercase">
+          scroll · ↑ ↓ keyboard
         </span>
       </div>
     </div>
