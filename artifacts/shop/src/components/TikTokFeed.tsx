@@ -287,20 +287,6 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
             : "Add to Bag →"}
         </button>
 
-        <div className="flex justify-center gap-1.5 mt-4">
-          {Array.from({ length: visibleDots }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => !isFading && setCurrentIndex(i)}
-              className={`rounded-full transition-all duration-300 ${
-                i === currentIndex ? "w-5 h-1.5 bg-[#D4AF37]" : "w-1.5 h-1.5 bg-white/15"
-              }`}
-            />
-          ))}
-          {products.length > 8 && (
-            <span className="text-white/15 text-xs leading-none">···</span>
-          )}
-        </div>
       </div>
 
       {/* Tap zones for navigation */}
