@@ -29,9 +29,9 @@ export function RootLayout({ children, title, showBack, searchBar }: RootLayoutP
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
       {/* Marquee strip */}
-      <div className="bg-[#D4AF37]/10 border-b border-[#D4AF37]/20 overflow-hidden py-1.5">
+      <div className="bg-[#D4AF37]/10 border-b border-[#D4AF37]/15 overflow-hidden py-1.5">
         <div
-          className="flex whitespace-nowrap text-[10px] tracking-widest uppercase text-[#D4AF37]/70"
+          className="flex whitespace-nowrap text-[10px] tracking-widest uppercase text-[#D4AF37]/60"
           style={{ animation: "marquee 28s linear infinite" }}
         >
           <span>{MARQUEE_TEXT}</span>
@@ -41,21 +41,21 @@ export function RootLayout({ children, title, showBack, searchBar }: RootLayoutP
 
       {/* Header */}
       <header
-        className="sticky top-0 z-50 bg-[#0a0a0a]/90 backdrop-blur-md text-zinc-100 transition-all duration-300"
+        className="sticky top-0 z-50 bg-[#0a0a0a]/92 backdrop-blur-md text-zinc-100 transition-all duration-300"
         style={{
           borderBottom: scrolled
-            ? "1px solid rgba(212,175,55,0.35)"
-            : "1px solid rgb(24,24,27)",
+            ? "1px solid rgba(212,175,55,0.3)"
+            : "1px solid rgba(255,255,255,0.05)",
           boxShadow: scrolled
-            ? "0 1px 24px 0 rgba(212,175,55,0.08)"
+            ? "0 1px 32px 0 rgba(212,175,55,0.07)"
             : "none",
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-20 gap-4">
-          {/* Left: back/logo + store name */}
+          {/* Left */}
           <div className="flex items-center gap-3 flex-shrink-0">
             {showBack ? (
-              <Link href="/" className="p-2 -ml-2 text-zinc-400 hover:text-[#D4AF37] transition-colors">
+              <Link href="/" className="p-2 -ml-2 text-zinc-500 hover:text-[#D4AF37] transition-colors">
                 <ArrowLeft className="w-5 h-5" />
               </Link>
             ) : (
@@ -72,7 +72,7 @@ export function RootLayout({ children, title, showBack, searchBar }: RootLayoutP
             </span>
           </div>
 
-          {/* Center: search slot (desktop only) */}
+          {/* Center search */}
           {searchBar && (
             <div className="hidden md:flex flex-1 max-w-md mx-4">
               {searchBar}
@@ -81,7 +81,7 @@ export function RootLayout({ children, title, showBack, searchBar }: RootLayoutP
 
           {/* Right: cart */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <Link href="/cart" className="relative flex items-center gap-2 p-2 -mr-2 text-zinc-400 hover:text-[#D4AF37] transition-colors group">
+            <Link href="/cart" className="relative flex items-center p-2 -mr-2 text-zinc-500 hover:text-[#D4AF37] transition-colors">
               <ShoppingBag className="w-6 h-6" />
               {itemCount > 0 && (
                 <>

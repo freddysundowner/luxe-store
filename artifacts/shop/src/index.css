@@ -66,36 +66,41 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Luxury Dark — both light and dark modes use the same dark palette */
+/* Luxury Dark — black + gold */
 :root {
   --background: 0 0% 4%;
   --foreground: 240 5% 84%;
-  --border: 240 4% 16%;
-  --card: 240 4% 10%;
+  --border: 240 4% 12%;
+  --card: 240 4% 7%;
   --card-foreground: 240 5% 84%;
-  --card-border: 240 4% 16%;
-  --sidebar: 240 4% 8%;
+  --card-border: 240 4% 12%;
+  --sidebar: 240 4% 6%;
   --sidebar-foreground: 240 5% 84%;
-  --sidebar-border: 240 4% 16%;
+  --sidebar-border: 240 4% 12%;
   --sidebar-primary: 43 65% 52%;
   --sidebar-primary-foreground: 0 0% 5%;
-  --sidebar-accent: 240 4% 16%;
+  --sidebar-accent: 240 4% 14%;
   --sidebar-accent-foreground: 240 5% 84%;
   --sidebar-ring: 43 65% 52%;
-  --popover: 240 4% 10%;
+  --popover: 240 4% 7%;
   --popover-foreground: 240 5% 84%;
-  --popover-border: 240 4% 16%;
+  --popover-border: 240 4% 12%;
   --primary: 43 65% 52%;
   --primary-foreground: 0 0% 5%;
-  --secondary: 240 4% 14%;
+  --primary-border: rgba(212,175,55,0.4);
+  --secondary: 240 4% 12%;
   --secondary-foreground: 240 5% 84%;
-  --muted: 240 4% 14%;
+  --secondary-border: rgba(255,255,255,0.06);
+  --muted: 240 4% 12%;
   --muted-foreground: 240 4% 46%;
-  --accent: 240 4% 18%;
+  --muted-border: rgba(255,255,255,0.04);
+  --accent: 240 4% 14%;
   --accent-foreground: 240 5% 84%;
+  --accent-border: rgba(255,255,255,0.06);
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --input: 240 4% 16%;
+  --destructive-border: rgba(239,68,68,0.4);
+  --input: 240 4% 12%;
   --ring: 43 65% 52%;
 
   --chart-1: 43 65% 52%;
@@ -109,41 +114,46 @@
   --app-font-mono: Menlo, monospace;
   --radius: 0.25rem;
 
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.5);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.5);
+  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.6), 0 1px 2px -1px rgb(0 0 0 / 0.5);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.6), 0 2px 4px -2px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
 }
 
 .dark {
   --background: 0 0% 4%;
   --foreground: 240 5% 84%;
-  --border: 240 4% 16%;
-  --card: 240 4% 10%;
+  --border: 240 4% 12%;
+  --card: 240 4% 7%;
   --card-foreground: 240 5% 84%;
-  --card-border: 240 4% 16%;
-  --sidebar: 240 4% 8%;
+  --card-border: 240 4% 12%;
+  --sidebar: 240 4% 6%;
   --sidebar-foreground: 240 5% 84%;
-  --sidebar-border: 240 4% 16%;
+  --sidebar-border: 240 4% 12%;
   --sidebar-primary: 43 65% 52%;
   --sidebar-primary-foreground: 0 0% 5%;
-  --sidebar-accent: 240 4% 16%;
+  --sidebar-accent: 240 4% 14%;
   --sidebar-accent-foreground: 240 5% 84%;
   --sidebar-ring: 43 65% 52%;
-  --popover: 240 4% 10%;
+  --popover: 240 4% 7%;
   --popover-foreground: 240 5% 84%;
-  --popover-border: 240 4% 16%;
+  --popover-border: 240 4% 12%;
   --primary: 43 65% 52%;
   --primary-foreground: 0 0% 5%;
-  --secondary: 240 4% 14%;
+  --primary-border: rgba(212,175,55,0.4);
+  --secondary: 240 4% 12%;
   --secondary-foreground: 240 5% 84%;
-  --muted: 240 4% 14%;
+  --secondary-border: rgba(255,255,255,0.06);
+  --muted: 240 4% 12%;
   --muted-foreground: 240 4% 46%;
-  --accent: 240 4% 18%;
+  --muted-border: rgba(255,255,255,0.04);
+  --accent: 240 4% 14%;
   --accent-foreground: 240 5% 84%;
+  --accent-border: rgba(255,255,255,0.06);
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --input: 240 4% 16%;
+  --destructive-border: rgba(239,68,68,0.4);
+  --input: 240 4% 12%;
   --ring: 43 65% 52%;
 
   --chart-1: 43 65% 52%;
