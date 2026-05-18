@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { Link } from "wouter";
 import {
   Search, Sparkles, X, Heart, ShoppingBag, RefreshCw,
-  MessageCircle, Share2
+  MessageCircle, Share2, Droplets
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { ProductCard } from "@/components/ProductCard";
@@ -138,9 +138,9 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
 
       {/* Top label */}
       <div className="absolute top-3 left-0 right-0 flex justify-center z-10 pointer-events-none">
-        <span className="text-[9px] uppercase tracking-widest text-[#D4AF37]/50">
-          Featured Drops
-        </span>
+        <div className="w-8 h-8 rounded-full bg-black/50 border border-[#D4AF37]/30 flex items-center justify-center">
+          <Droplets className="w-4 h-4 text-[#D4AF37]/70" />
+        </div>
       </div>
 
       {/* Vertical dot indicators — right edge */}
