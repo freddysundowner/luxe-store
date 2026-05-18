@@ -23,7 +23,7 @@ export function ProductCard({ product }: { product: Product }) {
     toast({ title: "Added to bag", description: `${product.name} added to your bag.`, duration: 2000 });
   };
 
-  const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });
 
   return (
     <Link href={`/product/${product.id}`}>

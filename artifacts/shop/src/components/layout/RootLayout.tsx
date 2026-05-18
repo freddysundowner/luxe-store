@@ -25,7 +25,7 @@ export function RootLayout({ children, title, showBack, searchBar }: RootLayoutP
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const currency = settings?.currency ?? "$";
+  const currency = settings?.currency ?? "KES";
 
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">

@@ -17,8 +17,8 @@ const settingsSchema = z.object({
   storeDescription: z.string().optional(),
   whatsappNumber: z.string().min(1, "WhatsApp number is required"),
   logoUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
-  currency: z.string().default("USD"),
-  currencySymbol: z.string().default("$"),
+  currency: z.string().default("KES"),
+  currencySymbol: z.string().default("KSh"),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;

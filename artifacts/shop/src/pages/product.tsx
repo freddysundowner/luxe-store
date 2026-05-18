@@ -25,7 +25,7 @@ export default function ProductDetail() {
     toast({ title: "Added to bag", description: `${quantity}x ${product.name} added to your bag.`, duration: 2000 });
   };
 
-  const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });
 
   if (isLoading) {
     return (

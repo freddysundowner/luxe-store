@@ -8,7 +8,7 @@ export default function Cart() {
   const { items, updateQuantity, removeItem, subtotal, clearCart } = useCart();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
-  const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: settings?.currency || 'USD' });
+  const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: settings?.currency || 'KES', maximumFractionDigits: 0 });
 
   const handleCheckout = () => {
     if (!settings?.whatsappNumber) return;

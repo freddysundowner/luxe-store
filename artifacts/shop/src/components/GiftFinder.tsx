@@ -119,13 +119,8 @@ export function GiftFinder() {
           from { opacity: 0; transform: translateY(40px) scale(0.96); }
           to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-        @keyframes gf-float {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-5px); }
-        }
         .gf-backdrop { animation: gf-backdrop-in 0.25s ease forwards; }
         .gf-panel    { animation: gf-panel-in 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
-        .gf-float    { animation: gf-float 3s ease-in-out infinite; }
         .gf-scrollbar::-webkit-scrollbar { width: 3px; }
         .gf-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .gf-scrollbar::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.2); border-radius: 999px; }
@@ -144,7 +139,7 @@ export function GiftFinder() {
       {open && (
         <div
           className="gf-backdrop fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:p-6"
-          style={{ background: "rgba(0,0,0,0.88)", backdropFilter: "blur(8px)" }}
+          style={{ background: "rgba(0,0,0,0.92)" }}
           onClick={(e) => e.target === e.currentTarget && close()}
         >
           <div className="gf-panel relative flex flex-col w-full sm:w-[480px] sm:max-w-[90vw] bg-[#0a0a0a] border border-[#D4AF37]/20 shadow-[0_0_100px_rgba(212,175,55,0.1),0_32px_64px_rgba(0,0,0,0.9)]"
@@ -156,7 +151,7 @@ export function GiftFinder() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="gf-float w-9 h-9 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#D4AF37]/5 border border-[#D4AF37]/40 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center">
                   <Gift className="w-4 h-4 text-[#D4AF37]" />
                 </div>
                 <div>
