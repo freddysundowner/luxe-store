@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Search, RefreshCw } from "lucide-react";
 import { RootLayout } from "@/components/layout/RootLayout";
-import { Input } from "@/components/ui/input";
 import { ProductCard } from "@/components/ProductCard";
 import { useListProducts, getListProductsQueryKey, useListCategories, getListCategoriesQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,29 +21,30 @@ export default function Home() {
 
   return (
     <RootLayout>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border shadow-sm">
+      {/* Search + category bar */}
+      <div className="sticky top-0 z-40 bg-[#0a0a0a]/95 backdrop-blur border-b border-zinc-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-3">
-            <div className="relative max-w-2xl">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
+          <div className="py-4">
+            <div className="relative max-w-2xl group">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 group-focus-within:text-[#D4AF37] transition-colors" />
+              <input
                 type="search"
-                placeholder="Search products..."
-                className="w-full pl-9 bg-muted/50 border-transparent focus-visible:ring-primary rounded-full h-10"
+                placeholder="Search collection..."
+                className="w-full pl-10 pr-4 py-2.5 bg-zinc-900/60 border border-zinc-800 rounded-full text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
           </div>
 
-          <ScrollArea className="w-full whitespace-nowrap border-t border-border/40">
+          <ScrollArea className="w-full whitespace-nowrap border-t border-zinc-900/60">
             <div className="flex w-max space-x-2 py-3">
               <button
                 onClick={() => setSelectedCategory(undefined)}
-                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                className={`px-5 py-1.5 text-xs uppercase tracking-widest rounded-full transition-all duration-300 ${
                   selectedCategory === undefined
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    ? "bg-[#D4AF37] text-black font-medium"
+                    : "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
                 }`}
               >
                 All
@@ -58,10 +58,10 @@ export default function Home() {
                   <button
                     key={category.id}
                     onClick={() => setSelectedCategory(category.id)}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    className={`px-5 py-1.5 text-xs uppercase tracking-widest rounded-full transition-all duration-300 ${
                       selectedCategory === category.id
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        ? "bg-[#D4AF37] text-black font-medium"
+                        : "bg-zinc-900 text-zinc-400 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800"
                     }`}
                   >
                     {category.name}
@@ -74,38 +74,45 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main content */}
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
+        {/* Section header */}
+        <div className="mb-10">
+          <h2 className="text-2xl font-light text-white tracking-wide mb-1">Curated Selection</h2>
+          <p className="text-xs uppercase tracking-widest text-zinc-600">Exclusive pieces for the discerning</p>
+        </div>
+
         {isError ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="bg-destructive/10 text-destructive p-3 rounded-full mb-4">
-              <RefreshCw className="h-6 w-6" />
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="bg-zinc-900 border border-zinc-800 p-3 mb-4 inline-flex">
+              <RefreshCw className="h-6 w-6 text-zinc-500" />
             </div>
-            <h3 className="font-semibold text-lg mb-1">Failed to load products</h3>
-            <p className="text-muted-foreground mb-4 text-sm">Please try again.</p>
+            <h3 className="font-light text-lg mb-1 text-zinc-200 uppercase tracking-wide">Failed to load products</h3>
+            <p className="text-zinc-600 mb-6 text-sm">Please try again.</p>
             <button
               onClick={() => refetch()}
-              className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm"
+              className="bg-[#D4AF37] text-black px-6 py-2.5 text-xs uppercase tracking-widest font-medium hover:bg-white transition-colors"
             >
               Retry
             </button>
           </div>
         ) : isLoadingProducts ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-5 gap-y-10">
             {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-2 bg-card border border-border rounded-lg p-2">
-                <Skeleton className="w-full aspect-square rounded-md" />
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-4 w-1/3" />
+              <div key={i} className="flex flex-col gap-2">
+                <Skeleton className="w-full aspect-[4/5] bg-zinc-900" />
+                <Skeleton className="h-3 w-1/2 bg-zinc-900" />
+                <Skeleton className="h-3 w-2/3 bg-zinc-900" />
               </div>
             ))}
           </div>
         ) : products?.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-            <div className="bg-muted p-4 rounded-full mb-4">
-              <Search className="h-8 w-8 text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center py-24 text-center px-4">
+            <div className="bg-zinc-900 border border-zinc-800 p-4 mb-6 inline-flex">
+              <Search className="h-8 w-8 text-zinc-700" />
             </div>
-            <h3 className="font-semibold text-lg mb-1">No products found</h3>
-            <p className="text-muted-foreground text-sm max-w-[250px]">
+            <h3 className="font-light text-lg mb-2 text-zinc-200 uppercase tracking-wide">No products found</h3>
+            <p className="text-zinc-600 text-sm max-w-[260px]">
               {search
                 ? `We couldn't find any products matching "${search}"`
                 : "There are no products in this category yet."}
@@ -116,14 +123,14 @@ export default function Home() {
                   setSearch("");
                   setSelectedCategory(undefined);
                 }}
-                className="mt-6 text-primary font-medium hover:underline text-sm"
+                className="mt-8 text-[#D4AF37] text-xs uppercase tracking-widest hover:text-white transition-colors"
               >
                 Clear filters
               </button>
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-x-5 gap-y-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {products?.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

@@ -1,91 +1,109 @@
 import { Link } from "wouter";
 import { Product } from "@workspace/api-client-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem } = useCart();
   const { toast } = useToast();
 
   const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault(); // prevent navigation
+    e.preventDefault();
     if (!product.inStock) return;
     addItem(product, 1);
     toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
+      title: "Added to bag",
+      description: `${product.name} has been added to your bag.`,
       duration: 2000,
     });
   };
 
   const formatter = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD', // Could be dynamic from settings
+    currency: 'USD',
   });
 
   return (
     <Link href={`/product/${product.id}`}>
-      <Card className="h-full overflow-hidden flex flex-col hover-elevate transition-all active-elevate active:scale-[0.98] cursor-pointer group">
-        <div className="aspect-square relative bg-muted/30 overflow-hidden">
+      <div className="group cursor-pointer">
+        {/* Image container */}
+        <div className="relative aspect-[4/5] overflow-hidden bg-zinc-900 border border-zinc-900 group-hover:border-[#D4AF37]/40 transition-colors duration-500 mb-3">
           {product.imageUrl ? (
             <img
               src={product.imageUrl}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 ease-out opacity-80 group-hover:opacity-100 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-secondary/30 text-muted-foreground">
-              <ShoppingCart className="w-8 h-8 opacity-20" />
+            <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+              <ShoppingBag className="w-8 h-8 text-zinc-700" />
             </div>
           )}
+
+          {/* Gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-50 pointer-events-none" />
+
+          {/* Out of stock overlay */}
           {!product.inStock && (
-            <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] flex items-center justify-center">
-              <span className="font-semibold text-sm tracking-widest text-foreground uppercase px-3 py-1 bg-background/90 rounded-md">
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
+              <span className="text-xs uppercase tracking-widest text-zinc-300 px-3 py-1 border border-zinc-700">
                 Sold Out
               </span>
             </div>
           )}
+
+          {/* Featured badge */}
           {product.isFeatured && product.inStock && (
-            <div className="absolute top-2 left-2 bg-primary text-primary-foreground text-xs font-bold px-2 py-1 rounded shadow-sm">
+            <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/80 border border-[#D4AF37]/40 text-[10px] uppercase tracking-widest text-[#D4AF37]">
               Featured
             </div>
           )}
-        </div>
-        <CardContent className="p-3 flex-1 flex flex-col">
-          {product.categoryName && (
-            <span className="text-[10px] uppercase font-bold text-primary/80 mb-1">
-              {product.categoryName}
-            </span>
+
+          {/* Sale badge */}
+          {product.originalPrice && product.originalPrice > product.price && product.inStock && (
+            <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/80 border border-[#D4AF37]/30 text-[10px] uppercase tracking-widest text-[#D4AF37]">
+              Sale
+            </div>
           )}
-          <h3 className="font-medium text-sm leading-tight text-foreground line-clamp-2 mb-1 flex-1">
-            {product.name}
-          </h3>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-border/50">
-            <div className="flex flex-col">
-              <span className="font-bold text-base text-foreground">
+
+          {/* Add to bag — slides up on hover */}
+          {product.inStock && (
+            <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
+              <button
+                onClick={handleAddToCart}
+                className="w-full py-3 bg-[#D4AF37] text-black text-[11px] uppercase tracking-widest font-medium hover:bg-white transition-colors"
+              >
+                Add to Bag
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Product info */}
+        <div className="px-0.5 space-y-1">
+          {product.categoryName && (
+            <p className="text-[10px] uppercase tracking-widest text-zinc-600">
+              {product.categoryName}
+            </p>
+          )}
+          <div className="flex items-start justify-between gap-3">
+            <h3 className="text-sm font-light text-zinc-100 uppercase tracking-wide leading-snug group-hover:text-[#D4AF37] transition-colors line-clamp-2 flex-1">
+              {product.name}
+            </h3>
+            <div className="text-right shrink-0">
+              <div className="text-sm text-[#D4AF37] font-medium">
                 {formatter.format(product.price)}
-              </span>
+              </div>
               {product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-xs text-muted-foreground line-through">
+                <div className="text-xs text-zinc-600 line-through">
                   {formatter.format(product.originalPrice)}
-                </span>
+                </div>
               )}
             </div>
-            <Button
-              size="icon"
-              variant={product.inStock ? "default" : "secondary"}
-              className="h-8 w-8 rounded-full shadow-sm"
-              disabled={!product.inStock}
-              onClick={handleAddToCart}
-            >
-              <ShoppingCart className="h-4 w-4" />
-            </Button>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </Link>
   );
 }

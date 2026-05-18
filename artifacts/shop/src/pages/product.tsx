@@ -1,11 +1,10 @@
 import { useParams, Link } from "wouter";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { useGetProduct, getGetProductQueryKey } from "@workspace/api-client-react";
-import { ShoppingCart, Minus, Plus } from "lucide-react";
+import { ShoppingBag, Minus, Plus } from "lucide-react";
 import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductDetail() {
@@ -23,8 +22,8 @@ export default function ProductDetail() {
     if (!product) return;
     addItem(product, quantity);
     toast({
-      title: "Added to cart",
-      description: `${quantity}x ${product.name} added to your cart.`,
+      title: "Added to bag",
+      description: `${quantity}x ${product.name} added to your bag.`,
       duration: 2000,
     });
   };
@@ -37,13 +36,14 @@ export default function ProductDetail() {
   if (isLoading) {
     return (
       <RootLayout showBack>
-        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
           <div className="lg:grid lg:grid-cols-2 lg:gap-12">
-            <Skeleton className="w-full aspect-square rounded-xl" />
+            <Skeleton className="w-full aspect-square bg-zinc-900" />
             <div className="mt-6 lg:mt-0 space-y-4">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-10 w-1/3" />
-              <Skeleton className="h-32 w-full" />
+              <Skeleton className="h-4 w-1/4 bg-zinc-900" />
+              <Skeleton className="h-8 w-3/4 bg-zinc-900" />
+              <Skeleton className="h-10 w-1/3 bg-zinc-900" />
+              <Skeleton className="h-32 w-full bg-zinc-900" />
             </div>
           </div>
         </div>
@@ -54,10 +54,10 @@ export default function ProductDetail() {
   if (isError || !product) {
     return (
       <RootLayout showBack>
-        <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-          <h3 className="font-semibold text-lg mb-1">Product not found</h3>
-          <p className="text-muted-foreground mb-6">The product you're looking for doesn't exist or has been removed.</p>
-          <Link href="/" className="bg-primary text-primary-foreground px-6 py-2 rounded-full font-medium">
+        <div className="flex flex-col items-center justify-center py-24 text-center px-4">
+          <h3 className="font-light text-xl mb-2 text-zinc-200 uppercase tracking-wide">Product not found</h3>
+          <p className="text-zinc-600 mb-8 text-sm">The product you're looking for doesn't exist or has been removed.</p>
+          <Link href="/" className="bg-[#D4AF37] text-black px-6 py-2.5 text-xs uppercase tracking-widest font-medium hover:bg-white transition-colors">
             Return to store
           </Link>
         </div>
@@ -65,85 +65,90 @@ export default function ProductDetail() {
     );
   }
 
+  const discount = product.originalPrice && product.originalPrice > product.price
+    ? Math.round((1 - product.price / product.originalPrice) * 100)
+    : null;
+
   return (
     <RootLayout showBack title={product.name}>
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
-        <div className="lg:grid lg:grid-cols-2 lg:gap-12 xl:gap-16">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
+        <div className="lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-20">
           {/* Image */}
-          <div className="relative bg-muted/20 rounded-2xl overflow-hidden aspect-square lg:aspect-auto lg:min-h-[500px]">
+          <div className="relative bg-zinc-900 overflow-hidden aspect-square lg:aspect-auto lg:min-h-[560px]">
             {product.imageUrl ? (
               <img
                 src={product.imageUrl}
                 alt={product.name}
-                className="w-full h-full object-cover animate-in fade-in duration-700"
+                className="w-full h-full object-cover animate-in fade-in duration-700 opacity-90"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-secondary/20">
-                <ShoppingCart className="w-16 h-16 text-muted-foreground/30" />
+              <div className="w-full h-full flex items-center justify-center bg-zinc-900">
+                <ShoppingBag className="w-16 h-16 text-zinc-700" />
               </div>
             )}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-40 pointer-events-none" />
             {!product.inStock && (
-              <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] flex items-center justify-center">
-                <span className="font-bold text-lg tracking-widest text-foreground uppercase px-4 py-2 bg-background/90 rounded-md">
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
+                <span className="text-sm uppercase tracking-widest text-zinc-300 px-4 py-2 border border-zinc-700">
                   Sold Out
                 </span>
               </div>
             )}
             {product.isFeatured && product.inStock && (
-              <div className="absolute top-3 left-3 bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+              <div className="absolute top-4 left-4 px-3 py-1 bg-black/80 border border-[#D4AF37]/40 text-[10px] uppercase tracking-widest text-[#D4AF37]">
                 Featured
+              </div>
+            )}
+            {discount && product.inStock && (
+              <div className="absolute top-4 right-4 px-3 py-1 bg-black/80 border border-[#D4AF37]/30 text-[10px] uppercase tracking-widest text-[#D4AF37]">
+                {discount}% off
               </div>
             )}
           </div>
 
           {/* Details */}
-          <div className="mt-6 lg:mt-0 flex flex-col">
+          <div className="mt-8 lg:mt-0 flex flex-col">
             {product.categoryName && (
-              <span className="text-xs uppercase font-bold tracking-wider text-primary/80 mb-2">
+              <span className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">
                 {product.categoryName}
               </span>
             )}
-            <h1 className="text-2xl lg:text-3xl font-bold text-foreground leading-tight mb-3">
+            <h1 className="text-2xl lg:text-3xl font-light text-zinc-100 uppercase tracking-wide leading-tight mb-6">
               {product.name}
             </h1>
 
-            <div className="flex items-end gap-3 mb-6">
-              <span className="text-3xl lg:text-4xl font-bold text-foreground">
+            <div className="flex items-end gap-4 mb-8 pb-8 border-b border-zinc-900">
+              <span className="text-3xl lg:text-4xl font-light text-[#D4AF37]">
                 {formatter.format(product.price)}
               </span>
               {product.originalPrice && product.originalPrice > product.price && (
-                <span className="text-lg text-muted-foreground line-through mb-1">
+                <span className="text-lg text-zinc-700 line-through mb-1">
                   {formatter.format(product.originalPrice)}
-                </span>
-              )}
-              {product.originalPrice && product.originalPrice > product.price && (
-                <span className="mb-1 text-sm font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
-                  {Math.round((1 - product.price / product.originalPrice) * 100)}% off
                 </span>
               )}
             </div>
 
-            <div className="bg-muted/30 p-4 rounded-xl mb-6">
-              <h3 className="font-semibold text-sm mb-2 text-foreground">Description</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
+            <div className="bg-zinc-900/60 border border-zinc-800/60 p-5 mb-6">
+              <h3 className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Description</h3>
+              <p className="text-zinc-400 text-sm leading-relaxed whitespace-pre-line font-light">
                 {product.description || "No description provided."}
               </p>
             </div>
 
-            <div className="flex items-center justify-between p-4 bg-muted/50 rounded-xl mb-6">
-              <span className="font-medium text-foreground">Quantity</span>
-              <div className="flex items-center gap-4 bg-background px-2 py-1 rounded-full border border-border shadow-sm">
+            <div className="flex items-center justify-between p-4 bg-zinc-900/40 border border-zinc-900 mb-8">
+              <span className="text-xs uppercase tracking-widest text-zinc-500">Quantity</span>
+              <div className="flex items-center gap-5 border border-zinc-800 px-4 py-2">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30"
                   disabled={quantity <= 1 || !product.inStock}
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="font-semibold w-6 text-center">{quantity}</span>
+                <span className="font-light text-zinc-200 w-6 text-center">{quantity}</span>
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="p-1.5 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+                  className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30"
                   disabled={!product.inStock}
                 >
                   <Plus className="w-4 h-4" />
@@ -151,31 +156,33 @@ export default function ProductDetail() {
               </div>
             </div>
 
-            {/* Inline CTA on desktop, fixed bottom bar on mobile */}
+            {/* Desktop CTA */}
             <div className="hidden lg:block">
-              <Button
+              <button
                 onClick={handleAddToCart}
                 disabled={!product.inStock}
-                size="lg"
-                className="w-full h-14 text-lg rounded-full font-bold shadow-lg"
+                className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
               >
-                {product.inStock ? `Add to Cart — ${formatter.format(product.price * quantity)}` : "Out of Stock"}
-              </Button>
+                {product.inStock
+                  ? `Add to Bag — ${formatter.format(product.price * quantity)}`
+                  : "Out of Stock"}
+              </button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Mobile fixed bottom bar */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-t border-border shadow-[0_-4px_20px_-10px_rgba(0,0,0,0.1)] z-50">
-        <Button
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0a]/95 backdrop-blur border-t border-zinc-900 z-50">
+        <button
           onClick={handleAddToCart}
           disabled={!product.inStock}
-          size="lg"
-          className="w-full h-14 text-lg rounded-full font-bold shadow-lg"
+          className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {product.inStock ? `Add to Cart — ${formatter.format(product.price * quantity)}` : "Out of Stock"}
-        </Button>
+          {product.inStock
+            ? `Add to Bag — ${formatter.format(product.price * quantity)}`
+            : "Out of Stock"}
+        </button>
       </div>
     </RootLayout>
   );
