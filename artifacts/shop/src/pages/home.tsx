@@ -230,7 +230,7 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
           </button>
           <button
             onClick={handleGift}
-            className="gift-glow-btn md:hidden flex-[2] py-3 text-[9px] uppercase tracking-widest font-semibold bg-black border border-[#D4AF37]/70 text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center justify-center gap-1"
+            className="gift-glow-btn flex-[2] py-3 text-[9px] uppercase tracking-widest font-semibold bg-black border border-[#D4AF37]/70 text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center justify-center gap-1"
           >
             <Sparkles className="w-3 h-3 shrink-0" />
             Surprise Someone
@@ -446,13 +446,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Gift Finder CTA */}
-            <div className="mt-auto pt-4 border-t border-zinc-900">
-              <button className="w-full py-2.5 bg-[#D4AF37]/10 border border-[#D4AF37]/25 text-[#D4AF37] text-[10px] tracking-widest uppercase rounded hover:bg-[#D4AF37]/20 transition-colors flex items-center justify-center gap-2">
-                <Sparkles className="w-3 h-3" />
-                Gift Finder
-              </button>
-            </div>
           </div>
         </aside>
 
