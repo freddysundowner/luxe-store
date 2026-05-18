@@ -11,6 +11,7 @@ import { TikTokFeed } from "@/components/TikTokFeed";
 import {
   useListProducts, getListProductsQueryKey,
   useListCategories, getListCategoriesQueryKey,
+  useGetSettings, getGetSettingsQueryKey,
   Product,
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
@@ -77,10 +78,21 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
       return n;
     });
 
+  const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+
   const handleCart = (product: Product) => {
     addItem(product, 1);
     setCartAdded((prev) => new Set(prev).add(product.id));
     toast({ title: "Added to bag", description: `${product.name} added.`, duration: 2000 });
+  };
+
+  const handleGift = (product: Product) => {
+    const msg = `🎁 Hi! I'd love to gift this to someone special:\n\n*${product.name}*\nPrice: ${fmt.format(product.price)}\n\nCould you help me arrange it as a gift?`;
+    if (settings?.whatsappNumber) {
+      window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+    } else {
+      toast({ title: "WhatsApp not configured", description: "Set your WhatsApp number in Admin > Settings.", duration: 3000 });
+    }
   };
 
   const handleShare = (product: Product) => {
@@ -203,19 +215,40 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
             </span>
           )}
         </div>
-        <button
-          onClick={() => handleCart(current)}
-          disabled={!current.inStock}
-          className={`w-full py-3 text-xs uppercase tracking-widest font-semibold transition-colors ${
-            !current.inStock
-              ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-              : cartAdded.has(current.id)
-              ? "bg-zinc-800 text-[#D4AF37] border border-[#D4AF37]/40"
-              : "bg-[#D4AF37] text-black hover:bg-white"
-          }`}
-        >
-          {!current.inStock ? "Sold Out" : cartAdded.has(current.id) ? "✓ Added" : "Buy Now →"}
-        </button>
+        <style>{`
+          @keyframes gift-shine {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+          }
+          .gift-shine-bar {
+            animation: gift-shine 2s ease-in-out infinite;
+          }
+        `}</style>
+        <div className="flex gap-2">
+          <button
+            onClick={() => handleCart(current)}
+            disabled={!current.inStock}
+            className={`flex-[3] py-3 text-xs uppercase tracking-widest font-semibold transition-colors ${
+              !current.inStock
+                ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+                : cartAdded.has(current.id)
+                ? "bg-zinc-800 text-[#D4AF37] border border-[#D4AF37]/40"
+                : "bg-[#D4AF37] text-black hover:bg-white"
+            }`}
+          >
+            {!current.inStock ? "Sold Out" : cartAdded.has(current.id) ? "✓ Added" : "Buy Now →"}
+          </button>
+          <button
+            onClick={() => handleGift(current)}
+            className="relative flex-[2] overflow-hidden py-3 text-[10px] uppercase tracking-widest font-semibold border border-[#D4AF37]/50 text-[#D4AF37] hover:border-[#D4AF37] transition-colors"
+          >
+            <span className="gift-shine-bar absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent pointer-events-none" />
+            <span className="relative flex items-center justify-center gap-1">
+              <Sparkles className="w-3 h-3" />
+              Gift
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Scroll hint */}
