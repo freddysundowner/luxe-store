@@ -39,7 +39,7 @@ export function GiftFinder() {
     if (open && messages.length === 0) {
       setMessages([{ role: "assistant", content: "Hi! I'm your gift advisor. Tell me who you're shopping for, their interests, and your budget — I'll find the perfect match from our collection." }]);
     }
-    if (open) setTimeout(() => inputRef.current?.focus(), 100);
+    if (open && window.matchMedia("(pointer: fine)").matches) setTimeout(() => inputRef.current?.focus(), 100);
   }, [open]);
 
   useEffect(() => {
@@ -72,7 +72,7 @@ export function GiftFinder() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className={`fixed bottom-6 right-6 z-[200] flex items-center gap-2 px-4 py-3 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-medium shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-white transition-all duration-300 ${open ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+        className={`fixed bottom-6 right-6 z-[200] hidden sm:flex items-center gap-2 px-4 py-3 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-medium shadow-[0_4px_24px_rgba(212,175,55,0.4)] hover:bg-white transition-all duration-300 ${open ? "opacity-0 pointer-events-none" : "opacity-100"}`}
       >
         <Gift className="w-4 h-4" />
         <span className="hidden sm:inline">Gift Finder</span>
