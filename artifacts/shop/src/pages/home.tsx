@@ -1,10 +1,79 @@
 import { useState } from "react";
-import { Search, RefreshCw } from "lucide-react";
+import { Search, RefreshCw, ArrowRight } from "lucide-react";
+import { Link } from "wouter";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { ProductCard } from "@/components/ProductCard";
 import { useListProducts, getListProductsQueryKey, useListCategories, getListCategoriesQueryKey } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { useCart } from "@/lib/cart-context";
+import { useToast } from "@/hooks/use-toast";
+import type { Product } from "@workspace/api-client-react";
+
+function FeaturedCard({ product, size }: { product: Product; size: "large" | "small" }) {
+  const { addItem } = useCart();
+  const { toast } = useToast();
+  const formatter = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+
+  const handleAdd = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (!product.inStock) return;
+    addItem(product, 1);
+    toast({ title: "Added to bag", description: `${product.name} added.`, duration: 2000 });
+  };
+
+  return (
+    <Link href={`/product/${product.id}`}>
+      <div className={`group relative overflow-hidden bg-zinc-900 border border-zinc-900 hover:border-[#D4AF37]/40 transition-colors duration-500 cursor-pointer ${size === "large" ? "h-[420px] md:h-[480px]" : "h-[280px]"}`}>
+        {product.imageUrl ? (
+          <img
+            src={product.imageUrl}
+            alt={product.name}
+            className="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-90 group-hover:scale-105 transition-all duration-700 ease-out"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-zinc-900" />
+        )}
+
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+
+        {/* Sale badge */}
+        {product.originalPrice && product.originalPrice > product.price && (
+          <div className="absolute top-4 right-4 px-2.5 py-1 bg-black/80 border border-[#D4AF37]/40 text-[10px] uppercase tracking-widest text-[#D4AF37]">
+            Sale
+          </div>
+        )}
+
+        {/* Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
+          {product.categoryName && (
+            <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">{product.categoryName}</p>
+          )}
+          <h3 className={`font-light text-white uppercase tracking-wide group-hover:text-[#D4AF37] transition-colors mb-3 ${size === "large" ? "text-xl md:text-2xl" : "text-base"}`}>
+            {product.name}
+          </h3>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-[#D4AF37] font-medium">{formatter.format(product.price)}</span>
+              {product.originalPrice && product.originalPrice > product.price && (
+                <span className="text-zinc-600 line-through text-sm">{formatter.format(product.originalPrice)}</span>
+              )}
+            </div>
+            {product.inStock && (
+              <button
+                onClick={handleAdd}
+                className="px-4 py-2 bg-[#D4AF37] text-black text-[10px] uppercase tracking-widest font-medium hover:bg-white transition-colors opacity-0 group-hover:opacity-100 translate-y-2 group-hover:translate-y-0 transition-all duration-300"
+              >
+                Add to Bag
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
 
 export default function Home() {
   const [search, setSearch] = useState("");
@@ -18,6 +87,14 @@ export default function Home() {
     { categoryId: selectedCategory, search: search || undefined },
     { query: { queryKey: getListProductsQueryKey({ categoryId: selectedCategory, search: search || undefined }) } }
   );
+
+  const { data: allProducts } = useListProducts(
+    {},
+    { query: { queryKey: getListProductsQueryKey({}) } }
+  );
+
+  const featuredProducts = allProducts?.filter((p) => p.isFeatured && p.inStock) ?? [];
+  const showFeatured = featuredProducts.length > 0 && !search && !selectedCategory;
 
   const searchBar = (
     <div className="relative w-full group">
@@ -39,6 +116,49 @@ export default function Home() {
         {searchBar}
       </div>
 
+      {/* Featured spotlight section */}
+      {showFeatured && (
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pt-10 pb-2">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-light text-white tracking-wide mb-1">Featured</h2>
+              <p className="text-xs uppercase tracking-widest text-zinc-600">Handpicked for you</p>
+            </div>
+            <button
+              onClick={() => {}}
+              className="flex items-center gap-1.5 text-[10px] uppercase tracking-widest text-zinc-600 hover:text-[#D4AF37] transition-colors"
+            >
+              View all <ArrowRight className="w-3 h-3" />
+            </button>
+          </div>
+
+          {featuredProducts.length === 1 && (
+            <FeaturedCard product={featuredProducts[0]} size="large" />
+          )}
+
+          {featuredProducts.length === 2 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {featuredProducts.map((p) => (
+                <FeaturedCard key={p.id} product={p} size="large" />
+              ))}
+            </div>
+          )}
+
+          {featuredProducts.length >= 3 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FeaturedCard product={featuredProducts[0]} size="large" />
+              <div className="grid grid-rows-2 gap-4">
+                <FeaturedCard product={featuredProducts[1]} size="small" />
+                <FeaturedCard product={featuredProducts[2]} size="small" />
+              </div>
+            </div>
+          )}
+
+          {/* Divider */}
+          <div className="mt-10 border-t border-zinc-900" />
+        </div>
+      )}
+
       {/* Main content */}
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
         {/* Section header + categories in one row on desktop */}
@@ -48,7 +168,6 @@ export default function Home() {
             <p className="text-xs uppercase tracking-widest text-zinc-600">Exclusive pieces for the discerning</p>
           </div>
 
-          {/* Category pills */}
           <ScrollArea className="w-full md:w-auto whitespace-nowrap">
             <div className="flex w-max space-x-2">
               <button
@@ -85,7 +204,6 @@ export default function Home() {
           </ScrollArea>
         </div>
 
-        {/* Product grid */}
         {isError ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="bg-zinc-900 border border-zinc-800 p-3 mb-4 inline-flex">
@@ -123,10 +241,7 @@ export default function Home() {
             </p>
             {(search || selectedCategory) && (
               <button
-                onClick={() => {
-                  setSearch("");
-                  setSelectedCategory(undefined);
-                }}
+                onClick={() => { setSearch(""); setSelectedCategory(undefined); }}
                 className="mt-8 text-[#D4AF37] text-xs uppercase tracking-widest hover:text-white transition-colors"
               >
                 Clear filters

@@ -4,7 +4,6 @@ import { RootLayout } from "@/components/layout/RootLayout";
 import { useListProducts, getListProductsQueryKey, useGetCategory, getGetCategoryQueryKey } from "@workspace/api-client-react";
 import { ProductCard } from "@/components/ProductCard";
 import { Search, RefreshCw } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CategoryPage() {
@@ -21,67 +20,85 @@ export default function CategoryPage() {
     { query: { queryKey: getListProductsQueryKey({ categoryId, search: search || undefined }) } }
   );
 
+  const searchBar = (
+    <div className="relative w-full group">
+      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-600 group-focus-within:text-[#D4AF37] transition-colors pointer-events-none" />
+      <input
+        type="search"
+        placeholder={`Search ${category?.name ?? "collection"}...`}
+        className="w-full pl-10 pr-4 py-2.5 bg-zinc-900/60 border border-zinc-800 rounded-full text-sm text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#D4AF37] focus:border-[#D4AF37] transition-all"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
+    </div>
+  );
+
   return (
-    <RootLayout title={category?.name || "Category"} showBack>
-      <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b border-border shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-          <div className="relative max-w-2xl">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder={`Search in ${category?.name || "category"}...`}
-              className="w-full pl-9 bg-muted/50 border-transparent focus-visible:ring-primary rounded-full h-10"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-        </div>
+    <RootLayout title={category?.name ?? "Category"} showBack searchBar={searchBar}>
+      {/* Mobile search */}
+      <div className="md:hidden px-4 pt-4 pb-2 bg-[#0a0a0a] border-b border-zinc-900">
+        {searchBar}
       </div>
 
-      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-10">
         {category?.description && (
-          <div className="mb-6 p-4 bg-muted/50 rounded-xl text-sm text-muted-foreground">
+          <p className="text-xs uppercase tracking-widest text-zinc-600 mb-8 border-l-2 border-[#D4AF37]/40 pl-4">
             {category.description}
-          </div>
+          </p>
         )}
 
+        <div className="mb-8">
+          <h2 className="text-2xl font-light text-white tracking-wide mb-1">{category?.name ?? "Collection"}</h2>
+          <p className="text-xs uppercase tracking-widest text-zinc-600">
+            {products ? `${products.length} piece${products.length !== 1 ? "s" : ""}` : "Loading..."}
+          </p>
+        </div>
+
         {isError ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="bg-destructive/10 text-destructive p-3 rounded-full mb-4">
-              <RefreshCw className="h-6 w-6" />
+          <div className="flex flex-col items-center justify-center py-20 text-center">
+            <div className="bg-zinc-900 border border-zinc-800 p-3 mb-4 inline-flex">
+              <RefreshCw className="h-6 w-6 text-zinc-500" />
             </div>
-            <h3 className="font-semibold text-lg mb-1">Failed to load products</h3>
+            <h3 className="font-light text-lg mb-2 text-zinc-200 uppercase tracking-wide">Failed to load</h3>
             <button
               onClick={() => refetch()}
-              className="bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm mt-2"
+              className="bg-[#D4AF37] text-black px-6 py-2.5 text-xs uppercase tracking-widest font-medium hover:bg-white transition-colors mt-4"
             >
               Retry
             </button>
           </div>
         ) : isLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12">
             {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="flex flex-col gap-2 bg-card border border-border rounded-lg p-2">
-                <Skeleton className="w-full aspect-square rounded-md" />
-                <Skeleton className="h-4 w-2/3" />
-                <Skeleton className="h-4 w-1/3" />
+              <div key={i} className="flex flex-col gap-3">
+                <Skeleton className="w-full aspect-[4/5] bg-zinc-900" />
+                <Skeleton className="h-3 w-1/2 bg-zinc-900" />
+                <Skeleton className="h-3 w-2/3 bg-zinc-900" />
               </div>
             ))}
           </div>
         ) : products?.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center px-4">
-            <div className="bg-muted p-4 rounded-full mb-4">
-              <Search className="h-8 w-8 text-muted-foreground" />
+          <div className="flex flex-col items-center justify-center py-24 text-center px-4">
+            <div className="bg-zinc-900 border border-zinc-800 p-4 mb-6 inline-flex">
+              <Search className="h-8 w-8 text-zinc-700" />
             </div>
-            <h3 className="font-semibold text-lg mb-1">No products found</h3>
-            <p className="text-muted-foreground text-sm max-w-[250px]">
+            <h3 className="font-light text-lg mb-2 text-zinc-200 uppercase tracking-wide">No products found</h3>
+            <p className="text-zinc-600 text-sm max-w-[260px]">
               {search
-                ? `We couldn't find any products matching "${search}"`
+                ? `No results for "${search}"`
                 : "This category is currently empty."}
             </p>
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="mt-8 text-[#D4AF37] text-xs uppercase tracking-widest hover:text-white transition-colors"
+              >
+                Clear search
+              </button>
+            )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-12 animate-in fade-in duration-500">
             {products?.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
