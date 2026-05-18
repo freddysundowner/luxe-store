@@ -383,9 +383,11 @@ export default function Home() {
       });
     }
 
-    if (availability.has("instock"))  list = list.filter(p => p.inStock);
-    if (availability.has("sale"))     list = list.filter(p => p.originalPrice != null && p.originalPrice > p.price);
-    if (availability.has("new"))      list = list.filter(p => p.isFeatured);
+    if (availability.has("instock")) list = list.filter(p => p.inStock);
+    const tagFilters = ["new", "sale", "hot", "bestseller", "limited", "coming_soon"].filter(t => availability.has(t));
+    if (tagFilters.length > 0) {
+      list = list.filter(p => p.availabilityTag != null && tagFilters.includes(p.availabilityTag));
+    }
 
     return list.sort((a, b) => (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0));
   }, [products, priceRanges, availability]);
@@ -565,10 +567,14 @@ export default function Home() {
               <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-3">Availability</p>
               <div className="flex flex-col gap-2">
                 {([
-                  { key: "instock", label: "In Stock" },
-                  { key: "sale",    label: "Sale Items" },
-                  { key: "new",     label: "New Arrivals" },
-                ] as const).map(({ key, label }) => (
+                  { key: "instock",    label: "In Stock" },
+                  { key: "new",        label: "New Arrival" },
+                  { key: "sale",       label: "Sale" },
+                  { key: "hot",        label: "Hot / Trending" },
+                  { key: "bestseller", label: "Bestseller" },
+                  { key: "limited",    label: "Limited Edition" },
+                  { key: "coming_soon", label: "Coming Soon" },
+                ] as { key: string; label: string }[]).map(({ key, label }) => (
                   <label key={key} className="flex items-center gap-2 text-xs cursor-pointer hover:text-zinc-200 transition-colors select-none"
                     style={{ color: availability.has(key) ? "#D4AF37" : "#71717a" }}>
                     <input type="checkbox" className="sr-only"

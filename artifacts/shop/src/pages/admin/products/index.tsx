@@ -10,6 +10,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 
+const TAG_COLORS: Record<string, { label: string; color: string }> = {
+  new:         { label: "New Arrival",     color: "#D4AF37" },
+  sale:        { label: "Sale",            color: "#ef4444" },
+  hot:         { label: "Hot / Trending",  color: "#f97316" },
+  bestseller:  { label: "Bestseller",      color: "#3b82f6" },
+  limited:     { label: "Limited Edition", color: "#8b5cf6" },
+  coming_soon: { label: "Coming Soon",     color: "#71717a" },
+};
+
 export default function AdminProducts() {
   const [search, setSearch] = useState("");
   const { toast } = useToast();
@@ -113,6 +122,17 @@ export default function AdminProducts() {
                         )}
                         {!product.inStock && (
                           <Badge variant="destructive">Out of Stock</Badge>
+                        )}
+                        {product.availabilityTag && (
+                          <Badge
+                            variant="outline"
+                            style={{
+                              borderColor: TAG_COLORS[product.availabilityTag]?.color ?? "#71717a",
+                              color: TAG_COLORS[product.availabilityTag]?.color ?? "#71717a",
+                            }}
+                          >
+                            {TAG_COLORS[product.availabilityTag]?.label ?? product.availabilityTag}
+                          </Badge>
                         )}
                       </div>
                     </TableCell>

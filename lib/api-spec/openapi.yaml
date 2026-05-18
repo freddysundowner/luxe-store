@@ -454,6 +454,9 @@ components:
           type: boolean
         isFeatured:
           type: boolean
+        availabilityTag:
+          type: ["string", "null"]
+          description: "Custom availability tag: new, sale, hot, bestseller, limited, coming_soon"
         createdAt:
           type: ["string", "null"]
           format: date-time
@@ -484,6 +487,9 @@ components:
           type: boolean
         isFeatured:
           type: boolean
+        availabilityTag:
+          type: ["string", "null"]
+          description: "Custom availability tag: new, sale, hot, bestseller, limited, coming_soon"
 
     PriceTier:
       type: object

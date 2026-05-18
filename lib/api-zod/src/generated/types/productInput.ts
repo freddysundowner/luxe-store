@@ -21,4 +21,9 @@ export interface ProductInput {
   isActive?: boolean;
   isDropship?: boolean;
   isFeatured?: boolean;
+  /**
+     * Custom availability tag: new, sale, hot, bestseller, limited, coming_soon
+     * @nullable
+     */
+  availabilityTag?: string | null;
 }

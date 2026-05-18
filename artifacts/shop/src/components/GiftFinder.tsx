@@ -110,32 +110,6 @@ export function GiftFinder() {
 
   return (
     <>
-      <style>{`
-        @keyframes gf-backdrop-in {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-        @keyframes gf-panel-in {
-          from { opacity: 0; transform: translateY(40px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .gf-backdrop { animation: gf-backdrop-in 0.25s ease forwards; }
-        .gf-panel    { animation: gf-panel-in 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
-        .gf-scrollbar::-webkit-scrollbar { width: 3px; }
-        .gf-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .gf-scrollbar::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.2); border-radius: 999px; }
-        .gf-chip {
-          transition: all 0.15s ease;
-          cursor: pointer;
-        }
-        .gf-chip:hover { border-color: rgba(212,175,55,0.6); color: #D4AF37; }
-        .gf-chip.active {
-          background: rgba(212,175,55,0.12);
-          border-color: #D4AF37;
-          color: #D4AF37;
-        }
-      `}</style>
-
       {open && (
         <div
           className="gf-backdrop fixed inset-0 z-[300] flex items-end sm:items-center justify-center sm:p-6"

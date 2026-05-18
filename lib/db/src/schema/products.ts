@@ -14,6 +14,7 @@ export const productsTable = pgTable("products", {
   isActive: boolean("is_active").notNull().default(true),
   isDropship: boolean("is_dropship").notNull().default(false),
   isFeatured: boolean("is_featured").notNull().default(false),
+  availabilityTag: text("availability_tag"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

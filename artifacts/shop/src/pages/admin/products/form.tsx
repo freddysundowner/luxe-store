@@ -15,6 +15,16 @@ import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
+const AVAILABILITY_TAGS = [
+  { value: "none",        label: "None" },
+  { value: "new",         label: "New Arrival" },
+  { value: "sale",        label: "Sale" },
+  { value: "hot",         label: "Hot / Trending" },
+  { value: "bestseller",  label: "Bestseller" },
+  { value: "limited",     label: "Limited Edition" },
+  { value: "coming_soon", label: "Coming Soon" },
+] as const;
+
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
@@ -26,6 +36,7 @@ const productSchema = z.object({
   isActive: z.boolean().default(true),
   isDropship: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
+  availabilityTag: z.string().optional().nullable(),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -59,6 +70,7 @@ export default function ProductForm() {
       isActive: true,
       isDropship: false,
       isFeatured: false,
+      availabilityTag: null,
     },
   });
 
@@ -75,6 +87,7 @@ export default function ProductForm() {
         isActive: product.isActive,
         isDropship: product.isDropship,
         isFeatured: product.isFeatured,
+        availabilityTag: product.availabilityTag || null,
       });
     }
   }, [product, isEditing, form]);
@@ -107,6 +120,7 @@ export default function ProductForm() {
       originalPrice: data.originalPrice || null,
       categoryId: data.categoryId || null,
       imageUrl: data.imageUrl || undefined,
+      availabilityTag: data.availabilityTag === "none" ? null : (data.availabilityTag || null),
     };
 
     if (isEditing) {
@@ -135,7 +149,7 @@ export default function ProductForm() {
                   <FormItem className="md:col-span-2">
                     <FormLabel>Product Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="E.g. Fresh Organic Tomatoes" {...field} />
+                      <Input placeholder="E.g. Premium Leather Wallet" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -147,9 +161,9 @@ export default function ProductForm() {
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Price ($)</FormLabel>
+                    <FormLabel>Price (KSh)</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" {...field} />
+                      <Input type="number" step="1" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -161,9 +175,9 @@ export default function ProductForm() {
                 name="originalPrice"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Original Price ($) - Optional</FormLabel>
+                    <FormLabel>Original Price (KSh) — Optional</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" value={field.value || ""} onChange={field.onChange} />
+                      <Input type="number" step="1" value={field.value || ""} onChange={field.onChange} />
                     </FormControl>
                     <FormDescription>Shows as crossed out to indicate a sale</FormDescription>
                     <FormMessage />
@@ -177,8 +191,8 @@ export default function ProductForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select 
-                      onValueChange={(val) => field.onChange(parseInt(val, 10))} 
+                    <Select
+                      onValueChange={(val) => field.onChange(parseInt(val, 10))}
                       value={field.value ? field.value.toString() : ""}
                     >
                       <FormControl>
@@ -194,6 +208,35 @@ export default function ProductForm() {
                         ))}
                       </SelectContent>
                     </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="availabilityTag"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Availability Tag</FormLabel>
+                    <Select
+                      onValueChange={(val) => field.onChange(val === "none" ? null : val)}
+                      value={field.value ?? "none"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a tag" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {AVAILABILITY_TAGS.map(({ value, label }) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>Badge shown on product cards in the store</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -244,7 +287,7 @@ export default function ProductForm() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="inStock"

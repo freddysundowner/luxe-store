@@ -1,20 +1,21 @@
 import { Link } from "wouter";
 import { Product } from "@workspace/api-client-react";
-import { ShoppingBag, Pin } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 
-const NEW_THRESHOLD_DAYS = 30;
-
-function isNew(createdAt?: string | null) {
-  if (!createdAt) return false;
-  return Date.now() - new Date(createdAt).getTime() < NEW_THRESHOLD_DAYS * 86400000;
-}
+const TAG_CONFIG: Record<string, { label: string; color: string; textColor: string }> = {
+  new:         { label: "New",          color: "#D4AF37", textColor: "#000" },
+  sale:        { label: "Sale",         color: "#ef4444", textColor: "#fff" },
+  hot:         { label: "Hot",          color: "#f97316", textColor: "#fff" },
+  bestseller:  { label: "Bestseller",   color: "#3b82f6", textColor: "#fff" },
+  limited:     { label: "Limited",      color: "#8b5cf6", textColor: "#fff" },
+  coming_soon: { label: "Coming Soon",  color: "#71717a", textColor: "#fff" },
+};
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
-  const productIsNew = isNew(product.createdAt);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -24,6 +25,8 @@ export function ProductCard({ product }: { product: Product }) {
   };
 
   const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });
+
+  const tag = product.availabilityTag ? TAG_CONFIG[product.availabilityTag] : null;
 
   return (
     <Link href={`/product/${product.id}`}>
@@ -58,24 +61,18 @@ export function ProductCard({ product }: { product: Product }) {
             </div>
           )}
 
-          {product.isFeatured && product.inStock && (
-            <div className="absolute top-3 left-3 drop-shadow-[0_2px_6px_rgba(212,175,55,0.6)]" style={{ transform: "rotate(-35deg)" }}>
-              <Pin className="w-4 h-4 fill-[#D4AF37] text-[#D4AF37]" />
+          {/* Availability tag badge — top right */}
+          {tag && product.inStock && (
+            <div
+              className="absolute top-2 right-2 px-2 py-0.5 text-[10px] uppercase tracking-widest font-semibold"
+              style={{ background: tag.color, color: tag.textColor }}
+            >
+              {tag.label}
             </div>
           )}
 
-          {productIsNew && product.inStock && !product.isFeatured && (
-            <div className="absolute top-0 left-0 overflow-hidden w-16 h-16 pointer-events-none">
-              <div
-                className="absolute bg-[#D4AF37] text-black text-[8px] font-bold uppercase tracking-widest text-center leading-none py-1"
-                style={{ width: "72px", top: "14px", left: "-16px", transform: "rotate(-45deg)" }}
-              >
-                New
-              </div>
-            </div>
-          )}
-
-          {product.originalPrice && product.originalPrice > product.price && product.inStock && (
+          {/* Fallback: show Sale badge only when no custom tag is set */}
+          {!tag && product.originalPrice && product.originalPrice > product.price && product.inStock && (
             <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/80 border border-[#D4AF37]/30 text-[10px] uppercase tracking-widest text-[#D4AF37]">
               Sale
             </div>

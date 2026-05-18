@@ -79,6 +79,18 @@ ${urls.join("\n")}
           : rawUrl;
       const cleanUrl = routerUrl.split("?")[0] || "/";
 
+      // Skip SSR for admin routes — serve plain SPA shell to avoid hydration mismatches
+      if (cleanUrl.startsWith("/admin")) {
+        let template = fs.readFileSync(
+          path.resolve(__dirname, isProd ? "dist/public/index.html" : "index.html"),
+          "utf-8"
+        );
+        if (!isProd) template = await vite.transformIndexHtml(rawUrl, template);
+        return res.status(200).set({ "Content-Type": "text/html" }).end(
+          template.replace("<!--ssr-head-->", "")
+        );
+      }
+
       let template: string;
       let render: (url: string) => Promise<{ html: string; head: string }>;
 

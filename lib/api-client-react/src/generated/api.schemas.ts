@@ -44,6 +44,11 @@ export interface Product {
   isActive: boolean;
   isDropship?: boolean;
   isFeatured?: boolean;
+  /**
+     * Custom availability tag: new, sale, hot, bestseller, limited, coming_soon
+     * @nullable
+     */
+  availabilityTag?: string | null;
   /** @nullable */
   createdAt?: string | null;
 }
@@ -63,6 +68,11 @@ export interface ProductInput {
   isActive?: boolean;
   isDropship?: boolean;
   isFeatured?: boolean;
+  /**
+     * Custom availability tag: new, sale, hot, bestseller, limited, coming_soon
+     * @nullable
+     */
+  availabilityTag?: string | null;
 }
 
 export interface PriceTier {

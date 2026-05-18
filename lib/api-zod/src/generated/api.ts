@@ -113,6 +113,7 @@ export const ListProductsResponseItem = zod.object({
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
+  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
   "createdAt": zod.coerce.date().nullish()
 })
 export const ListProductsResponse = zod.array(ListProductsResponseItem)
@@ -138,6 +139,7 @@ export const GetProductResponse = zod.object({
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
+  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
   "createdAt": zod.coerce.date().nullish()
 })
 
@@ -158,6 +160,7 @@ export const ListAdminProductsResponseItem = zod.object({
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
+  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
   "createdAt": zod.coerce.date().nullish()
 })
 export const ListAdminProductsResponse = zod.array(ListAdminProductsResponseItem)
@@ -181,7 +184,8 @@ export const CreateProductBody = zod.object({
   "inStock": zod.boolean().optional(),
   "isActive": zod.boolean().optional(),
   "isDropship": zod.boolean().optional(),
-  "isFeatured": zod.boolean().optional()
+  "isFeatured": zod.boolean().optional(),
+  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon')
 })
 
 
@@ -207,7 +211,8 @@ export const UpdateProductBody = zod.object({
   "inStock": zod.boolean().optional(),
   "isActive": zod.boolean().optional(),
   "isDropship": zod.boolean().optional(),
-  "isFeatured": zod.boolean().optional()
+  "isFeatured": zod.boolean().optional(),
+  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon')
 })
 
 export const UpdateProductResponse = zod.object({
@@ -223,6 +228,7 @@ export const UpdateProductResponse = zod.object({
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
+  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
   "createdAt": zod.coerce.date().nullish()
 })
 
