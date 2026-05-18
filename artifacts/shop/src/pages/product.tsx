@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { RelatedProducts } from "@/components/RelatedProducts";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -170,6 +171,11 @@ export default function ProductDetail() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Related products */}
+      <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 pb-16">
+        <RelatedProducts categoryId={product.categoryId} currentProductId={product.id} />
       </div>
 
       {/* Mobile fixed bottom bar */}
