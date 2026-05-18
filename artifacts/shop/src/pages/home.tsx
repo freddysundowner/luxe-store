@@ -463,25 +463,6 @@ export default function Home() {
         {/* Right — All products grid */}
         <div className="flex-1 overflow-y-auto bg-[#0a0a0a]">
           <div className="p-5 lg:p-6">
-            {/* Header row */}
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-[10px] uppercase tracking-widest text-zinc-500">
-                  {selectedCategory
-                    ? categories?.find((c) => c.id === selectedCategory)?.name
-                    : "All Products"}
-                  {!isLoading && (
-                    <span className="ml-2 text-zinc-700">· {displayProducts.length} items</span>
-                  )}
-                </p>
-              </div>
-              <select className="bg-zinc-900 border border-zinc-800 text-zinc-400 text-xs px-3 py-1.5 rounded focus:outline-none focus:border-[#D4AF37]/30 transition-colors">
-                <option>Featured first</option>
-                <option>Price: Low to High</option>
-                <option>Price: High to Low</option>
-                <option>Newest</option>
-              </select>
-            </div>
 
             {/* Content */}
             {isError ? (
