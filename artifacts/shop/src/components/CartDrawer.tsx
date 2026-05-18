@@ -197,6 +197,8 @@ export function CartDrawer() {
   const { items, updateQuantity, removeItem, clearCart, subtotal, isCartOpen, closeCart } = useCart();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const [showMpesa, setShowMpesa] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const formatter = new Intl.NumberFormat("en-KE", {
     style: "currency",
@@ -235,6 +237,8 @@ export function CartDrawer() {
     setShowMpesa(false);
     closeCart();
   }, [clearCart, closeCart]);
+
+  if (!mounted) return null;
 
   return (
     <>

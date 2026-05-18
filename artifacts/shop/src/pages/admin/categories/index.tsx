@@ -9,6 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ImageUpload } from "@/components/ImageUpload";
 
 export default function AdminCategories() {
   const { toast } = useToast();
@@ -102,10 +103,11 @@ export default function AdminCategories() {
                 <Label>Description</Label>
                 <Input value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
               </div>
-              <div className="space-y-2">
-                <Label>Image URL</Label>
-                <Input value={formData.imageUrl} onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })} />
-              </div>
+              <ImageUpload
+                label="Category Image"
+                value={formData.imageUrl}
+                onChange={(url) => setFormData({ ...formData, imageUrl: url })}
+              />
               <DialogFooter>
                 <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
                   Save

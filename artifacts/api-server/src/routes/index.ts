@@ -6,6 +6,7 @@ import settingsRouter from "./settings";
 import adminRouter from "./admin";
 import aiRouter from "./ai";
 import paymentsRouter from "./payments";
+import uploadRouter from "./upload";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(settingsRouter);
 router.use(adminRouter);
 router.use(aiRouter);
 router.use(paymentsRouter);
+router.use(uploadRouter);
 
 export default router;

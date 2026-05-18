@@ -1,4 +1,5 @@
 import { Switch, Route, Router as WouterRouter } from "wouter";
+import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -70,6 +71,8 @@ function App({ ssrUrl }: AppProps) {
       ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (() => [ssrUrl, () => {}] as any)
       : undefined;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -78,12 +81,13 @@ function App({ ssrUrl }: AppProps) {
           <FavoritesProvider>
             <WouterRouter base={base} hook={locationHook}>
               <Router />
-              <GiftFinder />
+              {mounted && <GiftFinder />}
+              {/* CartDrawer has its own mounted guard */}
               <CartDrawer />
             </WouterRouter>
           </FavoritesProvider>
         </CartProvider>
-        <Toaster />
+        {mounted && <Toaster />}
       </TooltipProvider>
     </QueryClientProvider>
   );

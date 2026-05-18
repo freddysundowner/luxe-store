@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageUpload } from "@/components/ImageUpload";
 import { useCreateProduct, useUpdateProduct, useGetProduct, getGetProductQueryKey, useListCategories, getListCategoriesQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -31,7 +32,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(0, "Price must be positive"),
   originalPrice: z.coerce.number().optional().nullable(),
   categoryId: z.coerce.number().optional().nullable(),
-  imageUrl: z.string().url("Must be a valid URL").optional().or(z.literal("")),
+  imageUrl: z.string().optional().or(z.literal("")),
   inStock: z.boolean().default(true),
   isActive: z.boolean().default(true),
   isDropship: z.boolean().default(false),
@@ -246,10 +247,13 @@ export default function ProductForm() {
                 control={form.control}
                 name="imageUrl"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Image URL</FormLabel>
+                  <FormItem className="md:col-span-2">
                     <FormControl>
-                      <Input placeholder="https://..." {...field} />
+                      <ImageUpload
+                        label="Product Image"
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

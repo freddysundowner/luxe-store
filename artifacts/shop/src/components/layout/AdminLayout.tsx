@@ -104,7 +104,7 @@ export function AdminLayout({ children, title }: { children: ReactNode; title: s
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full">
+      <div className="flex-1 flex flex-col w-full min-w-0">
         <header className="p-6 pb-2">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">{title}</h1>
         </header>
