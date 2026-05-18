@@ -30,6 +30,12 @@ export function GiftFinder() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("open-gift-finder", handler);
+    return () => window.removeEventListener("open-gift-finder", handler);
+  }, []);
+
+  useEffect(() => {
     if (open && messages.length === 0) {
       setMessages([{ role: "assistant", content: "Hi! I'm your gift advisor. Tell me who you're shopping for, their interests, and your budget — I'll find the perfect match from our collection." }]);
     }

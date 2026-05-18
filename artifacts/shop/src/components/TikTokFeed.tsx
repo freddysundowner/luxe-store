@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { Link } from "wouter";
 import { Heart, MessageCircle, Share2, ShoppingBag, Sparkles } from "lucide-react";
-import { Product, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
+import { Product } from "@workspace/api-client-react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,21 +47,14 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
     });
   };
 
-  const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
-
   const handleAddToCart = (product: Product) => {
     addItem(product, 1);
     setCartAdded((prev) => new Set(prev).add(product.id));
     toast({ title: "Added to bag", description: `${product.name} added.`, duration: 2000 });
   };
 
-  const handleGift = (product: Product) => {
-    const msg = `🎁 Hi! I'd love to gift this to someone special:\n\n*${product.name}*\nPrice: ${fmt.format(product.price)}\n\nCould you help me arrange it as a gift?`;
-    if (settings?.whatsappNumber) {
-      window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
-    } else {
-      toast({ title: "WhatsApp not configured", description: "Set your WhatsApp number in Admin > Settings.", duration: 3000 });
-    }
+  const handleGift = () => {
+    window.dispatchEvent(new CustomEvent("open-gift-finder"));
   };
 
   const handleShare = (product: Product) => {
@@ -304,7 +297,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
             {!current.inStock ? "Sold Out" : cartAdded.has(current.id) ? "✓ Added" : "Buy Now →"}
           </button>
           <button
-            onClick={() => handleGift(current)}
+            onClick={handleGift}
             className="relative flex-[2] overflow-hidden py-3.5 text-xs uppercase tracking-widest font-semibold border border-[#D4AF37]/50 text-[#D4AF37] hover:border-[#D4AF37] transition-colors"
           >
             <span className="gift-shine-bar absolute inset-y-0 w-1/3 bg-gradient-to-r from-transparent via-[#D4AF37]/30 to-transparent pointer-events-none" />
