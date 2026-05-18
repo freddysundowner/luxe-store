@@ -160,8 +160,9 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
 
       {/* Top label */}
       <div className="absolute top-3 left-0 right-0 flex justify-center z-10 pointer-events-none">
-        <div className="w-8 h-8 rounded-full bg-black/50 border border-[#D4AF37]/30 flex items-center justify-center">
-          <Droplets className="w-4 h-4 text-[#D4AF37]/70" />
+        <div className="w-11 h-11 rounded-full bg-black/60 border border-[#D4AF37]/40 flex items-center justify-center"
+          style={{ boxShadow: "0 0 12px rgba(212,175,55,0.25)" }}>
+          <Droplets className="w-6 h-6" style={{ animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }} />
         </div>
       </div>
 
@@ -231,6 +232,10 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
             50% { box-shadow: 0 0 18px rgba(212,175,55,0.65), inset 0 0 10px rgba(212,175,55,0.1); }
           }
           .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
+          @keyframes goldShimmer {
+            0%, 100% { color: #D4AF37; filter: drop-shadow(0 0 3px rgba(212,175,55,0.4)); opacity: 0.85; }
+            50% { color: #f5e27a; filter: drop-shadow(0 0 8px rgba(245,226,122,0.9)); opacity: 1; }
+          }
         `}</style>
         <div className="flex gap-2">
           <button
