@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { useGetSettings, getGetSettingsQueryKey, useUpdateSettings } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
-import { Loader2, Plus, Trash2, GripVertical } from "lucide-react";
+import { Loader2, Plus, Trash2, Smartphone } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 const priceTierSchema = z.object({
@@ -29,6 +30,8 @@ const settingsSchema = z.object({
   currency: z.string().default("KES"),
   currencySymbol: z.string().default("KSh"),
   priceTiers: z.array(priceTierSchema).min(1, "At least one price tier is required"),
+  sunpayApiKey: z.string().optional(),
+  sunpayEnabled: z.boolean().default(false),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -58,6 +61,8 @@ export default function AdminSettings() {
       currency: "KES",
       currencySymbol: "KSh",
       priceTiers: DEFAULT_TIERS,
+      sunpayApiKey: "",
+      sunpayEnabled: false,
     },
   });
 
@@ -76,6 +81,8 @@ export default function AdminSettings() {
         currency: settings.currency || "KES",
         currencySymbol: settings.currencySymbol || "KSh",
         priceTiers: (settings.priceTiers as typeof DEFAULT_TIERS | undefined) ?? DEFAULT_TIERS,
+        sunpayApiKey: settings.sunpayApiKey || "",
+        sunpayEnabled: settings.sunpayEnabled === "true",
       });
     }
   }, [settings, form]);
@@ -91,7 +98,14 @@ export default function AdminSettings() {
   });
 
   const onSubmit = (data: SettingsFormValues) => {
-    updateMutation.mutate({ data: data as Parameters<typeof updateMutation.mutate>[0]["data"] });
+    const { sunpayEnabled, sunpayApiKey, ...rest } = data;
+    updateMutation.mutate({
+      data: {
+        ...rest,
+        sunpayEnabled: sunpayEnabled ? "true" : "false",
+        sunpayApiKey: sunpayApiKey || "",
+      } as Parameters<typeof updateMutation.mutate>[0]["data"]
+    });
   };
 
   if (isLoading) {
@@ -156,6 +170,63 @@ export default function AdminSettings() {
               />
             </div>
 
+            {/* M-Pesa / SunPay */}
+            <div className="space-y-4 pt-4">
+              <div className="border-b border-border pb-2">
+                <h3 className="font-semibold text-lg flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-green-500" />
+                  M-Pesa Payments (SunPay)
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Enable STK Push checkout directly in the cart. Requires a SunPay account at{" "}
+                  <a href="https://sunpay.co.ke" target="_blank" rel="noopener noreferrer" className="underline">
+                    sunpay.co.ke
+                  </a>.
+                </p>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="sunpayEnabled"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border border-border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Enable M-Pesa Checkout</FormLabel>
+                      <FormDescription>
+                        Shows "Pay with M-Pesa" button on the cart page
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              <FormField control={form.control} name="sunpayApiKey"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>SunPay API Key</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="sp_live_xxxxxxxxxxxxxxxx"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Your SunPay secret key starting with <code className="text-xs bg-muted px-1 rounded">sp_</code>.
+                      Found in your SunPay dashboard under API Keys.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             {/* Localization */}
             <div className="space-y-4 pt-4">
               <h3 className="font-semibold text-lg border-b border-border pb-2">Localization</h3>
@@ -194,7 +265,6 @@ export default function AdminSettings() {
               </div>
 
               <div className="space-y-2">
-                {/* Header row */}
                 <div className="grid grid-cols-[1fr_90px_90px_32px] gap-2 px-1">
                   <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Tier Label</span>
                   <span className="text-[11px] uppercase tracking-wider text-muted-foreground">Min (KSh)</span>
@@ -208,11 +278,7 @@ export default function AdminSettings() {
                       render={({ field }) => (
                         <FormItem className="space-y-0">
                           <FormControl>
-                            <Input
-                              placeholder={`e.g. Budget`}
-                              className="h-9 text-sm"
-                              {...field}
-                            />
+                            <Input placeholder="e.g. Budget" className="h-9 text-sm" {...field} />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>
@@ -222,13 +288,7 @@ export default function AdminSettings() {
                       render={({ field }) => (
                         <FormItem className="space-y-0">
                           <FormControl>
-                            <Input
-                              type="number"
-                              min={0}
-                              placeholder="0"
-                              className="h-9 text-sm"
-                              {...field}
-                            />
+                            <Input type="number" min={0} placeholder="0" className="h-9 text-sm" {...field} />
                           </FormControl>
                           <FormMessage className="text-[10px]" />
                         </FormItem>

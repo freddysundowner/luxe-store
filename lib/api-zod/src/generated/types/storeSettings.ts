@@ -17,4 +17,7 @@ export interface StoreSettings {
   currency?: string;
   currencySymbol?: string;
   priceTiers?: PriceTier[];
+  sunpayEnabled?: string;
+  /** @nullable */
+  sunpayApiKey?: string | null;
 }

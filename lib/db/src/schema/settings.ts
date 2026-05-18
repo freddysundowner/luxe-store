@@ -11,6 +11,8 @@ export const storeSettingsTable = pgTable("store_settings", {
   currency: text("currency").notNull().default("KES"),
   currencySymbol: text("currency_symbol").notNull().default("KSh"),
   priceTiers: jsonb("price_tiers").$type<Array<{ name: string; min: number; max: number | null }>>(),
+  sunpayApiKey: text("sunpay_api_key"),
+  sunpayEnabled: text("sunpay_enabled").notNull().default("false"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

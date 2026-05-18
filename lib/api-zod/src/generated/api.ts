@@ -249,8 +249,66 @@ export const GetSettingsResponse = zod.object({
   "name": zod.string(),
   "min": zod.number(),
   "max": zod.number().nullish()
-})).optional()
+})).optional(),
+  "sunpayEnabled": zod.string().optional(),
+  "sunpayApiKey": zod.string().nullish()
 })
+
+
+/**
+ * @summary Initiate M-Pesa STK push
+ */
+
+
+
+export const InitiatePaymentBody = zod.object({
+  "phoneNumber": zod.string().describe('Customer phone in format 254XXXXXXXXX'),
+  "amount": zod.number().min(1),
+  "externalRef": zod.string().optional(),
+  "cartSnapshot": zod.object({
+
+}).passthrough().optional()
+})
+
+export const InitiatePaymentResponse = zod.object({
+  "success": zod.boolean(),
+  "message": zod.string().optional(),
+  "transactionId": zod.string(),
+  "checkoutRequestId": zod.string().optional()
+})
+
+
+/**
+ * @summary Get payment status
+ */
+export const GetPaymentStatusParams = zod.object({
+  "transactionId": zod.coerce.string()
+})
+
+export const GetPaymentStatusResponse = zod.object({
+  "id": zod.string(),
+  "status": zod.enum(['pending', 'completed', 'failed']),
+  "amount": zod.number(),
+  "phoneNumber": zod.string(),
+  "mpesaRef": zod.string().nullish(),
+  "createdAt": zod.string().optional()
+})
+
+
+/**
+ * @summary List all payments (admin)
+ */
+export const ListAdminPaymentsResponseItem = zod.object({
+  "id": zod.number(),
+  "transactionId": zod.string(),
+  "phoneNumber": zod.string(),
+  "amount": zod.number(),
+  "status": zod.string(),
+  "mpesaRef": zod.string().nullish(),
+  "externalRef": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const ListAdminPaymentsResponse = zod.array(ListAdminPaymentsResponseItem)
 
 
 /**
@@ -267,7 +325,9 @@ export const UpdateSettingsBody = zod.object({
   "name": zod.string(),
   "min": zod.number(),
   "max": zod.number().nullish()
-})).optional()
+})).optional(),
+  "sunpayEnabled": zod.string().optional(),
+  "sunpayApiKey": zod.string().optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
@@ -281,7 +341,9 @@ export const UpdateSettingsResponse = zod.object({
   "name": zod.string(),
   "min": zod.number(),
   "max": zod.number().nullish()
-})).optional()
+})).optional(),
+  "sunpayEnabled": zod.string().optional(),
+  "sunpayApiKey": zod.string().nullish()
 })
 
 

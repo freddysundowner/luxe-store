@@ -82,6 +82,9 @@ export interface StoreSettings {
   currency?: string;
   currencySymbol?: string;
   priceTiers?: PriceTier[];
+  sunpayEnabled?: string;
+  /** @nullable */
+  sunpayApiKey?: string | null;
 }
 
 export interface StoreSettingsInput {
@@ -92,6 +95,58 @@ export interface StoreSettingsInput {
   currency?: string;
   currencySymbol?: string;
   priceTiers?: PriceTier[];
+  sunpayEnabled?: string;
+  sunpayApiKey?: string;
+}
+
+export type PaymentInitiateBodyCartSnapshot = { [key: string]: unknown };
+
+export interface PaymentInitiateBody {
+  /** Customer phone in format 254XXXXXXXXX */
+  phoneNumber: string;
+  /** @minimum 1 */
+  amount: number;
+  externalRef?: string;
+  cartSnapshot?: PaymentInitiateBodyCartSnapshot;
+}
+
+export interface PaymentInitiateResponse {
+  success: boolean;
+  message?: string;
+  transactionId: string;
+  checkoutRequestId?: string;
+}
+
+export type PaymentStatusResponseStatus = typeof PaymentStatusResponseStatus[keyof typeof PaymentStatusResponseStatus];
+
+
+export const PaymentStatusResponseStatus = {
+  pending: 'pending',
+  completed: 'completed',
+  failed: 'failed',
+} as const;
+
+export interface PaymentStatusResponse {
+  id: string;
+  status: PaymentStatusResponseStatus;
+  amount: number;
+  phoneNumber: string;
+  /** @nullable */
+  mpesaRef?: string | null;
+  createdAt?: string;
+}
+
+export interface AdminPayment {
+  id: number;
+  transactionId: string;
+  phoneNumber: string;
+  amount: number;
+  status: string;
+  /** @nullable */
+  mpesaRef?: string | null;
+  /** @nullable */
+  externalRef?: string | null;
+  createdAt: string;
 }
 
 export interface AdminCredentials {

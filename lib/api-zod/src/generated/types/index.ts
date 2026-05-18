@@ -8,11 +8,17 @@
 
 export * from './adminAuthResult';
 export * from './adminCredentials';
+export * from './adminPayment';
 export * from './adminStats';
 export * from './category';
 export * from './categoryInput';
 export * from './healthStatus';
 export * from './listProductsParams';
+export * from './paymentInitiateBody';
+export * from './paymentInitiateBodyCartSnapshot';
+export * from './paymentInitiateResponse';
+export * from './paymentStatusResponse';
+export * from './paymentStatusResponseStatus';
 export * from './priceTier';
 export * from './product';
 export * from './productInput';
