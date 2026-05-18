@@ -5,6 +5,7 @@ import { useListProducts, getListProductsQueryKey, useGetCategory, getGetCategor
 import { ProductCard } from "@/components/ProductCard";
 import { Search, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Helmet } from "react-helmet-async";
 
 export default function CategoryPage() {
   const { id } = useParams();
@@ -35,6 +36,12 @@ export default function CategoryPage() {
 
   return (
     <RootLayout title={category?.name ?? "Category"} showBack searchBar={searchBar}>
+      <Helmet>
+        <title>{category ? `${category.name} — Luxe Store` : "Collection — Luxe Store"}</title>
+        <meta name="description" content={`Shop ${category?.name ?? "luxury"} products at Luxe Store. Curated selection with M-Pesa & WhatsApp checkout. Fast delivery in Kenya.`} />
+        <meta property="og:title" content={category ? `${category.name} — Luxe Store` : "Luxe Store Collection"} />
+        <meta property="og:type" content="website" />
+      </Helmet>
       {/* Mobile search */}
       <div className="md:hidden px-4 pt-4 pb-2 bg-[#0a0a0a] border-b border-zinc-900">
         {searchBar}

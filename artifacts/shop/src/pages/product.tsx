@@ -7,6 +7,7 @@ import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RelatedProducts } from "@/components/RelatedProducts";
+import { Helmet } from "react-helmet-async";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -63,8 +64,34 @@ export default function ProductDetail() {
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : null;
 
+  const priceFormatted = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(product.price);
+
   return (
     <RootLayout showBack noMarquee title={product.name}>
+      <Helmet>
+        <title>{product.name} — Luxe Store</title>
+        <meta name="description" content={product.description ? product.description.slice(0, 155) : `Shop ${product.name} at Luxe Store. ${priceFormatted}. M-Pesa & WhatsApp checkout.`} />
+        <meta property="og:title" content={`${product.name} — Luxe Store`} />
+        <meta property="og:description" content={product.description || `${product.name} — ${priceFormatted}`} />
+        {product.imageUrl && <meta property="og:image" content={product.imageUrl} />}
+        <meta property="og:type" content="product" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          "name": product.name,
+          "description": product.description || undefined,
+          "image": product.imageUrl || undefined,
+          "offers": {
+            "@type": "Offer",
+            "priceCurrency": "KES",
+            "price": product.price,
+            "availability": product.inStock
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+            "seller": { "@type": "Organization", "name": "Luxe Store" },
+          },
+        })}</script>
+      </Helmet>
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-20">
           <div className="relative bg-zinc-900 overflow-hidden aspect-square lg:aspect-auto lg:min-h-[560px]">

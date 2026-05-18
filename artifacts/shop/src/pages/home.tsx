@@ -19,6 +19,7 @@ import { useFavorites } from "@/lib/favorites-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Helmet } from "react-helmet-async";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
@@ -321,12 +322,11 @@ export default function Home() {
       return next;
     });
   };
-  const [isMobile, setIsMobile] = useState(() =>
-    typeof window !== "undefined" ? window.innerWidth < 768 : false
-  );
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
+    check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
@@ -396,6 +396,12 @@ export default function Home() {
   if (isMobile) {
     return (
       <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 100 }}>
+        <Helmet>
+          <title>Luxe Store — Curated Luxury Collection</title>
+          <meta name="description" content="Shop curated luxury products at Luxe Store. Electronics, clothing, home & kitchen and more. M-Pesa & WhatsApp checkout. Fast delivery in Kenya." />
+          <meta property="og:title" content="Luxe Store — Curated Luxury Collection" />
+          <meta property="og:type" content="website" />
+        </Helmet>
         <TikTokFeed products={displayProducts} isLoading={isLoading} topOffset={12} />
       </div>
     );
@@ -403,6 +409,21 @@ export default function Home() {
 
   return (
     <div className="fixed inset-0 bg-[#0a0a0a] flex flex-col" style={{ zIndex: 100 }}>
+      <Helmet>
+        <title>Luxe Store — Curated Luxury Collection</title>
+        <meta name="description" content="Shop curated luxury products at Luxe Store. Electronics, clothing, home & kitchen and more. M-Pesa & WhatsApp checkout. Fast delivery in Kenya." />
+        <meta property="og:title" content="Luxe Store — Curated Luxury Collection" />
+        <meta property="og:type" content="website" />
+        <script type="application/ld+json">{JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Store",
+          "name": "Luxe Store",
+          "description": "Curated luxury products with M-Pesa & WhatsApp checkout. Fast delivery in Kenya.",
+          "currenciesAccepted": "KES",
+          "paymentAccepted": "M-Pesa, WhatsApp",
+          "areaServed": "KE",
+        })}</script>
+      </Helmet>
       {/* Floating top-right pills */}
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
         <Link

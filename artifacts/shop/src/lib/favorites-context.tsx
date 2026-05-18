@@ -12,6 +12,7 @@ const FavoritesContext = createContext<FavoritesContextType | undefined>(undefin
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<Product[]>(() => {
+    if (typeof window === "undefined") return [];
     try {
       const saved = localStorage.getItem("favorites");
       if (saved) return JSON.parse(saved);

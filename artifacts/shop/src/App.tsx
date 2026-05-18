@@ -41,10 +41,10 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/favorites" component={Favorites} />
       <Route path="/gift/:id" component={GiftPage} />
-      
+
       {/* Admin Auth */}
       <Route path="/admin" component={AdminLogin} />
-      
+
       {/* Admin Protected Routes */}
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/products" component={AdminProducts} />
@@ -52,24 +52,35 @@ function Router() {
       <Route path="/admin/products/:id/edit" component={AdminProductForm} />
       <Route path="/admin/categories" component={AdminCategories} />
       <Route path="/admin/settings" component={AdminSettings} />
-      
+
       {/* Fallback */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
-function App() {
+interface AppProps {
+  ssrUrl?: string;
+}
+
+function App({ ssrUrl }: AppProps) {
+  const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+  const locationHook =
+    ssrUrl !== undefined
+      ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (() => [ssrUrl, () => {}] as any)
+      : undefined;
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CartProvider>
           <FavoritesProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-            <GiftFinder />
-            <CartDrawer />
-          </WouterRouter>
+            <WouterRouter base={base} hook={locationHook}>
+              <Router />
+              <GiftFinder />
+              <CartDrawer />
+            </WouterRouter>
           </FavoritesProvider>
         </CartProvider>
         <Toaster />
