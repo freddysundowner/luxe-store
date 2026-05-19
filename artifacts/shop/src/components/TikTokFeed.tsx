@@ -307,11 +307,11 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
       >
         <CardBg product={current} />
 
-        {/* Top bar: image indicators (left), drop icon (center, reveals when
-            progress completes), filter button (right) */}
+        {/* Top bar: image indicators (left), drop icon (absolutely centered so
+            its position never depends on the indicators), filter button (right) */}
         <div className="absolute left-4 right-4 z-10 flex items-center justify-between gap-3" style={{ top: `${topOffset}px` }}>
           {/* Image indicators — one dot per image of the current product */}
-          <div className="flex gap-1 flex-1 max-w-[40%]">
+          <div className="flex gap-1 flex-1">
             {Array.from({ length: imageCount }).map((_, i) => (
               <span
                 key={i}
@@ -321,26 +321,29 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
             ))}
           </div>
 
-          {/* Drop icon — fades in once progress bar completes */}
-          <div
-            className="w-9 h-9 rounded-full bg-black/60 border border-[#D4AF37]/40 flex items-center justify-center transition-opacity duration-500 pointer-events-none"
-            style={{
-              opacity: progressDone ? 1 : 0,
-              boxShadow: progressDone ? "0 0 12px rgba(212,175,55,0.25)" : "none",
-            }}
-            aria-hidden={!progressDone}
-          >
-            <Droplets className="w-5 h-5" style={{ animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }} />
-          </div>
-
           {/* Filter button → opens bottom sheet */}
           <button
             onClick={() => onOpenFilters?.()}
             aria-label="Filters"
-            className="w-9 h-9 rounded-full bg-black/60 border border-white/15 flex items-center justify-center hover:border-[#D4AF37]/60 transition-colors"
+            className="w-9 h-9 rounded-full bg-black/60 border border-white/15 flex items-center justify-center hover:border-[#D4AF37]/60 transition-colors shrink-0"
           >
             <SlidersHorizontal className="w-4 h-4 text-white" />
           </button>
+        </div>
+
+        {/* Drop icon — absolutely centered at the top, independent of the
+            indicators / filter button on either side. Fades in once the
+            progress bar completes. */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-black/60 border border-[#D4AF37]/40 flex items-center justify-center transition-opacity duration-500 pointer-events-none"
+          style={{
+            top: `${topOffset - 4}px`,
+            opacity: progressDone ? 1 : 0,
+            boxShadow: progressDone ? "0 0 12px rgba(212,175,55,0.25)" : "none",
+          }}
+          aria-hidden={!progressDone}
+        >
+          <Droplets className="w-5 h-5" style={{ animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }} />
         </div>
 
         {/* Thin gold progress bar — fills left→right over PROGRESS_DURATION_MS,
