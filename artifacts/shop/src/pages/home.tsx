@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import {
   Search, Sparkles, X, Gift, Heart, ShoppingBag, RefreshCw,
@@ -30,8 +30,6 @@ const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES",
 
 function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: () => void }) {
   const [index, setIndex] = useState(0);
-  const [isFading, setIsFading] = useState(false);
-  const [touchStartY, setTouchStartY] = useState(0);
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
   const [giftRecipient, setGiftRecipient] = useState("");
   const [giftNote, setGiftNote] = useState("");
@@ -40,48 +38,175 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
   const [giftLink, setGiftLink] = useState("");
   const { toast } = useToast();
   const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
+  const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const { toggleFavorite, isFavorite } = useFavorites();
+
+  // TikTok-style drag/swipe state. `dragOffset` follows the pointer/touch in
+  // real-time (px). `slideDir` says which neighbour to render off-screen so it
+  // glides in alongside the current card. `isAnimating` enables the snap/
+  // complete CSS transition.
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [vh, setVh] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [slideDir, setSlideDir] = useState<"up" | "down" | null>(null);
+  const dragStartY = useRef(0);
+  const liveOffset = useRef(0);
+  const isDragging = useRef(false);
+
+  // Measure the container height so swipes snap a full card distance, no
+  // matter the desktop layout. Re-measure on window resize.
+  useEffect(() => {
+    const measure = () => {
+      if (containerRef.current) setVh(containerRef.current.clientHeight);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, []);
 
   const featured = useMemo(() => products, [products]);
 
   const current = featured.length > 0 ? featured[index] : null;
 
-  const navigate = useCallback(
-    (dir: "up" | "down") => {
-      if (isFading || featured.length < 2) return;
-      setIsFading(true);
+  // Complete a slide programmatically (keyboard / wheel / tap). Mirrors the
+  // mobile TikTokFeed `triggerSlide` so wheel + keyboard feel identical to
+  // a real swipe — the card actually translates instead of crossfading.
+  const triggerSlide = useCallback((dir: "up" | "down") => {
+    if (isAnimating || featured.length < 2 || vh === 0) return;
+    setSlideDir(dir);
+    setIsAnimating(true);
+    setDragOffset(0);
+    requestAnimationFrame(() => {
+      setDragOffset(dir === "up" ? -vh : vh);
       setTimeout(() => {
         setIndex((i) =>
-          dir === "down" ? (i + 1) % featured.length : (i - 1 + featured.length) % featured.length
+          dir === "up" ? (i + 1) % featured.length : (i - 1 + featured.length) % featured.length
         );
-        setIsFading(false);
-      }, 150);
-    },
-    [isFading, featured.length]
-  );
+        setDragOffset(0);
+        setIsAnimating(false);
+        setSlideDir(null);
+        liveOffset.current = 0;
+      }, 300);
+    });
+  }, [isAnimating, featured.length, vh]);
 
-  // Keyboard ↑ ↓
+  // Keyboard ↑ ↓ — gated so it doesn't fight typing in modals or move the
+  // feed while the gift sheet / quick-buy / share dialog is open.
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "ArrowUp") navigate("up");
-      if (e.key === "ArrowDown") navigate("down");
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      // Block while any overlay-style flow is active.
+      if (giftProduct || quickBuyProduct || shareTarget) return;
+      // Block while typing in an editable field.
+      const t = document.activeElement as HTMLElement | null;
+      if (t) {
+        const tag = t.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
+      }
+      triggerSlide(e.key === "ArrowUp" ? "down" : "up");
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [navigate]);
+  }, [triggerSlide, giftProduct, quickBuyProduct, shareTarget]);
 
-  // Mouse wheel
+  // Mouse wheel — single slide per detent with a short cooldown so trackpad
+  // inertia doesn't blast through the catalogue.
+  const wheelCooldown = useRef(false);
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (isAnimating || wheelCooldown.current) return;
+    if (Math.abs(e.deltaY) < 20) return;
+    triggerSlide(e.deltaY > 0 ? "up" : "down");
+    wheelCooldown.current = true;
+    setTimeout(() => { wheelCooldown.current = false; }, 600);
+  }, [isAnimating, triggerSlide]);
+
+  // ── Touch drag (live) ──
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isAnimating) return;
+    dragStartY.current = e.touches[0].clientY;
+    liveOffset.current = 0;
+    isDragging.current = true;
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isAnimating || !isDragging.current) return;
+    const diff = e.touches[0].clientY - dragStartY.current;
+    liveOffset.current = diff;
+    setDragOffset(diff);
+    setSlideDir(diff < 0 ? "up" : diff > 0 ? "down" : null);
+  };
+  const endDrag = () => {
+    if (!isDragging.current) return;
+    isDragging.current = false;
+    if (isAnimating) return;
+    const offset = liveOffset.current;
+    const threshold = (vh || 600) * 0.22;
+    if (Math.abs(offset) > threshold && featured.length > 1) {
+      const dir = offset < 0 ? "up" : "down";
+      setIsAnimating(true);
+      setDragOffset(dir === "up" ? -vh : vh);
+      setTimeout(() => {
+        setIndex((i) =>
+          dir === "up" ? (i + 1) % featured.length : (i - 1 + featured.length) % featured.length
+        );
+        setDragOffset(0);
+        setIsAnimating(false);
+        setSlideDir(null);
+        liveOffset.current = 0;
+      }, 280);
+      return;
+    }
+    // Snap back to centre
+    setIsAnimating(true);
+    setDragOffset(0);
+    setTimeout(() => {
+      setIsAnimating(false);
+      setSlideDir(null);
+      liveOffset.current = 0;
+    }, 240);
+  };
+
+  // ── Mouse drag (click-and-drag on desktop) ──
+  // Stash the active listeners in refs so we can always tear them down — both
+  // on the normal mouseup *and* if the component unmounts mid-drag.
+  const mouseMoveRef = useRef<((ev: MouseEvent) => void) | null>(null);
+  const mouseUpRef = useRef<(() => void) | null>(null);
   useEffect(() => {
-    const el = document.getElementById("featured-swiper");
-    if (!el) return;
-    const handler = (e: WheelEvent) => {
-      e.preventDefault();
-      navigate(e.deltaY > 0 ? "down" : "up");
+    return () => {
+      if (mouseMoveRef.current) window.removeEventListener("mousemove", mouseMoveRef.current);
+      if (mouseUpRef.current) window.removeEventListener("mouseup", mouseUpRef.current);
+      mouseMoveRef.current = null;
+      mouseUpRef.current = null;
     };
-    el.addEventListener("wheel", handler, { passive: false });
-    return () => el.removeEventListener("wheel", handler);
-  }, [navigate]);
+  }, []);
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isAnimating) return;
+    // Don't hijack drags that start on interactive elements (buttons, links).
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, input, textarea")) return;
+    dragStartY.current = e.clientY;
+    liveOffset.current = 0;
+    isDragging.current = true;
+    const onMove = (ev: MouseEvent) => {
+      if (!isDragging.current) return;
+      const diff = ev.clientY - dragStartY.current;
+      liveOffset.current = diff;
+      setDragOffset(diff);
+      setSlideDir(diff < 0 ? "up" : diff > 0 ? "down" : null);
+    };
+    const onUp = () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      mouseMoveRef.current = null;
+      mouseUpRef.current = null;
+      endDrag();
+    };
+    mouseMoveRef.current = onMove;
+    mouseUpRef.current = onUp;
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
 
   const createGiftMutation = useCreateGift({
     mutation: {
@@ -156,8 +281,6 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
     import("@/lib/gift-finder-trigger").then(m => m.triggerGiftFinder());
   };
 
-  const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
-
   const handleShare = (product: Product) => {
     const url = `${window.location.origin}/product/${product.id}`;
     // On touch devices use the native share sheet (better UX, supports more apps).
@@ -182,163 +305,207 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
     );
   }
 
+  // The card that slides in alongside the current one during a swipe.
+  // `slideDir==="up"` means user is swiping the card upward → the *next*
+  // product appears from below. `"down"` → the previous one appears from
+  // above. Wrap around to mirror the existing crossfade behaviour.
+  const adjacentIndex = slideDir === "up"
+    ? (index + 1) % featured.length
+    : slideDir === "down"
+    ? (index - 1 + featured.length) % featured.length
+    : null;
+  const adjacentProduct = adjacentIndex !== null ? featured[adjacentIndex] : null;
+  const adjacentBase = slideDir === "up" ? vh : -vh;
+  const transition = isAnimating ? "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)" : "none";
+
+  // Per-card visuals (image background + drop icon + right rail + bottom
+  // info panel). Inactive cards (the one sliding in behind/ahead) get
+  // no-op interactions so a half-drag doesn't trigger purchases or shares.
+  const renderCardContent = (p: Product, isActive: boolean) => {
+    const fav = isActive && isFavorite(p.id);
+    const isSoldOut = isProductSoldOut(p);
+    return (
+      <>
+        {/* Full-height image + scrim */}
+        <div className="absolute inset-0">
+          {p.imageUrl ? (
+            <img
+              key={p.id}
+              src={p.imageUrl}
+              alt={p.name}
+              draggable={false}
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
+              <ShoppingBag className="w-14 h-14 text-zinc-700" />
+            </div>
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/10 to-transparent pointer-events-none" />
+        </div>
+
+        {/* Top label — doubles as Save/Favorite toggle (active card only). */}
+        <div className="absolute top-3 left-0 right-0 flex justify-center z-10">
+          <button
+            type="button"
+            onClick={isActive ? () => {
+              const wasFavorited = fav;
+              toggleFavorite(p);
+              toast({
+                title: wasFavorited ? "Removed from saved" : "Saved!",
+                description: p.name,
+                duration: 1500,
+              });
+            } : undefined}
+            aria-label={fav ? "Remove from saved" : "Save to favorites"}
+            aria-pressed={fav}
+            tabIndex={isActive ? 0 : -1}
+            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
+              fav
+                ? "bg-[#D4AF37]/25 border border-[#D4AF37]"
+                : "bg-black/60 border border-[#D4AF37]/40 hover:border-[#D4AF37]/80"
+            }`}
+            style={{ boxShadow: "0 0 12px rgba(212,175,55,0.25)" }}
+          >
+            <Droplets
+              className={`w-6 h-6 transition-transform duration-300 ${fav ? "scale-110" : ""}`}
+              style={
+                fav
+                  ? { color: "#D4AF37", fill: "#D4AF37", filter: "drop-shadow(0 0 6px rgba(212,175,55,0.7))" }
+                  : { animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }
+              }
+            />
+          </button>
+        </div>
+
+        {/* Action buttons */}
+        <div
+          className="absolute right-4 z-10 flex flex-col gap-3.5"
+          style={{ bottom: "170px", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }}
+        >
+          <button onClick={isActive ? () => openGiftSheet(p) : undefined} className="flex flex-col items-center gap-1">
+            <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/70 ring-1 ring-black/30 flex items-center justify-center shadow-lg transition-all hover:bg-[#D4AF37]/25">
+              <Gift className="w-4 h-4 text-[#D4AF37]" />
+            </div>
+            <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Gift</span>
+          </button>
+          <Link href={isActive ? `/product/${p.id}` : "#"} className="flex flex-col items-center gap-1">
+            <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/60 transition-colors">
+              <MessageCircle className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>View</span>
+          </Link>
+          <button onClick={isActive ? () => handleShare(p) : undefined} className="flex flex-col items-center gap-1">
+            <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/60 transition-colors">
+              <Share2 className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Share</span>
+          </button>
+        </div>
+
+        {/* Product info overlay */}
+        <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
+          <Link href={`/product/${p.id}`}>
+            <h2 className="text-xl font-light uppercase tracking-wide hover:text-[#D4AF37] transition-colors cursor-pointer leading-snug">
+              {p.name}
+            </h2>
+          </Link>
+          {p.categoryName && (
+            <p className="text-[9px] uppercase tracking-wider text-[#D4AF37]/70 mt-0.5 mb-2">
+              {p.categoryName}
+            </p>
+          )}
+          <div className="flex items-baseline gap-3 mb-4">
+            <span className="text-2xl text-[#D4AF37] font-light">{fmt.format(p.price)}</span>
+            {p.originalPrice != null && p.originalPrice > p.price && (
+              <span className="text-zinc-600 line-through text-sm">
+                {fmt.format(p.originalPrice)}
+              </span>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={isActive && !isSoldOut ? () => handleCart(p) : undefined}
+              disabled={isSoldOut}
+              className={`flex-[3] py-3 text-xs uppercase tracking-widest font-semibold transition-colors ${
+                isSoldOut
+                  ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+                  : "bg-[#D4AF37] text-black hover:bg-white"
+              }`}
+            >
+              {isSoldOut ? "Sold Out" : "Buy Now →"}
+            </button>
+            <button
+              onClick={isActive ? handleGift : undefined}
+              className="gift-glow-btn flex-[2] py-3 text-[9px] uppercase tracking-widest font-semibold bg-black border border-[#D4AF37]/70 text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center justify-center gap-1"
+            >
+              <Sparkles className="w-3 h-3 shrink-0" />
+              Find a Gift
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  };
+
   return (
     <div
+      ref={containerRef}
       id="featured-swiper"
-      className="flex-1 relative overflow-hidden bg-black select-none"
+      className="flex-1 relative overflow-hidden bg-black select-none cursor-grab active:cursor-grabbing"
       style={{ touchAction: "none" }}
-      onTouchStart={(e) => setTouchStartY(e.touches[0].clientY)}
-      onTouchEnd={(e) => {
-        const diff = touchStartY - e.changedTouches[0].clientY;
-        if (Math.abs(diff) > 45) navigate(diff > 0 ? "down" : "up");
-      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={endDrag}
+      onTouchCancel={endDrag}
+      onMouseDown={handleMouseDown}
+      onWheel={handleWheel}
     >
-      {/* Full-height image */}
-      <div
-        className="absolute inset-0 transition-opacity duration-150"
-        style={{ opacity: isFading ? 0 : 1 }}
-      >
-        {current.imageUrl ? (
-          <img
-            key={current.id}
-            src={current.imageUrl}
-            alt={current.name}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
-            <ShoppingBag className="w-14 h-14 text-zinc-700" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/10 to-transparent" />
-      </div>
+      <style>{`
+        @keyframes gift-glow {
+          0%, 100% { box-shadow: 0 0 6px rgba(212,175,55,0.3), inset 0 0 6px rgba(212,175,55,0.05); }
+          50% { box-shadow: 0 0 18px rgba(212,175,55,0.65), inset 0 0 10px rgba(212,175,55,0.1); }
+        }
+        .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
+        @keyframes goldShimmer {
+          0%, 100% { color: #D4AF37; filter: drop-shadow(0 0 3px rgba(212,175,55,0.4)); opacity: 0.85; }
+          50% { color: #f5e27a; filter: drop-shadow(0 0 8px rgba(245,226,122,0.9)); opacity: 1; }
+        }
+      `}</style>
 
-      {/* Top label — doubles as Save/Favorite toggle for the current product. */}
-      <div className="absolute top-3 left-0 right-0 flex justify-center z-10">
-        {current && (() => {
-          const fav = isFavorite(current.id);
-          return (
-            <button
-              type="button"
-              onClick={() => {
-                const wasFavorited = fav;
-                toggleFavorite(current);
-                toast({
-                  title: wasFavorited ? "Removed from saved" : "Saved!",
-                  description: current.name,
-                  duration: 1500,
-                });
-              }}
-              aria-label={fav ? "Remove from saved" : "Save to favorites"}
-              aria-pressed={fav}
-              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
-                fav
-                  ? "bg-[#D4AF37]/25 border border-[#D4AF37]"
-                  : "bg-black/60 border border-[#D4AF37]/40 hover:border-[#D4AF37]/80"
-              }`}
-              style={{ boxShadow: "0 0 12px rgba(212,175,55,0.25)" }}
-            >
-              <Droplets
-                className={`w-6 h-6 transition-transform duration-300 ${fav ? "scale-110" : ""}`}
-                style={
-                  fav
-                    ? { color: "#D4AF37", fill: "#D4AF37", filter: "drop-shadow(0 0 6px rgba(212,175,55,0.7))" }
-                    : { animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }
-                }
-              />
-            </button>
-          );
-        })()}
-      </div>
-
-
-      {/* Action buttons */}
-      <div
-        className="absolute right-4 z-10 flex flex-col gap-3.5"
-        style={{ bottom: "170px", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }}
-      >
-        <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-1">
-          <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/70 ring-1 ring-black/30 flex items-center justify-center shadow-lg transition-all hover:bg-[#D4AF37]/25">
-            <Gift className="w-4 h-4 text-[#D4AF37]" />
-          </div>
-          <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Gift</span>
-        </button>
-        <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-1">
-          <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/60 transition-colors">
-            <MessageCircle className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>View</span>
-        </Link>
-        <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-1">
-          <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/60 transition-colors">
-            <Share2 className="w-4 h-4 text-white" />
-          </div>
-          <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Share</span>
-        </button>
-      </div>
-
-      {/* Product info overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-        <Link href={`/product/${current.id}`}>
-          <h2 className="text-xl font-light uppercase tracking-wide hover:text-[#D4AF37] transition-colors cursor-pointer leading-snug">
-            {current.name}
-          </h2>
-        </Link>
-        {current.categoryName && (
-          <p className="text-[9px] uppercase tracking-wider text-[#D4AF37]/70 mt-0.5 mb-2">
-            {current.categoryName}
-          </p>
-        )}
-        <div className="flex items-baseline gap-3 mb-4">
-          <span className="text-2xl text-[#D4AF37] font-light">{fmt.format(current.price)}</span>
-          {current.originalPrice != null && current.originalPrice > current.price && (
-            <span className="text-zinc-600 line-through text-sm">
-              {fmt.format(current.originalPrice)}
-            </span>
-          )}
+      {/* Adjacent card (slides in alongside the current one). Inert by
+          design — pointer-events disabled so partial drags can't tap through
+          to the off-screen card's buttons or links. */}
+      {adjacentProduct && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            transform: `translateY(${adjacentBase + dragOffset}px)`,
+            transition,
+            willChange: "transform",
+          }}
+        >
+          {renderCardContent(adjacentProduct, false)}
         </div>
-        <style>{`
-          @keyframes gift-glow {
-            0%, 100% { box-shadow: 0 0 6px rgba(212,175,55,0.3), inset 0 0 6px rgba(212,175,55,0.05); }
-            50% { box-shadow: 0 0 18px rgba(212,175,55,0.65), inset 0 0 10px rgba(212,175,55,0.1); }
-          }
-          .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
-          @keyframes goldShimmer {
-            0%, 100% { color: #D4AF37; filter: drop-shadow(0 0 3px rgba(212,175,55,0.4)); opacity: 0.85; }
-            50% { color: #f5e27a; filter: drop-shadow(0 0 8px rgba(245,226,122,0.9)); opacity: 1; }
-          }
-        `}</style>
-        {(() => {
-          const isSoldOut = isProductSoldOut(current);
-          return (
-        <div className="flex gap-2">
-          <button
-            onClick={isSoldOut ? undefined : () => handleCart(current)}
-            disabled={isSoldOut}
-            className={`flex-[3] py-3 text-xs uppercase tracking-widest font-semibold transition-colors ${
-              isSoldOut
-                ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-                : "bg-[#D4AF37] text-black hover:bg-white"
-            }`}
-          >
-            {isSoldOut ? "Sold Out" : "Buy Now →"}
-          </button>
-          <button
-            onClick={handleGift}
-            className="gift-glow-btn flex-[2] py-3 text-[9px] uppercase tracking-widest font-semibold bg-black border border-[#D4AF37]/70 text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center justify-center gap-1"
-          >
-            <Sparkles className="w-3 h-3 shrink-0" />
-            Find a Gift
-          </button>
-        </div>
-          );
-        })()}
+      )}
+
+      {/* Current card */}
+      <div
+        className="absolute inset-0"
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition,
+          willChange: "transform",
+        }}
+      >
+        {renderCardContent(current, true)}
       </div>
 
       {/* Scroll hint */}
       <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-1 z-20 pointer-events-none">
         <span className="text-[8px] text-zinc-700 tracking-widest uppercase">
-          scroll · ↑ ↓ keyboard
+          drag · scroll · ↑ ↓ keyboard
         </span>
       </div>
 
