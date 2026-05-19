@@ -157,19 +157,20 @@ INTERNAL_API_URL="http://127.0.0.1:${API_PORT}"
 API_PORT="${API_PORT}"
 SHOP_PORT="${SHOP_PORT}"
 
-# --- Fill these in (or leave blank to disable that integration) -----------
-WHATSAPP_NUMBER=""
-SUNPAY_API_KEY=""
-SUNPAY_CONSUMER_KEY=""
-SUNPAY_CONSUMER_SECRET=""
-SUNPAY_SHORTCODE=""
-SUNPAY_PASSKEY=""
-BREVO_API_KEY=""
-BREVO_SENDER_EMAIL=""
-BREVO_SENDER_NAME="Luxe Store"
-SALES_NOTIFICATION_EMAIL=""
+# Admin password for the /admin login (change this!)
+ADMIN_PASSWORD="admin123"
+
+# Log verbosity for the API server (trace|debug|info|warn|error)
+LOG_LEVEL="info"
+
+# --- AI Concierge -----------------------------------------------------------
+# Fill in ONE of these. ANTHROPIC_API_KEY is what the code reads.
+# Leave blank to disable the AI gift advisor entirely.
 ANTHROPIC_API_KEY=""
-OPENAI_API_KEY=""
+
+# NOTE: Brevo (email), SunPay (M-Pesa) and the WhatsApp number are configured
+# from the admin Settings page in the shop — they are stored in the database,
+# not here. No need to set them in this file.
 ENV
   chown "${APP_USER}:${APP_USER}" "$ENV_FILE"
   chmod 600 "$ENV_FILE"
