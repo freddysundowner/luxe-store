@@ -148,6 +148,7 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
     // variant + quantity (if needed) and goes straight to the customer-info
     // checkout step on confirm. The dialog itself handles adding to cart, so
     // we don't mark the button as "added" here.
+    console.log("[QuickBuy] Buy Now clicked for", product.name, product.id);
     setQuickBuyProduct(product);
   };
 
