@@ -2,7 +2,7 @@ import { useParams, Link } from "wouter";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { useGetProduct, getGetProductQueryKey, ProductVariant } from "@workspace/api-client-react";
 import { ShoppingBag, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -148,6 +148,14 @@ export default function ProductDetail() {
           />
 
           <div className="mt-8 lg:mt-0 flex flex-col">
+            {gallery.length > 1 && (
+              <GalleryProgressBar
+                count={gallery.length}
+                activeIdx={Math.min(activeImageIdx, gallery.length - 1)}
+                durationMs={4000}
+                onComplete={() => setActiveImageIdx((i) => (i + 1) % gallery.length)}
+              />
+            )}
             {product.categoryName && (
               <span className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">{product.categoryName}</span>
             )}
@@ -317,14 +325,6 @@ function ProductGallery({ images, activeIdx, onChange, name, soldOut, featured, 
             >
               <ChevronRight className="w-5 h-5" />
             </button>
-            <div className="lg:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-              {images.map((_, i) => (
-                <span
-                  key={i}
-                  className={`h-1.5 rounded-full transition-all ${i === activeIdx ? "w-5 bg-[#D4AF37]" : "w-1.5 bg-white/40"}`}
-                />
-              ))}
-            </div>
           </>
         )}
       </div>
@@ -346,6 +346,64 @@ function ProductGallery({ images, activeIdx, onChange, name, soldOut, featured, 
           ))}
         </div>
       )}
+    </div>
+  );
+}
+
+interface GalleryProgressBarProps {
+  count: number;
+  activeIdx: number;
+  durationMs: number;
+  onComplete: () => void;
+}
+
+// Instagram-Stories style segmented progress bar. Each segment fills left to
+// right over `durationMs`; when the active segment finishes, `onComplete`
+// advances the gallery. The timer resets whenever `activeIdx` changes (e.g.
+// the user taps a chevron or swipes), so manual navigation always restarts
+// the current segment from zero.
+function GalleryProgressBar({ count, activeIdx, durationMs, onComplete }: GalleryProgressBarProps) {
+  const [progress, setProgress] = useState(0);
+  // Keep the latest onComplete in a ref so the timer effect below doesn't
+  // restart on every parent render (which would otherwise reset progress
+  // to zero before any segment could finish).
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => { onCompleteRef.current = onComplete; }, [onComplete]);
+
+  useEffect(() => {
+    setProgress(0);
+    let fired = false;
+    const start = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / durationMs);
+      setProgress(p);
+      if (p >= 1) {
+        if (!fired) {
+          fired = true;
+          onCompleteRef.current();
+        }
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [activeIdx, count, durationMs]);
+
+  return (
+    <div className="flex justify-center gap-1.5 mb-4 px-1" aria-hidden>
+      {Array.from({ length: count }).map((_, i) => {
+        const fill = i < activeIdx ? 1 : i === activeIdx ? progress : 0;
+        return (
+          <div key={i} className="relative h-0.5 flex-1 max-w-16 bg-white/15 rounded-full overflow-hidden">
+            <div
+              className="absolute inset-y-0 left-0 bg-[#D4AF37] rounded-full"
+              style={{ width: `${fill * 100}%` }}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
