@@ -794,6 +794,10 @@ components:
         createdAt:
           type: ["string", "null"]
           format: date-time
+        updatedAt:
+          type: ["string", "null"]
+          format: date-time
+          description: "Last time the product row was modified. Sort key for the admin table."
 
     ProductInput:
       type: object

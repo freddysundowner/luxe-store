@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, and, ilike, inArray, asc } from "drizzle-orm";
+import { eq, and, ilike, inArray, asc, desc } from "drizzle-orm";
 import { db, productsTable, productVariantsTable, categoriesTable } from "@workspace/db";
 import type { BundleItem, ProductKind } from "@workspace/db";
 import { getHamperReservations } from "./hampers";
@@ -56,6 +56,7 @@ const productSelect = {
   kind: productsTable.kind,
   bundleItems: productsTable.bundleItems,
   createdAt: productsTable.createdAt,
+  updatedAt: productsTable.updatedAt,
   categoryName: categoriesTable.name,
 } as const;
 
@@ -123,6 +124,7 @@ interface ProductRow {
   kind: ProductKind;
   bundleItems: BundleItem[];
   createdAt: Date;
+  updatedAt: Date;
   categoryName: string | null;
 }
 
@@ -172,6 +174,7 @@ function mapRow(
     bundleItems: row.bundleItems ?? [],
     bundleProducts,
     createdAt: row.createdAt.toISOString(),
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 
@@ -398,11 +401,13 @@ router.get("/products/:id", async (req, res): Promise<void> => {
 });
 
 router.get("/admin/products", async (_req, res): Promise<void> => {
+  // Default to most-recently-updated first so admins see whatever they just
+  // edited at the top of the table.
   const rows = (await db
     .select(productSelect)
     .from(productsTable)
     .leftJoin(categoriesTable, eq(categoriesTable.id, productsTable.categoryId))
-    .orderBy(productsTable.createdAt)) as ProductRow[];
+    .orderBy(desc(productsTable.updatedAt))) as ProductRow[];
 
   const variantMap = await fetchVariantsByProductIds(rows.map((r) => r.id));
   const [bundleProductsMap, bundleInStockMap] = await Promise.all([

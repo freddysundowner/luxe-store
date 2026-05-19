@@ -170,6 +170,11 @@ export interface Product {
   bundleProducts?: BundleProductSummary[] | null;
   /** @nullable */
   createdAt?: string | null;
+  /**
+     * Last time the product row was modified. Sort key for the admin table.
+     * @nullable
+     */
+  updatedAt?: string | null;
 }
 
 /**

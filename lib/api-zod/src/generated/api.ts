@@ -156,7 +156,8 @@ export const ListProductsResponseItem = zod.object({
   "imageUrl": zod.string().nullish(),
   "quantity": zod.number().min(1)
 }).describe('Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.')).nullish().describe('When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.'),
-  "createdAt": zod.coerce.date().nullish()
+  "createdAt": zod.coerce.date().nullish(),
+  "updatedAt": zod.coerce.date().nullish().describe('Last time the product row was modified. Sort key for the admin table.')
 })
 export const ListProductsResponse = zod.array(ListProductsResponseItem)
 
@@ -223,7 +224,8 @@ export const GetProductResponse = zod.object({
   "imageUrl": zod.string().nullish(),
   "quantity": zod.number().min(1)
 }).describe('Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.')).nullish().describe('When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.'),
-  "createdAt": zod.coerce.date().nullish()
+  "createdAt": zod.coerce.date().nullish(),
+  "updatedAt": zod.coerce.date().nullish().describe('Last time the product row was modified. Sort key for the admin table.')
 })
 
 
@@ -285,7 +287,8 @@ export const ListAdminProductsResponseItem = zod.object({
   "imageUrl": zod.string().nullish(),
   "quantity": zod.number().min(1)
 }).describe('Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.')).nullish().describe('When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.'),
-  "createdAt": zod.coerce.date().nullish()
+  "createdAt": zod.coerce.date().nullish(),
+  "updatedAt": zod.coerce.date().nullish().describe('Last time the product row was modified. Sort key for the admin table.')
 })
 export const ListAdminProductsResponse = zod.array(ListAdminProductsResponseItem)
 
@@ -462,7 +465,8 @@ export const UpdateProductResponse = zod.object({
   "imageUrl": zod.string().nullish(),
   "quantity": zod.number().min(1)
 }).describe('Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.')).nullish().describe('When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.'),
-  "createdAt": zod.coerce.date().nullish()
+  "createdAt": zod.coerce.date().nullish(),
+  "updatedAt": zod.coerce.date().nullish().describe('Last time the product row was modified. Sort key for the admin table.')
 })
 
 
