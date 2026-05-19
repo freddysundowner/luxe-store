@@ -193,6 +193,7 @@ export default function ProductForm() {
                   <FormItem>
                     <FormLabel>Category <span className="text-destructive">*</span></FormLabel>
                     <Select
+                      key={field.value ?? "none"}
                       onValueChange={(val) => field.onChange(parseInt(val, 10))}
                       value={field.value ? field.value.toString() : ""}
                     >
