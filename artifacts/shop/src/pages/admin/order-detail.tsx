@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import { ReceiptCard } from "@/components/ReceiptCard";
 import {
   ShoppingBag, Phone, CheckCircle2, Clock, XCircle,
   Hash, Package, CreditCard, Calendar, RefreshCw,
@@ -275,11 +276,20 @@ export default function AdminOrderDetail() {
               Receipt — {order.externalRef ?? order.transactionId.slice(0, 20) + "…"}
             </DialogTitle>
           </DialogHeader>
-          <div className="h-[70vh]">
-            <iframe
-              src={receiptUrl}
-              className="w-full h-full border-0"
-              title="Order Receipt"
+          <div className="max-h-[75vh] overflow-y-auto">
+            <ReceiptCard
+              storeName={settings?.storeName ?? "Store"}
+              storeLogoUrl={settings?.logoUrl}
+              currencySymbol={settings?.currencySymbol ?? "KSh"}
+              status={order.status}
+              amount={order.amount}
+              phoneNumber={order.phoneNumber}
+              transactionId={order.transactionId}
+              externalRef={order.externalRef}
+              mpesaRef={order.mpesaRef}
+              createdAt={order.createdAt}
+              cartSnapshot={order.cartSnapshot}
+              hideActions
             />
           </div>
         </DialogContent>
