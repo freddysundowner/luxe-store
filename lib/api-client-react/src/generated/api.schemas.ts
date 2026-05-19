@@ -135,6 +135,34 @@ export interface PaymentInitiateResponse {
   checkoutRequestId?: string;
 }
 
+export type PaymentReceiptResponseStatus = typeof PaymentReceiptResponseStatus[keyof typeof PaymentReceiptResponseStatus];
+
+
+export const PaymentReceiptResponseStatus = {
+  pending: 'pending',
+  completed: 'completed',
+  failed: 'failed',
+} as const;
+
+export type PaymentReceiptResponseCartSnapshot = { [key: string]: unknown } | null;
+
+export interface PaymentReceiptResponse {
+  transactionId: string;
+  /** @nullable */
+  externalRef?: string | null;
+  status: PaymentReceiptResponseStatus;
+  amount: number;
+  phoneNumber: string;
+  /** @nullable */
+  mpesaRef?: string | null;
+  cartSnapshot?: PaymentReceiptResponseCartSnapshot;
+  createdAt: string;
+  storeName: string;
+  /** @nullable */
+  storeLogoUrl?: string | null;
+  currencySymbol: string;
+}
+
 export type PaymentStatusResponseStatus = typeof PaymentStatusResponseStatus[keyof typeof PaymentStatusResponseStatus];
 
 

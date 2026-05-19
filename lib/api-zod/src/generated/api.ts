@@ -305,6 +305,30 @@ export const GetPaymentStatusResponse = zod.object({
 
 
 /**
+ * @summary Get full receipt for a payment
+ */
+export const GetPaymentReceiptParams = zod.object({
+  "transactionId": zod.coerce.string()
+})
+
+export const GetPaymentReceiptResponse = zod.object({
+  "transactionId": zod.string(),
+  "externalRef": zod.string().nullish(),
+  "status": zod.enum(['pending', 'completed', 'failed']),
+  "amount": zod.number(),
+  "phoneNumber": zod.string(),
+  "mpesaRef": zod.string().nullish(),
+  "cartSnapshot": zod.object({
+
+}).passthrough().nullish(),
+  "createdAt": zod.string(),
+  "storeName": zod.string(),
+  "storeLogoUrl": zod.string().nullish(),
+  "currencySymbol": zod.string()
+})
+
+
+/**
  * @summary List all payments (admin)
  */
 export const ListAdminPaymentsResponseItem = zod.object({

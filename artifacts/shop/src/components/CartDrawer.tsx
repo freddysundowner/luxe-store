@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useLocation } from "wouter";
 import { useCart } from "@/lib/cart-context";
 import {
   useGetSettings,
@@ -9,7 +10,7 @@ import {
 } from "@workspace/api-client-react";
 import {
   X, Minus, Plus, Trash2, ShoppingBag, MessageCircle,
-  Smartphone, CheckCircle2, XCircle, Loader2, ArrowRight,
+  Smartphone, CheckCircle2, XCircle, Loader2, ArrowRight, Receipt,
 } from "lucide-react";
 
 // ── M-Pesa flow types ────────────────────────────────────────────────────────
@@ -31,6 +32,7 @@ function MpesaFlow({ subtotal, formatter, cartSnapshot, onSuccess, onCancel }: M
   const [transactionId, setTransactionId] = useState<string | null>(null);
   const [mpesaRef, setMpesaRef] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [, navigate] = useLocation();
 
   const initiateMutation = useInitiatePayment({
     mutation: {
@@ -104,10 +106,14 @@ function MpesaFlow({ subtotal, formatter, cartSnapshot, onSuccess, onCancel }: M
           )}
         </div>
         <button
-          onClick={onSuccess}
-          className="w-full py-3 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-medium hover:bg-white transition-colors"
+          onClick={() => {
+            onSuccess();
+            if (transactionId) navigate(`/receipt/${transactionId}`);
+          }}
+          className="w-full py-3 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-medium hover:bg-white transition-colors flex items-center justify-center gap-2"
         >
-          Done
+          <Receipt className="w-3.5 h-3.5" />
+          View Receipt
         </button>
       </div>
     );

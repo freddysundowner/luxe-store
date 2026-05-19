@@ -34,6 +34,7 @@ import type {
   ListProductsParams,
   PaymentInitiateBody,
   PaymentInitiateResponse,
+  PaymentReceiptResponse,
   PaymentStatusResponse,
   Product,
   ProductInput,
@@ -1161,6 +1162,83 @@ export function useGetPaymentStatus<TData = Awaited<ReturnType<typeof getPayment
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetPaymentStatusQueryOptions(transactionId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetPaymentReceiptUrl = (transactionId: string,) => {
+
+
+
+
+  return `/api/payments/${transactionId}/receipt`
+}
+
+/**
+ * @summary Get full receipt for a payment
+ */
+export const getPaymentReceipt = async (transactionId: string, options?: RequestInit): Promise<PaymentReceiptResponse> => {
+
+  return customFetch<PaymentReceiptResponse>(getGetPaymentReceiptUrl(transactionId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPaymentReceiptQueryKey = (transactionId: string,) => {
+    return [
+    `/api/payments/${transactionId}/receipt`
+    ] as const;
+    }
+
+
+export const getGetPaymentReceiptQueryOptions = <TData = Awaited<ReturnType<typeof getPaymentReceipt>>, TError = ErrorType<void>>(transactionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPaymentReceipt>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPaymentReceiptQueryKey(transactionId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPaymentReceipt>>> = ({ signal }) => getPaymentReceipt(transactionId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(transactionId), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPaymentReceipt>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPaymentReceiptQueryResult = NonNullable<Awaited<ReturnType<typeof getPaymentReceipt>>>
+export type GetPaymentReceiptQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get full receipt for a payment
+ */
+
+export function useGetPaymentReceipt<TData = Awaited<ReturnType<typeof getPaymentReceipt>>, TError = ErrorType<void>>(
+ transactionId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPaymentReceipt>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPaymentReceiptQueryOptions(transactionId,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

@@ -314,6 +314,27 @@ paths:
         "404":
           description: Not found
 
+  /payments/{transactionId}/receipt:
+    get:
+      operationId: getPaymentReceipt
+      tags: [payments]
+      summary: Get full receipt for a payment
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Payment receipt
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentReceiptResponse"
+        "404":
+          description: Not found
+
   /webhooks/sunpay:
     post:
       operationId: sunpayWebhook
@@ -747,6 +768,35 @@ components:
         transactionId:
           type: string
         checkoutRequestId:
+          type: string
+
+    PaymentReceiptResponse:
+      type: object
+      required: [transactionId, status, amount, phoneNumber, createdAt, storeName, currencySymbol]
+      properties:
+        transactionId:
+          type: string
+        externalRef:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, completed, failed]
+        amount:
+          type: number
+        phoneNumber:
+          type: string
+        mpesaRef:
+          type: ["string", "null"]
+        cartSnapshot:
+          type: object
+          nullable: true
+        createdAt:
+          type: string
+        storeName:
+          type: string
+        storeLogoUrl:
+          type: ["string", "null"]
+        currencySymbol:
           type: string
 
     PaymentStatusResponse:

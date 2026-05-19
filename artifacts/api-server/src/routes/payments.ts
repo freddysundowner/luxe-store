@@ -224,6 +224,38 @@ router.post("/webhooks/sunpay", async (req, res): Promise<void> => {
   res.json({ received: true });
 });
 
+// ── GET /payments/:transactionId/receipt ─────────────────────────────────────
+router.get("/payments/:transactionId/receipt", async (req, res): Promise<void> => {
+  const { transactionId } = req.params;
+
+  const [payment] = await db
+    .select()
+    .from(paymentsTable)
+    .where(eq(paymentsTable.transactionId, transactionId))
+    .limit(1);
+
+  if (!payment) {
+    res.status(404).json({ error: "Receipt not found." });
+    return;
+  }
+
+  const settings = await getSettings();
+
+  res.json({
+    transactionId: payment.transactionId,
+    externalRef: payment.externalRef,
+    status: payment.status,
+    amount: payment.amount,
+    phoneNumber: payment.phoneNumber,
+    mpesaRef: payment.mpesaRef,
+    cartSnapshot: payment.cartSnapshot,
+    createdAt: payment.createdAt,
+    storeName: settings?.storeName ?? "Store",
+    storeLogoUrl: settings?.logoUrl ?? null,
+    currencySymbol: settings?.currencySymbol ?? "KSh",
+  });
+});
+
 // ── GET /admin/payments ──────────────────────────────────────────────────────
 router.get("/admin/payments", async (req, res): Promise<void> => {
   const payments = await db

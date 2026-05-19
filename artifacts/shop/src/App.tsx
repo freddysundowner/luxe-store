@@ -24,6 +24,7 @@ import AdminSettings from "@/pages/admin/settings";
 import AdminGifts from "@/pages/admin/gifts";
 import AdminAvailabilityTags from "@/pages/admin/availability-tags";
 import AdminOrders from "@/pages/admin/orders";
+import ReceiptPage from "@/pages/receipt";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/product/:id" component={ProductDetail} />
       <Route path="/favorites" component={Favorites} />
       <Route path="/gift/:id" component={GiftPage} />
+      <Route path="/receipt/:transactionId" component={ReceiptPage} />
 
       {/* Admin Auth */}
       <Route path="/admin" component={AdminLogin} />

@@ -1,15 +1,17 @@
 import { useState } from "react";
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListAdminPayments, getListAdminPaymentsQueryKey } from "@workspace/api-client-react";
+import { useListAdminPayments, getListAdminPaymentsQueryKey, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import type { AdminPayment } from "@workspace/api-client-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import {
   ShoppingBag, Phone, CheckCircle2, Clock, XCircle,
   Hash, ChevronRight, Package, CreditCard, Calendar, RefreshCw,
+  MessageCircle, ExternalLink,
 } from "lucide-react";
 
 // ── helpers ──────────────────────────────────────────────────────────────────
@@ -49,6 +51,28 @@ interface CartSnapshot { items?: CartItem[]; total?: number }
 function OrderDetailSheet({ order, onClose }: { order: AdminPayment; onClose: () => void }) {
   const cart = order.cartSnapshot as CartSnapshot | null;
   const items: CartItem[] = cart?.items ?? [];
+  const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+
+  const base = import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "";
+  const receiptUrl = `${window.location.origin}${base}/receipt/${order.transactionId}`;
+
+  const shareReceiptToWhatsApp = () => {
+    if (!settings?.whatsappNumber) return;
+    const sym = settings.currencySymbol ?? "KSh";
+    let msg = `*Order Receipt — ${settings.storeName ?? "Store"}*\n\n`;
+    msg += `📋 *Ref:* ${order.externalRef ?? order.transactionId}\n`;
+    if (order.mpesaRef) msg += `✅ *M-Pesa Ref:* ${order.mpesaRef}\n`;
+    msg += `📱 *Phone:* ${formatPhone(order.phoneNumber)}\n`;
+    msg += `📅 *Date:* ${formatDate(order.createdAt)}\n\n`;
+    if (items.length > 0) {
+      msg += `*Items:*\n`;
+      items.forEach(i => { msg += `  • ${i.quantity}× ${i.name} — ${sym} ${(i.price * i.quantity).toLocaleString()}\n`; });
+      msg += `\n`;
+    }
+    msg += `*Total: ${sym} ${order.amount.toLocaleString()}*\n\n`;
+    msg += `🔗 View receipt: ${receiptUrl}`;
+    window.open(`https://wa.me/${order.phoneNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+  };
 
   return (
     <Sheet open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -147,6 +171,29 @@ function OrderDetailSheet({ order, onClose }: { order: AdminPayment; onClose: ()
               </pre>
             </section>
           )}
+
+          <Separator />
+
+          {/* Actions */}
+          <section className="space-y-3 pb-2">
+            <Button
+              className="w-full gap-2 bg-[#25D366] hover:bg-[#1fba59] text-white border-0"
+              onClick={shareReceiptToWhatsApp}
+              disabled={!settings?.whatsappNumber}
+              title={!settings?.whatsappNumber ? "Set a WhatsApp number in Settings first" : undefined}
+            >
+              <MessageCircle className="w-4 h-4" />
+              Share Receipt to Customer WhatsApp
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full gap-2"
+              onClick={() => window.open(receiptUrl, "_blank")}
+            >
+              <ExternalLink className="w-4 h-4" />
+              Open Receipt Page
+            </Button>
+          </section>
         </div>
       </SheetContent>
     </Sheet>
