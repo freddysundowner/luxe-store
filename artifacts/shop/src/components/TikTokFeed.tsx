@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Link, Link as WouterLink } from "wouter";
 import { Gift, Heart, MessageCircle, Share2, ShoppingBag, Sparkles, X, Send } from "lucide-react";
 import { Product, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
@@ -17,34 +17,149 @@ interface TikTokFeedProps {
   topOffset?: number;
 }
 
+// ── Card background (image + gradient) ───────────────────────────────────────
+function CardBg({ product }: { product: Product }) {
+  return (
+    <>
+      {product.imageUrl ? (
+        <img
+          src={product.imageUrl}
+          alt={product.name}
+          className="absolute inset-0 w-full h-full object-cover"
+          draggable={false}
+        />
+      ) : (
+        <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
+          <ShoppingBag className="w-16 h-16 text-zinc-700" />
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/40" />
+    </>
+  );
+}
+
+// ── Main component ────────────────────────────────────────────────────────────
 export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 12 }: TikTokFeedProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
-  const [touchStartY, setTouchStartY] = useState(0);
-  const [isFading, setIsFading] = useState(false);
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
   const [giftRecipient, setGiftRecipient] = useState("");
   const [giftNote, setGiftNote] = useState("");
+
+  // ── Slide animation state ──
+  const [dragOffset, setDragOffset] = useState(0);       // px, follows finger live
+  const [isAnimating, setIsAnimating] = useState(false); // true during snap/complete
+  const [slideDir, setSlideDir] = useState<"up" | "down" | null>(null);
+  const touchStartY = useRef(0);
+  const liveOffset = useRef(0); // mirror of dragOffset for use inside handlers
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerH, setContainerH] = useState(0);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setContainerH(el.clientHeight));
+    ro.observe(el);
+    setContainerH(el.clientHeight);
+    return () => ro.disconnect();
+  }, []);
+
+  const vh = containerH || (typeof window !== "undefined" ? window.innerHeight : 700);
 
   const { addItem, openCart } = useCart();
   const { toggleFavorite, isFavorite, favoriteCount } = useFavorites();
   const { toast } = useToast();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
-  const navigate = useCallback(
-    (dir: "up" | "down") => {
-      if (isFading) return;
-      if (dir === "up" && currentIndex >= products.length - 1) return;
-      if (dir === "down" && currentIndex <= 0) return;
-      setIsFading(true);
+  // ── Complete a slide programmatically (button / tap zone) ──
+  const triggerSlide = useCallback((dir: "up" | "down") => {
+    if (isAnimating) return;
+    if (dir === "up" && currentIndex >= products.length - 1) return;
+    if (dir === "down" && currentIndex <= 0) return;
+
+    setSlideDir(dir);
+    setIsAnimating(true);
+    // Jump to final offset instantly so transition runs from there
+    setDragOffset(0);
+    // Give React one frame then snap to final position
+    requestAnimationFrame(() => {
+      setDragOffset(dir === "up" ? -vh : vh);
       setTimeout(() => {
         setCurrentIndex((i) => (dir === "up" ? i + 1 : i - 1));
-        setIsFading(false);
-      }, 150);
-    },
-    [isFading, currentIndex, products.length]
-  );
+        setDragOffset(0);
+        setIsAnimating(false);
+        setSlideDir(null);
+        liveOffset.current = 0;
+      }, 300);
+    });
+  }, [isAnimating, currentIndex, products.length, vh]);
 
+  // ── Touch handlers ──
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isAnimating) return;
+    touchStartY.current = e.touches[0].clientY;
+    liveOffset.current = 0;
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (isAnimating) return;
+    const diff = e.touches[0].clientY - touchStartY.current;
+    // Block at boundaries
+    if (diff < 0 && currentIndex >= products.length - 1) return;
+    if (diff > 0 && currentIndex <= 0) return;
+    liveOffset.current = diff;
+    setDragOffset(diff);
+    setSlideDir(diff < 0 ? "up" : diff > 0 ? "down" : null);
+  };
+
+  const handleTouchEnd = () => {
+    if (isAnimating) return;
+    const offset = liveOffset.current;
+    const threshold = vh * 0.22;
+
+    if (Math.abs(offset) > threshold) {
+      const dir = offset < 0 ? "up" : "down";
+      const canGo = dir === "up"
+        ? currentIndex < products.length - 1
+        : currentIndex > 0;
+
+      if (canGo) {
+        // Complete the swipe
+        setIsAnimating(true);
+        setDragOffset(dir === "up" ? -vh : vh);
+        setTimeout(() => {
+          setCurrentIndex((i) => (dir === "up" ? i + 1 : i - 1));
+          setDragOffset(0);
+          setIsAnimating(false);
+          setSlideDir(null);
+          liveOffset.current = 0;
+        }, 280);
+        return;
+      }
+    }
+
+    // Snap back
+    setIsAnimating(true);
+    setDragOffset(0);
+    setTimeout(() => {
+      setIsAnimating(false);
+      setSlideDir(null);
+      liveOffset.current = 0;
+    }, 280);
+  };
+
+  // ── Wheel (desktop scroll) ──
+  const wheelCooldown = useRef(false);
+  const handleWheel = useCallback((e: React.WheelEvent) => {
+    if (isAnimating || wheelCooldown.current) return;
+    if (Math.abs(e.deltaY) < 20) return;
+    const dir = e.deltaY > 0 ? "up" : "down";
+    triggerSlide(dir);
+    wheelCooldown.current = true;
+    setTimeout(() => { wheelCooldown.current = false; }, 600);
+  }, [isAnimating, triggerSlide]);
+
+  // ── Cart / gift / share ──
   const handleAddToCart = (product: Product) => {
     addItem(product, 1);
     setCartAdded((prev) => new Set(prev).add(product.id));
@@ -90,21 +205,14 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
     setGiftProduct(null);
   };
 
+  // ── Loading / empty ──
   if (isLoading) {
-    return (
-      <div className="flex-1 bg-[#0a0a0a]">
-        <Skeleton className="w-full h-full bg-zinc-900" />
-      </div>
-    );
+    return <div className="flex-1 bg-[#0a0a0a]"><Skeleton className="w-full h-full bg-zinc-900" /></div>;
   }
-
   if (products.length === 0) {
     return (
       <div className="flex-1 bg-[#0a0a0a] flex items-center justify-center">
-        <EmptyFeed
-          message="No matches"
-          sub="Adjust your filters to explore the collection"
-        />
+        <EmptyFeed message="No matches" sub="Adjust your filters to explore the collection" />
       </div>
     );
   }
@@ -112,267 +220,190 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   const current = products[currentIndex];
   const visibleDots = Math.min(products.length, 8);
 
+  // The "adjacent" card that slides in/out alongside the current card
+  const adjacentIndex = slideDir === "up"
+    ? currentIndex + 1
+    : slideDir === "down"
+    ? currentIndex - 1
+    : null;
+  const adjacentProduct = adjacentIndex !== null ? products[adjacentIndex] : null;
+
+  // CSS transform helpers
+  const transition = isAnimating
+    ? "transform 0.28s cubic-bezier(0.16, 1, 0.3, 1)"
+    : "none";
+
+  // Adjacent card starts off-screen opposite to drag direction
+  const adjacentBase = slideDir === "up" ? vh : -vh;
+
   return (
     <div
-      className="flex-1 relative overflow-hidden bg-black"
+      ref={containerRef}
+      className="flex-1 relative overflow-hidden bg-black select-none"
       style={{ touchAction: "none" }}
-      onTouchStart={(e) => setTouchStartY(e.touches[0].clientY)}
-      onTouchEnd={(e) => {
-        const diff = touchStartY - e.changedTouches[0].clientY;
-        if (Math.abs(diff) > 45) navigate(diff > 0 ? "up" : "down");
-      }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onWheel={handleWheel}
     >
-      {/* Full-screen image */}
-      <div
-        className="absolute inset-0 transition-opacity duration-150"
-        style={{ opacity: isFading ? 0 : 1 }}
-      >
-        {current.imageUrl ? (
-          <img
-            key={current.id}
-            src={current.imageUrl}
-            alt={current.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full bg-zinc-900 flex items-center justify-center">
-            <ShoppingBag className="w-16 h-16 text-zinc-700" />
-          </div>
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/40" />
-      </div>
+      {/* ── Adjacent card (slides in) ── */}
+      {adjacentProduct && (
+        <div
+          className="absolute inset-0"
+          style={{
+            transform: `translateY(${adjacentBase + dragOffset}px)`,
+            transition,
+            willChange: "transform",
+          }}
+        >
+          <CardBg product={adjacentProduct} />
+          <BottomPanel product={adjacentProduct} cartAdded={cartAdded} isActive={false}
+            onAddToCart={() => {}} onGift={() => {}} onGiftSheet={() => {}}
+            onShare={() => {}} onOpenGiftFinder={onOpenGiftFinder ?? null} />
+        </div>
+      )}
 
-      {/* Progress bar — top */}
-      <div className="absolute left-4 right-4 flex gap-1 z-10" style={{ top: `${topOffset}px` }}>
-        {Array.from({ length: visibleDots }).map((_, i) => (
-          <button
-            key={i}
-            onClick={() => !isFading && setCurrentIndex(i)}
-            className="flex-1 h-0.5 rounded-full transition-all"
-            style={{
-              background:
-                i === currentIndex
+      {/* ── Current card ── */}
+      <div
+        className="absolute inset-0"
+        style={{
+          transform: `translateY(${dragOffset}px)`,
+          transition,
+          willChange: "transform",
+        }}
+      >
+        <CardBg product={current} />
+
+        {/* Progress bars — top */}
+        <div className="absolute left-4 right-4 flex gap-1 z-10" style={{ top: `${topOffset}px` }}>
+          {Array.from({ length: visibleDots }).map((_, i) => (
+            <button
+              key={i}
+              onClick={() => !isAnimating && setCurrentIndex(i)}
+              className="flex-1 h-0.5 rounded-full transition-all"
+              style={{
+                background: i === currentIndex
                   ? "#D4AF37"
                   : i < currentIndex
                   ? "rgba(212,175,55,0.35)"
                   : "rgba(255,255,255,0.15)",
-            }}
-          />
-        ))}
-      </div>
-
-      {/* Counter */}
-      <div className="absolute left-4 right-4 z-10 flex justify-between items-center" style={{ top: `${topOffset + 14}px` }}>
-        <span className="text-[10px] text-white/30 uppercase tracking-widest">
-          {currentIndex + 1} / {products.length}
-        </span>
-        <div className="flex items-center gap-2">
-          {/* Favorites link */}
-          <WouterLink href="/favorites"
-            className="flex items-center gap-1 bg-black/50 backdrop-blur-sm border border-white/10 rounded-full px-2.5 py-1 hover:border-[#D4AF37]/40 transition-colors"
-          >
-            <Heart className={`w-3 h-3 transition-colors ${favoriteCount > 0 ? "fill-[#D4AF37] text-[#D4AF37]" : "text-white/40"}`} />
-            {favoriteCount > 0 && (
-              <span className="text-[9px] text-[#D4AF37] font-semibold leading-none">{favoriteCount}</span>
-            )}
-          </WouterLink>
-        <div className="flex gap-1">
-          <button
-            onClick={() => navigate("down")}
-            disabled={currentIndex <= 0}
-            className="w-7 h-7 flex items-center justify-center text-white/25 hover:text-white/60 disabled:opacity-10 transition-colors text-sm"
-          >
-            ↑
-          </button>
-          <button
-            onClick={() => navigate("up")}
-            disabled={currentIndex >= products.length - 1}
-            className="w-7 h-7 flex items-center justify-center text-white/25 hover:text-white/60 disabled:opacity-10 transition-colors text-sm"
-          >
-            ↓
-          </button>
+              }}
+            />
+          ))}
         </div>
-        </div>
-      </div>
 
-      {/* Right-side action buttons */}
-      <div
-        className="absolute right-3 z-10 flex flex-col gap-4"
-        style={{ bottom: "210px" }}
-      >
-        {/* Heart / favourite */}
-        <button
-          onClick={() => {
-            toggleFavorite(current);
-            toast({
-              title: isFavorite(current.id) ? "Removed from saved" : "Saved!",
-              description: current.name,
-              duration: 1500,
-            });
-          }}
-          className="flex flex-col items-center gap-1"
-        >
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-200 ${
-            isFavorite(current.id)
-              ? "bg-[#D4AF37]/20 border border-[#D4AF37]"
-              : "bg-black/50 backdrop-blur-sm border border-white/10 hover:border-[#D4AF37]/40"
-          }`}>
-            <Heart className={`w-5 h-5 transition-all duration-200 ${
-              isFavorite(current.id) ? "fill-[#D4AF37] text-[#D4AF37] scale-110" : "text-white"
-            }`} />
-          </div>
-          <span className={`text-[9px] transition-colors ${isFavorite(current.id) ? "text-[#D4AF37]/80" : "text-white/35"}`}>
-            Save
+        {/* Counter + nav */}
+        <div className="absolute left-4 right-4 z-10 flex justify-between items-center" style={{ top: `${topOffset + 14}px` }}>
+          <span className="text-[10px] text-white/30 uppercase tracking-widest">
+            {currentIndex + 1} / {products.length}
           </span>
-        </button>
-
-        <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/50 flex items-center justify-center shadow-xl transition-all duration-200 hover:bg-[#D4AF37]/25">
-            <Gift className="w-5 h-5 text-[#D4AF37]" />
-          </div>
-          <span className="text-[9px] text-[#D4AF37]/60">Gift</span>
-        </button>
-
-        <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/40 transition-colors">
-            <MessageCircle className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-[9px] text-white/35">View</span>
-        </Link>
-
-        <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/40 transition-colors">
-            <Share2 className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-[9px] text-white/35">Share</span>
-        </button>
-
-        {onOpenGiftFinder && (
-          <button onClick={onOpenGiftFinder} className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center shadow-xl">
-              <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+          <div className="flex items-center gap-2">
+            <WouterLink href="/favorites"
+              className="flex items-center gap-1 bg-black/50 backdrop-blur-sm border border-white/10 rounded-full px-2.5 py-1 hover:border-[#D4AF37]/40 transition-colors"
+            >
+              <Heart className={`w-3 h-3 transition-colors ${favoriteCount > 0 ? "fill-[#D4AF37] text-[#D4AF37]" : "text-white/40"}`} />
+              {favoriteCount > 0 && (
+                <span className="text-[9px] text-[#D4AF37] font-semibold leading-none">{favoriteCount}</span>
+              )}
+            </WouterLink>
+            <div className="flex gap-1">
+              <button onClick={() => triggerSlide("down")} disabled={currentIndex <= 0}
+                className="w-7 h-7 flex items-center justify-center text-white/25 hover:text-white/60 disabled:opacity-10 transition-colors text-sm">↑</button>
+              <button onClick={() => triggerSlide("up")} disabled={currentIndex >= products.length - 1}
+                className="w-7 h-7 flex items-center justify-center text-white/25 hover:text-white/60 disabled:opacity-10 transition-colors text-sm">↓</button>
             </div>
-            <span className="text-[9px] text-[#D4AF37]/55">AI</span>
-          </button>
-        )}
-      </div>
-
-      {/* Swipe hint */}
-      {currentIndex < products.length - 1 && (
-        <div
-          className="absolute left-0 right-0 z-10 flex justify-center pointer-events-none"
-          style={{ bottom: "197px" }}
-        >
-          <div className="flex flex-col items-center gap-1 animate-bounce">
-            <span className="text-white text-base drop-shadow-lg">↑</span>
-            <span className="text-[11px] text-white/90 tracking-widest font-medium drop-shadow-lg uppercase">swipe up</span>
           </div>
         </div>
-      )}
 
-      {/* Right progress bar */}
-      <div className="absolute right-0 top-16 bottom-16 w-0.5 bg-white/5 z-10">
-        <div
-          className="bg-[#D4AF37]/50 w-full rounded-full transition-all duration-300"
-          style={{ height: `${((currentIndex + 1) / products.length) * 100}%` }}
-        />
-      </div>
+        {/* Right-side actions */}
+        <div className="absolute right-3 z-10 flex flex-col gap-4" style={{ bottom: "210px" }}>
+          <button
+            onClick={() => { toggleFavorite(current); toast({ title: isFavorite(current.id) ? "Removed from saved" : "Saved!", description: current.name, duration: 1500 }); }}
+            className="flex flex-col items-center gap-1"
+          >
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-200 ${isFavorite(current.id) ? "bg-[#D4AF37]/20 border border-[#D4AF37]" : "bg-black/50 backdrop-blur-sm border border-white/10 hover:border-[#D4AF37]/40"}`}>
+              <Heart className={`w-5 h-5 transition-all duration-200 ${isFavorite(current.id) ? "fill-[#D4AF37] text-[#D4AF37] scale-110" : "text-white"}`} />
+            </div>
+            <span className={`text-[9px] transition-colors ${isFavorite(current.id) ? "text-[#D4AF37]/80" : "text-white/35"}`}>Save</span>
+          </button>
 
-      {/* Bottom info panel */}
-      <div
-        className="absolute bottom-0 left-0 right-0 z-10 px-5 pt-14 pb-5 transition-opacity duration-150"
-        style={{
-          background:
-            "linear-gradient(to top, rgba(10,10,10,1) 65%, rgba(10,10,10,0) 100%)",
-          opacity: isFading ? 0 : 1,
-        }}
-      >
-        <div className="flex gap-2 mb-2">
-          {current.originalPrice != null && current.originalPrice > current.price && (
-            <span className="text-[9px] border border-[#D4AF37]/40 text-[#D4AF37] px-2 py-0.5 uppercase tracking-wider">
-              Sale
-            </span>
-          )}
-          {!current.inStock && (
-            <span className="text-[9px] border border-zinc-700 text-zinc-500 px-2 py-0.5 uppercase tracking-wider">
-              Sold Out
-            </span>
+          <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/50 flex items-center justify-center shadow-xl transition-all duration-200 hover:bg-[#D4AF37]/25">
+              <Gift className="w-5 h-5 text-[#D4AF37]" />
+            </div>
+            <span className="text-[9px] text-[#D4AF37]/60">Gift</span>
+          </button>
+
+          <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/40 transition-colors">
+              <MessageCircle className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[9px] text-white/35">View</span>
+          </Link>
+
+          <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-1">
+            <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/40 transition-colors">
+              <Share2 className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-[9px] text-white/35">Share</span>
+          </button>
+
+          {onOpenGiftFinder && (
+            <button onClick={onOpenGiftFinder} className="flex flex-col items-center gap-1">
+              <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center shadow-xl">
+                <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+              </div>
+              <span className="text-[9px] text-[#D4AF37]/55">AI</span>
+            </button>
           )}
         </div>
 
-        {current.categoryName && (
-          <p className="text-[9px] uppercase tracking-widest text-[#D4AF37]/60 mb-1">
-            {current.categoryName}
-          </p>
+        {/* Swipe hint */}
+        {currentIndex < products.length - 1 && dragOffset === 0 && !isAnimating && (
+          <div className="absolute left-0 right-0 z-10 flex justify-center pointer-events-none" style={{ bottom: "197px" }}>
+            <div className="flex flex-col items-center gap-1 animate-bounce">
+              <span className="text-white text-base drop-shadow-lg">↑</span>
+              <span className="text-[11px] text-white/90 tracking-widest font-medium drop-shadow-lg uppercase">swipe up</span>
+            </div>
+          </div>
         )}
 
-        <Link href={`/product/${current.id}`}>
-          <h2 className="text-lg font-light uppercase tracking-wide text-white mb-2 leading-snug hover:text-[#D4AF37] transition-colors cursor-pointer">
-            {current.name}
-          </h2>
-        </Link>
-
-        <div className="flex items-baseline gap-3 mb-4">
-          <span className="text-2xl text-[#D4AF37] font-light">{fmt.format(current.price)}</span>
-          {current.originalPrice != null && current.originalPrice > current.price && (
-            <span className="text-zinc-600 line-through text-sm">
-              {fmt.format(current.originalPrice)}
-            </span>
-          )}
+        {/* Right progress bar */}
+        <div className="absolute right-0 top-16 bottom-16 w-0.5 bg-white/5 z-10">
+          <div
+            className="bg-[#D4AF37]/50 w-full rounded-full transition-all duration-300"
+            style={{ height: `${((currentIndex + 1) / products.length) * 100}%` }}
+          />
         </div>
 
-        <style>{`
-          @keyframes gift-glow {
-            0%, 100% { box-shadow: 0 0 6px rgba(212,175,55,0.3), inset 0 0 6px rgba(212,175,55,0.05); }
-            50% { box-shadow: 0 0 18px rgba(212,175,55,0.65), inset 0 0 10px rgba(212,175,55,0.1); }
-          }
-          .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
-        `}</style>
-        <div className="flex gap-2">
-          <button
-            onClick={() => current.inStock && handleAddToCart(current)}
-            disabled={!current.inStock}
-            className={`flex-[3] py-3.5 text-sm uppercase tracking-widest font-semibold transition-all duration-200 ${
-              !current.inStock
-                ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-                : cartAdded.has(current.id)
-                ? "bg-zinc-800 text-[#D4AF37] border border-[#D4AF37]/40"
-                : "bg-[#D4AF37] text-black hover:bg-white"
-            }`}
-          >
-            {!current.inStock ? "Sold Out" : cartAdded.has(current.id) ? "✓ Added" : "Buy Now →"}
-          </button>
-          <button
-            onClick={handleGift}
-            className="gift-glow-btn flex-[2] py-3.5 text-[10px] uppercase tracking-widest font-semibold bg-black border border-[#D4AF37]/70 text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center justify-center gap-1.5"
-          >
-            <Sparkles className="w-3 h-3 shrink-0" />
-            Surprise Someone
-          </button>
-        </div>
+        {/* Bottom info panel */}
+        <BottomPanel
+          product={current}
+          cartAdded={cartAdded}
+          isActive={true}
+          onAddToCart={() => handleAddToCart(current)}
+          onGift={handleGift}
+          onGiftSheet={() => openGiftSheet(current)}
+          onShare={() => handleShare(current)}
+          onOpenGiftFinder={onOpenGiftFinder ?? null}
+        />
 
-      </div>
-
-      {/* Tap zones for navigation */}
-      <div
-        className="absolute inset-x-0 z-5 pointer-events-none"
-        style={{ top: "60px", bottom: "250px" }}
-      >
-        <div className="flex h-full pointer-events-auto">
-          <div className="flex-1 cursor-pointer" onClick={() => navigate("down")} />
-          <div className="w-16 pointer-events-none" />
-          <div className="flex-1 cursor-pointer" onClick={() => navigate("up")} />
+        {/* Tap zones */}
+        <div className="absolute inset-x-0 z-5 pointer-events-none" style={{ top: "60px", bottom: "250px" }}>
+          <div className="flex h-full pointer-events-auto">
+            <div className="flex-1 cursor-pointer" onClick={() => triggerSlide("down")} />
+            <div className="w-16 pointer-events-none" />
+            <div className="flex-1 cursor-pointer" onClick={() => triggerSlide("up")} />
+          </div>
         </div>
       </div>
 
-      {/* Gift This Sheet */}
+      {/* Gift sheet */}
       {giftProduct && (
         <>
+          <div className="absolute inset-0 z-[200] bg-black/70" onClick={() => setGiftProduct(null)} />
           <div
-            className="absolute inset-0 z-[200] bg-black/70"
-            onClick={() => setGiftProduct(null)}
-          />
-          <div className="absolute bottom-0 left-0 right-0 z-[210] bg-[#0a0a0a] border-t border-[#D4AF37]/20"
+            className="absolute bottom-0 left-0 right-0 z-[210] bg-[#0a0a0a] border-t border-[#D4AF37]/20"
             style={{ animation: "slideUp 0.28s cubic-bezier(0.16,1,0.3,1) forwards" }}
           >
             <style>{`
@@ -381,22 +412,15 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
                 to   { transform: translateY(0);    opacity: 1; }
               }
             `}</style>
-
-            {/* Gold top line */}
             <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent" />
-
-            {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-0.5 bg-zinc-700 rounded-full" />
             </div>
-
-            {/* Product preview */}
             <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-900">
               <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
                 {giftProduct.imageUrl
                   ? <img src={giftProduct.imageUrl} alt={giftProduct.name} className="w-full h-full object-cover" />
-                  : <Gift className="w-6 h-6 text-zinc-700 m-auto mt-4" />
-                }
+                  : <Gift className="w-6 h-6 text-zinc-700 m-auto mt-4" />}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs uppercase tracking-wide text-zinc-300 font-light truncate">{giftProduct.name}</p>
@@ -406,45 +430,103 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
                 <X className="w-4 h-4" />
               </button>
             </div>
-
-            {/* Form */}
             <div className="px-5 pt-4 pb-3 space-y-3">
               <div>
                 <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Who's the lucky one?</label>
-                <input
-                  type="text"
-                  value={giftRecipient}
-                  onChange={(e) => setGiftRecipient(e.target.value)}
+                <input type="text" value={giftRecipient} onChange={(e) => setGiftRecipient(e.target.value)}
                   placeholder="Their name (optional)"
-                  className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors"
-                />
+                  className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors" />
               </div>
               <div>
                 <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Personal note</label>
-                <textarea
-                  value={giftNote}
-                  onChange={(e) => setGiftNote(e.target.value)}
-                  placeholder="Add a heartfelt message… (optional)"
-                  rows={2}
-                  className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors resize-none"
-                />
+                <textarea value={giftNote} onChange={(e) => setGiftNote(e.target.value)}
+                  placeholder="Add a heartfelt message… (optional)" rows={2}
+                  className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors resize-none" />
               </div>
             </div>
-
-            {/* CTA */}
             <div className="px-5 pb-6">
-              <button
-                onClick={sendGiftViaWhatsApp}
-                className="w-full py-4 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors flex items-center justify-center gap-2"
-              >
-                <Send className="w-3.5 h-3.5" />
-                Send Gift via WhatsApp
+              <button onClick={sendGiftViaWhatsApp}
+                className="w-full py-4 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors flex items-center justify-center gap-2">
+                <Send className="w-3.5 h-3.5" />Send Gift via WhatsApp
               </button>
               <p className="text-[9px] text-zinc-700 text-center tracking-widest uppercase mt-2">Opens WhatsApp — you pick who to send it to</p>
             </div>
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+// ── Bottom panel (shared between current + adjacent card) ─────────────────────
+function BottomPanel({
+  product, cartAdded, isActive,
+  onAddToCart, onGift, onGiftSheet, onShare, onOpenGiftFinder,
+}: {
+  product: Product;
+  cartAdded: Set<number>;
+  isActive: boolean;
+  onAddToCart: () => void;
+  onGift: () => void;
+  onGiftSheet: () => void;
+  onShare: () => void;
+  onOpenGiftFinder: (() => void) | null;
+}) {
+  return (
+    <div
+      className="absolute bottom-0 left-0 right-0 z-10 px-5 pt-14 pb-5"
+      style={{ background: "linear-gradient(to top, rgba(10,10,10,1) 65%, rgba(10,10,10,0) 100%)" }}
+    >
+      <div className="flex gap-2 mb-2">
+        {product.originalPrice != null && product.originalPrice > product.price && (
+          <span className="text-[9px] border border-[#D4AF37]/40 text-[#D4AF37] px-2 py-0.5 uppercase tracking-wider">Sale</span>
+        )}
+        {!product.inStock && (
+          <span className="text-[9px] border border-zinc-700 text-zinc-500 px-2 py-0.5 uppercase tracking-wider">Sold Out</span>
+        )}
+      </div>
+      {product.categoryName && (
+        <p className="text-[9px] uppercase tracking-widest text-[#D4AF37]/60 mb-1">{product.categoryName}</p>
+      )}
+      <Link href={`/product/${product.id}`}>
+        <h2 className="text-lg font-light uppercase tracking-wide text-white mb-2 leading-snug hover:text-[#D4AF37] transition-colors cursor-pointer">
+          {product.name}
+        </h2>
+      </Link>
+      <div className="flex items-baseline gap-3 mb-4">
+        <span className="text-2xl text-[#D4AF37] font-light">{fmt.format(product.price)}</span>
+        {product.originalPrice != null && product.originalPrice > product.price && (
+          <span className="text-zinc-600 line-through text-sm">{fmt.format(product.originalPrice)}</span>
+        )}
+      </div>
+      <style>{`
+        @keyframes gift-glow {
+          0%, 100% { box-shadow: 0 0 6px rgba(212,175,55,0.3), inset 0 0 6px rgba(212,175,55,0.05); }
+          50%       { box-shadow: 0 0 18px rgba(212,175,55,0.65), inset 0 0 10px rgba(212,175,55,0.1); }
+        }
+        .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
+      `}</style>
+      <div className="flex gap-2">
+        <button
+          onClick={isActive ? onAddToCart : undefined}
+          disabled={!product.inStock}
+          className={`flex-[3] py-3.5 text-sm uppercase tracking-widest font-semibold transition-all duration-200 ${
+            !product.inStock
+              ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+              : cartAdded.has(product.id)
+              ? "bg-zinc-800 text-[#D4AF37] border border-[#D4AF37]/40"
+              : "bg-[#D4AF37] text-black hover:bg-white"
+          }`}
+        >
+          {!product.inStock ? "Sold Out" : cartAdded.has(product.id) ? "✓ Added" : "Buy Now →"}
+        </button>
+        <button
+          onClick={isActive ? onGift : undefined}
+          className="gift-glow-btn flex-[2] py-3.5 text-[10px] uppercase tracking-widest font-semibold bg-black border border-[#D4AF37]/70 text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center justify-center gap-1.5"
+        >
+          <Sparkles className="w-3 h-3 shrink-0" />Surprise Someone
+        </button>
+      </div>
     </div>
   );
 }
