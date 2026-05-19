@@ -5,6 +5,7 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { GiftItem } from './giftItem';
 import type { GiftPaymentMethod } from './giftPaymentMethod';
 import type { GiftStatus } from './giftStatus';
 
@@ -16,6 +17,8 @@ export interface Gift {
   productPrice: number;
   /** @nullable */
   productImageUrl?: string | null;
+  /** @nullable */
+  items?: GiftItem[] | null;
   /** @nullable */
   recipientName?: string | null;
   /** @nullable */

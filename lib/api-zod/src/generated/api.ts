@@ -646,6 +646,13 @@ export const CreateGiftBody = zod.object({
   "productName": zod.string(),
   "productPrice": zod.number(),
   "productImageUrl": zod.string().optional(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number()
+})).optional(),
   "recipientName": zod.string().optional(),
   "note": zod.string().optional(),
   "senderName": zod.string().optional(),
@@ -668,6 +675,13 @@ export const GetGiftResponse = zod.object({
   "productName": zod.string(),
   "productPrice": zod.number(),
   "productImageUrl": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number()
+})).nullish(),
   "recipientName": zod.string().nullish(),
   "note": zod.string().nullish(),
   "senderName": zod.string().nullish(),
@@ -693,6 +707,13 @@ export const ClaimGiftResponse = zod.object({
   "productName": zod.string(),
   "productPrice": zod.number(),
   "productImageUrl": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number()
+})).nullish(),
   "recipientName": zod.string().nullish(),
   "note": zod.string().nullish(),
   "senderName": zod.string().nullish(),
@@ -714,6 +735,13 @@ export const ListAdminGiftsResponseItem = zod.object({
   "productName": zod.string(),
   "productPrice": zod.number(),
   "productImageUrl": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number()
+})).nullish(),
   "recipientName": zod.string().nullish(),
   "note": zod.string().nullish(),
   "senderName": zod.string().nullish(),
@@ -740,6 +768,13 @@ export const MarkGiftPaidResponse = zod.object({
   "productName": zod.string(),
   "productPrice": zod.number(),
   "productImageUrl": zod.string().nullish(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number()
+})).nullish(),
   "recipientName": zod.string().nullish(),
   "note": zod.string().nullish(),
   "senderName": zod.string().nullish(),

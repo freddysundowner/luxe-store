@@ -19,6 +19,7 @@ export * from './categoryInput';
 export * from './gift';
 export * from './giftInput';
 export * from './giftInputPaymentMethod';
+export * from './giftItem';
 export * from './giftPaymentMethod';
 export * from './giftStatus';
 export * from './hamper';

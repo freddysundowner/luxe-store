@@ -380,6 +380,15 @@ export interface AdminPayment {
   createdAt: string;
 }
 
+export interface GiftItem {
+  productId: number;
+  name: string;
+  price: number;
+  /** @nullable */
+  imageUrl?: string | null;
+  quantity: number;
+}
+
 export type GiftPaymentMethod = typeof GiftPaymentMethod[keyof typeof GiftPaymentMethod];
 
 
@@ -405,6 +414,8 @@ export interface Gift {
   productPrice: number;
   /** @nullable */
   productImageUrl?: string | null;
+  /** @nullable */
+  items?: GiftItem[] | null;
   /** @nullable */
   recipientName?: string | null;
   /** @nullable */
@@ -433,6 +444,7 @@ export interface GiftInput {
   productName: string;
   productPrice: number;
   productImageUrl?: string;
+  items?: GiftItem[];
   recipientName?: string;
   note?: string;
   senderName?: string;

@@ -6,12 +6,14 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { GiftInputPaymentMethod } from './giftInputPaymentMethod';
+import type { GiftItem } from './giftItem';
 
 export interface GiftInput {
   productId: number;
   productName: string;
   productPrice: number;
   productImageUrl?: string;
+  items?: GiftItem[];
   recipientName?: string;
   note?: string;
   senderName?: string;

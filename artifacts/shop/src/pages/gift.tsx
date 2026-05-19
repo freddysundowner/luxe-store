@@ -111,29 +111,49 @@ export default function GiftPage() {
 
   const handleAddToCart = () => {
     if (!gift) return;
-    addItem({
-      id: gift.productId,
-      name: gift.productName,
-      price: gift.productPrice,
-      imageUrl: gift.productImageUrl ?? null,
-      description: null,
-      originalPrice: null,
-      categoryId: null,
-      categoryName: null,
-      inStock: true,
-      isActive: true,
-      isDropship: false,
-      isFeatured: false,
-      availabilityTag: null,
-      stockQuantity: 1,
-      variants: [],
-      kind: "simple",
-      bundleItems: [],
-      createdAt: null,
-    }, { quantity: 1 });
+    // Multi-item gifts: drop every snapshot item into the bag. Single-item
+    // gifts: fall back to the primary product columns.
+    const cartItems = (gift.items && gift.items.length > 0)
+      ? gift.items.map((it) => ({
+          id: it.productId,
+          name: it.name,
+          price: it.price,
+          imageUrl: it.imageUrl ?? null,
+          quantity: it.quantity,
+        }))
+      : [{
+          id: gift.productId,
+          name: gift.productName,
+          price: gift.productPrice,
+          imageUrl: gift.productImageUrl ?? null,
+          quantity: 1,
+        }];
+
+    for (const it of cartItems) {
+      addItem({
+        id: it.id,
+        name: it.name,
+        price: it.price,
+        imageUrl: it.imageUrl,
+        description: null,
+        originalPrice: null,
+        categoryId: null,
+        categoryName: null,
+        inStock: true,
+        isActive: true,
+        isDropship: false,
+        isFeatured: false,
+        availabilityTag: null,
+        stockQuantity: it.quantity,
+        variants: [],
+        kind: "simple",
+        bundleItems: [],
+        createdAt: null,
+      }, { quantity: it.quantity });
+    }
     setAddedToCart(true);
     openCart();
-    toast({ title: "Added to your bag!" });
+    toast({ title: cartItems.length > 1 ? `${cartItems.length} items added to your bag!` : "Added to your bag!" });
   };
 
   return (
@@ -229,18 +249,45 @@ export default function GiftPage() {
               {gift.recipientName && <p className="text-lg font-light text-white">Enjoy, {gift.recipientName}!</p>}
             </div>
 
-            {/* Product card */}
-            <div className="w-full border border-[#D4AF37]/25 bg-zinc-950 overflow-hidden shadow-[0_0_60px_rgba(212,175,55,0.1)]">
-              {gift.productImageUrl && (
-                <div className="aspect-square overflow-hidden">
-                  <img src={gift.productImageUrl} alt={gift.productName} className="w-full h-full object-cover" style={{ animation: "zoomIn 0.8s cubic-bezier(0.16,1,0.3,1) forwards" }} />
+            {/* Product card — single item OR multi-item list */}
+            {gift.items && gift.items.length > 0 ? (
+              <div className="w-full border border-[#D4AF37]/25 bg-zinc-950 overflow-hidden shadow-[0_0_60px_rgba(212,175,55,0.1)]"
+                style={{ animation: "zoomIn 0.8s cubic-bezier(0.16,1,0.3,1) forwards" }}>
+                <div className="px-5 py-4 border-b border-[#D4AF37]/15 flex items-center justify-between">
+                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37]/70">
+                    {gift.items.length} {gift.items.length === 1 ? "item" : "items"} inside
+                  </p>
+                  <p className="text-[#D4AF37] text-lg font-light">{fmt.format(gift.productPrice)}</p>
                 </div>
-              )}
-              <div className="p-5 space-y-3">
-                <h2 className="text-lg font-light text-white uppercase tracking-wide">{gift.productName}</h2>
-                <p className="text-[#D4AF37] text-xl font-light">{fmt.format(gift.productPrice)}</p>
+                <ul className="divide-y divide-zinc-900">
+                  {gift.items.map((it, idx) => (
+                    <li key={`${it.productId}-${idx}`} className="flex items-center gap-3 px-4 py-3">
+                      <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
+                        {it.imageUrl
+                          ? <img src={it.imageUrl} alt={it.name} className="w-full h-full object-cover" />
+                          : <Gift className="w-5 h-5 text-zinc-700 m-auto mt-4" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-zinc-200 font-light truncate">{it.name}{it.quantity > 1 ? ` × ${it.quantity}` : ""}</p>
+                        <p className="text-[11px] text-zinc-500 mt-0.5">{fmt.format(it.price * it.quantity)}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            </div>
+            ) : (
+              <div className="w-full border border-[#D4AF37]/25 bg-zinc-950 overflow-hidden shadow-[0_0_60px_rgba(212,175,55,0.1)]">
+                {gift.productImageUrl && (
+                  <div className="aspect-square overflow-hidden">
+                    <img src={gift.productImageUrl} alt={gift.productName} className="w-full h-full object-cover" style={{ animation: "zoomIn 0.8s cubic-bezier(0.16,1,0.3,1) forwards" }} />
+                  </div>
+                )}
+                <div className="p-5 space-y-3">
+                  <h2 className="text-lg font-light text-white uppercase tracking-wide">{gift.productName}</h2>
+                  <p className="text-[#D4AF37] text-xl font-light">{fmt.format(gift.productPrice)}</p>
+                </div>
+              </div>
+            )}
 
             {/* Paid badge */}
             <div className="flex items-center gap-2 border border-green-800/40 bg-green-950/30 px-4 py-2.5 w-full">

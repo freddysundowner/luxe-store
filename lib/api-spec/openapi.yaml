@@ -1078,6 +1078,21 @@ components:
         createdAt:
           type: string
 
+    GiftItem:
+      type: object
+      required: [productId, name, price, quantity]
+      properties:
+        productId:
+          type: integer
+        name:
+          type: string
+        price:
+          type: number
+        imageUrl:
+          type: ["string", "null"]
+        quantity:
+          type: integer
+
     Gift:
       type: object
       required: [id, claimToken, productId, productName, productPrice, paymentMethod, status, createdAt]
@@ -1094,6 +1109,10 @@ components:
           type: number
         productImageUrl:
           type: ["string", "null"]
+        items:
+          type: ["array", "null"]
+          items:
+            $ref: "#/components/schemas/GiftItem"
         recipientName:
           type: ["string", "null"]
         note:
@@ -1127,6 +1146,10 @@ components:
           type: number
         productImageUrl:
           type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/GiftItem"
         recipientName:
           type: string
         note:
