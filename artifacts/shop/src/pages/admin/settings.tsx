@@ -37,6 +37,10 @@ const settingsSchema = z.object({
   brevoApiKey: z.string().optional(),
   brevoSenderEmail: z.string().optional(),
   brevoSenderName: z.string().optional(),
+  salesNotificationEmail: z
+    .string()
+    .optional()
+    .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), { message: "Enter a valid email address" }),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -73,6 +77,7 @@ export default function AdminSettings() {
       brevoApiKey: "",
       brevoSenderEmail: "",
       brevoSenderName: "",
+      salesNotificationEmail: "",
     },
   });
 
@@ -96,6 +101,7 @@ export default function AdminSettings() {
         brevoApiKey: settings.brevoApiKey || "",
         brevoSenderEmail: settings.brevoSenderEmail || "",
         brevoSenderName: settings.brevoSenderName || "",
+        salesNotificationEmail: settings.salesNotificationEmail || "",
       });
     }
   }, [settings, form]);
@@ -111,7 +117,7 @@ export default function AdminSettings() {
   });
 
   const onSubmit = (data: SettingsFormValues) => {
-    const { sunpayEnabled, sunpayApiKey, brevoApiKey, brevoSenderEmail, brevoSenderName, ...rest } = data;
+    const { sunpayEnabled, sunpayApiKey, brevoApiKey, brevoSenderEmail, brevoSenderName, salesNotificationEmail, ...rest } = data;
     updateMutation.mutate({
       data: {
         ...rest,
@@ -120,6 +126,7 @@ export default function AdminSettings() {
         brevoApiKey: brevoApiKey || "",
         brevoSenderEmail: brevoSenderEmail || "",
         brevoSenderName: brevoSenderName || "",
+        salesNotificationEmail: salesNotificationEmail || "",
       } as Parameters<typeof updateMutation.mutate>[0]["data"]
     });
   };
@@ -447,10 +454,30 @@ export default function AdminSettings() {
                   />
                 </div>
 
+                <FormField control={form.control} name="salesNotificationEmail"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Sales Notification Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="sales@yourstore.com"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Optional. When set, this address is BCC'd on every order confirmation so your team gets notified of new orders.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
                 <div className="rounded-lg border border-blue-900/30 bg-blue-950/20 p-4 text-sm space-y-1">
                   <p className="font-medium text-blue-400">How Brevo email works</p>
                   <p className="text-muted-foreground">
-                    After a customer pays via M-Pesa and the payment is confirmed, an order receipt is emailed to them automatically using these credentials.
+                    After a customer pays via M-Pesa and the payment is confirmed, an order receipt is emailed to them automatically using these credentials. If a sales notification email is set, your team is BCC'd on the same message.
                   </p>
                 </div>
               </div>

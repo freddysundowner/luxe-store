@@ -26,4 +26,9 @@ export interface StoreSettings {
   brevoSenderEmail?: string | null;
   /** @nullable */
   brevoSenderName?: string | null;
+  /**
+     * Optional internal sales address that is BCC'd on every order confirmation email.
+     * @nullable
+     */
+  salesNotificationEmail?: string | null;
 }

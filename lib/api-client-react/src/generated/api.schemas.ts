@@ -110,6 +110,11 @@ export interface StoreSettings {
   brevoSenderEmail?: string | null;
   /** @nullable */
   brevoSenderName?: string | null;
+  /**
+     * Optional internal sales address that is BCC'd on every order confirmation email.
+     * @nullable
+     */
+  salesNotificationEmail?: string | null;
 }
 
 export interface StoreSettingsInput {
@@ -125,6 +130,7 @@ export interface StoreSettingsInput {
   brevoApiKey?: string;
   brevoSenderEmail?: string;
   brevoSenderName?: string;
+  salesNotificationEmail?: string;
 }
 
 export type PaymentInitiateBodyCartSnapshot = { [key: string]: unknown };

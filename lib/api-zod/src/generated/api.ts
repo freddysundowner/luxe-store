@@ -286,7 +286,8 @@ export const GetSettingsResponse = zod.object({
   "sunpayApiKey": zod.string().nullish(),
   "brevoApiKey": zod.string().nullish(),
   "brevoSenderEmail": zod.string().nullish(),
-  "brevoSenderName": zod.string().nullish()
+  "brevoSenderName": zod.string().nullish(),
+  "salesNotificationEmail": zod.string().nullish().describe('Optional internal sales address that is BCC\'d on every order confirmation email.')
 })
 
 
@@ -550,7 +551,8 @@ export const UpdateSettingsBody = zod.object({
   "sunpayApiKey": zod.string().optional(),
   "brevoApiKey": zod.string().optional(),
   "brevoSenderEmail": zod.string().optional(),
-  "brevoSenderName": zod.string().optional()
+  "brevoSenderName": zod.string().optional(),
+  "salesNotificationEmail": zod.string().optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
@@ -569,7 +571,8 @@ export const UpdateSettingsResponse = zod.object({
   "sunpayApiKey": zod.string().nullish(),
   "brevoApiKey": zod.string().nullish(),
   "brevoSenderEmail": zod.string().nullish(),
-  "brevoSenderName": zod.string().nullish()
+  "brevoSenderName": zod.string().nullish(),
+  "salesNotificationEmail": zod.string().nullish().describe('Optional internal sales address that is BCC\'d on every order confirmation email.')
 })
 
 

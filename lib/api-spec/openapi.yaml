@@ -718,6 +718,9 @@ components:
           type: ["string", "null"]
         brevoSenderName:
           type: ["string", "null"]
+        salesNotificationEmail:
+          type: ["string", "null"]
+          description: "Optional internal sales address that is BCC'd on every order confirmation email."
 
     StoreSettingsInput:
       type: object
@@ -748,6 +751,8 @@ components:
         brevoSenderEmail:
           type: string
         brevoSenderName:
+          type: string
+        salesNotificationEmail:
           type: string
 
     PaymentInitiateBody:

@@ -49,9 +49,14 @@ router.put("/admin/settings", async (req, res): Promise<void> => {
   }
 
   const existing = await getOrCreateSettings();
-  const { priceTiers, ...restData } = parsed.data;
+  const { priceTiers, salesNotificationEmail, ...restData } = parsed.data;
+  const normalizedSalesEmail =
+    typeof salesNotificationEmail === "string"
+      ? salesNotificationEmail.trim() || null
+      : salesNotificationEmail;
   const dbSet = {
     ...restData,
+    ...(salesNotificationEmail !== undefined ? { salesNotificationEmail: normalizedSalesEmail } : {}),
     ...(priceTiers !== undefined
       ? { priceTiers: priceTiers.map((t) => ({ name: t.name, min: t.min, max: t.max ?? null })) }
       : {}),

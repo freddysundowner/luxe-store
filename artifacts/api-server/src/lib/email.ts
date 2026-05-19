@@ -16,7 +16,7 @@ interface CartCustomer {
 export interface OrderEmailInput {
   settings: Pick<
     StoreSettings,
-    "brevoApiKey" | "brevoSenderEmail" | "brevoSenderName" | "storeName" | "currencySymbol"
+    "brevoApiKey" | "brevoSenderEmail" | "brevoSenderName" | "storeName" | "currencySymbol" | "salesNotificationEmail"
   >;
   customer: CartCustomer;
   items: CartItem[];
@@ -104,7 +104,14 @@ export async function sendOrderConfirmationEmail(
   if (!settings.brevoSenderEmail) return { sent: false, reason: "Brevo sender email not configured" };
   if (!customer.email) return { sent: false, reason: "No customer email" };
 
-  const payload = {
+  const salesEmail = settings.salesNotificationEmail?.trim();
+  const payload: {
+    sender: { email: string; name: string };
+    to: { email: string; name?: string }[];
+    bcc?: { email: string; name?: string }[];
+    subject: string;
+    htmlContent: string;
+  } = {
     sender: {
       email: settings.brevoSenderEmail,
       name: settings.brevoSenderName || settings.storeName || "Store",
@@ -113,17 +120,37 @@ export async function sendOrderConfirmationEmail(
     subject: `Order confirmed — ${settings.storeName || "Store"}`,
     htmlContent: buildHtml(input),
   };
+  if (salesEmail && salesEmail.toLowerCase() !== customer.email.toLowerCase()) {
+    payload.bcc = [{ email: salesEmail, name: "Sales" }];
+  }
 
-  try {
-    const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+  const send = async (body: typeof payload) =>
+    fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
         accept: "application/json",
-        "api-key": settings.brevoApiKey,
+        "api-key": settings.brevoApiKey as string,
         "content-type": "application/json",
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(body),
     });
+
+  try {
+    let res = await send(payload);
+
+    // If Brevo rejects the request and we attached a BCC, retry once without
+    // BCC so the customer still receives their confirmation even when the
+    // sales address is malformed/unverified.
+    if (!res.ok && payload.bcc) {
+      const firstBody = await res.text().catch(() => "");
+      log?.warn(
+        { status: res.status, body: firstBody.slice(0, 200), bcc: payload.bcc },
+        "Brevo rejected send with BCC — retrying without BCC"
+      );
+      const { bcc: _bcc, ...withoutBcc } = payload;
+      void _bcc;
+      res = await send(withoutBcc as typeof payload);
+    }
 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
