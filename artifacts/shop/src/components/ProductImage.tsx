@@ -54,11 +54,17 @@ export function ProductImage({
   draggable,
 }: ProductImageProps) {
   const cfg = settings ?? DEFAULT_IMAGE_SETTINGS;
+  // Tailwind's compiled stylesheet declares `.relative` after `.absolute`,
+  // so combining both classes makes `relative` win and collapses the wrapper
+  // to 0×0. Only add `relative` when the caller hasn't taken responsibility
+  // for positioning (e.g. by passing `absolute inset-0`).
+  const positionClass = /\b(absolute|fixed|sticky)\b/.test(className) ? "" : "relative";
+  const wrapperClass = `${positionClass} overflow-hidden bg-zinc-900 ${className}`.trim();
 
   if (!src) {
     if (!showFallback) return null;
     return (
-      <div className={`relative overflow-hidden bg-zinc-900 ${className}`}>
+      <div className={wrapperClass}>
         <div className="absolute inset-0 flex items-center justify-center">
           <ShoppingBag className="w-10 h-10 text-zinc-700" />
         </div>
@@ -70,7 +76,7 @@ export function ProductImage({
 
   if (cfg.fit === "contain") {
     return (
-      <div className={`relative overflow-hidden bg-zinc-900 ${className}`}>
+      <div className={wrapperClass}>
         {/* Blurred background fills letterbox bars with the same image, so
             small/portrait/landscape uploads still look intentional rather
             than stranded against a black bar. */}
@@ -93,7 +99,7 @@ export function ProductImage({
   }
 
   return (
-    <div className={`relative overflow-hidden bg-zinc-900 ${className}`}>
+    <div className={wrapperClass}>
       <img
         src={src}
         alt={alt}
