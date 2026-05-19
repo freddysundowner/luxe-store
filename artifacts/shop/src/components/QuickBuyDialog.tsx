@@ -64,14 +64,13 @@ export function QuickBuyDialog({ open, onOpenChange, product, initialVariantId =
   const showFromPrice = hasVariants && priceDiffers && !selectedVariant;
   const headerPrice = selectedVariant ? effectivePrice : (showFromPrice ? Math.min(...variantPrices) : product.price);
 
-  // Require positive stock on both code paths. Previously the no-variant
-  // branch only checked `inStock` (a boolean flag), which let products with
-  // `inStock=true` but `stockQuantity=0` slip through quick checkout.
-  const canPurchase =
-    product.inStock &&
-    (hasVariants
-      ? !!selectedVariant && effectiveStock > 0
-      : effectiveStock > 0);
+  // For products without variants we trust the merchant's `inStock` flag —
+  // `stockQuantity` is often left unset on simple products. For products with
+  // variants we require the selected variant to have positive stock so a
+  // sold-out variant disables checkout.
+  const canPurchase = hasVariants
+    ? !!product.inStock && !!selectedVariant && effectiveStock > 0
+    : !!product.inStock;
 
   const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayApiKey;
   const whatsappEnabled = !!settings?.whatsappNumber;
