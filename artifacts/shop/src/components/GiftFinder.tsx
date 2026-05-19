@@ -146,8 +146,26 @@ export function GiftFinder() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: newMessages }),
       });
-      const data = await res.json();
-      setMessages([...newMessages, { role: "assistant", content: data.reply || "I couldn't find a match — try describing them differently." }]);
+      // Treat any non-OK response as a real failure so the user sees an
+      // honest error rather than the "couldn't find a match" copy that's
+      // meant for an empty-but-valid AI reply.
+      if (!res.ok) {
+        setMessages([...newMessages, { role: "assistant", content: "Something went wrong on my end. Please try again in a moment." }]);
+        return;
+      }
+      // The server always returns JSON on 2xx, but guard the parse anyway
+      // so a proxy/HTML response can't crash the chat.
+      let reply = "";
+      try {
+        const data = await res.json();
+        reply = typeof data?.reply === "string" ? data.reply.trim() : "";
+      } catch {
+        reply = "";
+      }
+      setMessages([
+        ...newMessages,
+        { role: "assistant", content: reply || "I couldn't find a match — try describing them differently." },
+      ]);
     } catch {
       setMessages([...newMessages, { role: "assistant", content: "Something went wrong. Please try again." }]);
     } finally {
@@ -356,6 +374,10 @@ export function GiftFinder() {
                     }
                     const parsed = parseAssistantMessage(msg.content);
                     const referencedHampers = parsed.hamperIds.map((id) => hamperById.get(id)).filter((h): h is Hamper => Boolean(h));
+                    // Drop product ids the AI hallucinated (not in our active
+                    // catalog) so we never render a chip that links to a 404
+                    // product page.
+                    const referencedProductIds = parsed.productIds.filter((id) => productById.has(id));
                     return (
                       <div key={i} className="flex flex-col gap-3">
                         <div className="flex justify-start">
@@ -363,7 +385,9 @@ export function GiftFinder() {
                             <Gift className="w-3 h-3 text-[#D4AF37]" />
                           </div>
                           <div className="max-w-[78%] px-4 py-3 text-sm leading-relaxed font-light bg-zinc-900/80 text-zinc-300 border border-zinc-800/60">
-                            {parsed.text}
+                            {parsed.text || (referencedHampers.length === 0 && referencedProductIds.length === 0
+                              ? "I couldn't pin down a match — tell me a little more about them and I'll try again."
+                              : "Here's what I'd suggest:")}
                           </div>
                         </div>
 
@@ -404,10 +428,10 @@ export function GiftFinder() {
                         ))}
 
                         {/* Product chips */}
-                        {parsed.productIds.length > 0 && (
+                        {referencedProductIds.length > 0 && (
                           <div className="ml-8 flex flex-wrap gap-2">
-                            {parsed.productIds.map((id) => {
-                              const p = productById.get(id);
+                            {referencedProductIds.map((id) => {
+                              const p = productById.get(id)!;
                               const inCustom = customHamper.find((c) => c.productId === id);
                               return (
                                 <div key={`p-${id}`} className="flex items-center border border-zinc-800 bg-zinc-950/60">
@@ -416,19 +440,17 @@ export function GiftFinder() {
                                     onClick={close}
                                     className="px-3 py-1.5 text-[11px] uppercase tracking-widest text-[#D4AF37] hover:bg-[#D4AF37]/10 transition-colors"
                                   >
-                                    {p ? p.name : `View product →`}
+                                    {p.name}
                                   </Link>
-                                  {p && (
-                                    <button
-                                      onClick={() => addToCustomHamper(id)}
-                                      title="Add to hamper"
-                                      className="px-2.5 py-1.5 border-l border-zinc-800 text-zinc-500 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center gap-1"
-                                    >
-                                      {inCustom ? <Check className="w-3 h-3 text-[#D4AF37]" /> : <Plus className="w-3 h-3" />}
-                                      <span className="text-[9px] uppercase tracking-widest">{inCustom ? `In hamper ×${inCustom.quantity}` : "Hamper"}</span>
-                                    </button>
-                                  )}
-                                  {!buildMode && p && (
+                                  <button
+                                    onClick={() => addToCustomHamper(id)}
+                                    title="Add to hamper"
+                                    className="px-2.5 py-1.5 border-l border-zinc-800 text-zinc-500 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center gap-1"
+                                  >
+                                    {inCustom ? <Check className="w-3 h-3 text-[#D4AF37]" /> : <Plus className="w-3 h-3" />}
+                                    <span className="text-[9px] uppercase tracking-widest">{inCustom ? `In hamper ×${inCustom.quantity}` : "Hamper"}</span>
+                                  </button>
+                                  {!buildMode && (
                                     <button
                                       onClick={() => { addItem(p); toast({ title: `${p.name} added to bag` }); }}
                                       title="Add to bag"
