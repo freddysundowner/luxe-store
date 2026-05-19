@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { Link, Link as WouterLink } from "wouter";
-import { Gift, Heart, MessageCircle, Share2, ShoppingBag, Sparkles, X, Send } from "lucide-react";
+import { Link } from "wouter";
+import { Gift, Heart, MessageCircle, Share2, ShoppingBag, Sparkles, X, Send, SlidersHorizontal, Droplets } from "lucide-react";
 import { Product, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { useCart } from "@/lib/cart-context";
 import { useFavorites } from "@/lib/favorites-context";
@@ -16,8 +16,12 @@ interface TikTokFeedProps {
   products: Product[];
   isLoading: boolean;
   onOpenGiftFinder?: () => void;
+  onOpenFilters?: () => void;
   topOffset?: number;
 }
+
+// Duration (ms) for the top progress bar before the drop icon reveals.
+const PROGRESS_DURATION_MS = 5000;
 
 // ── Card background (image + gradient) ───────────────────────────────────────
 function CardBg({ product }: { product: Product }) {
@@ -41,7 +45,7 @@ function CardBg({ product }: { product: Product }) {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 12 }: TikTokFeedProps) {
+export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilters, topOffset = 12 }: TikTokFeedProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
@@ -69,9 +73,29 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   const vh = containerH || (typeof window !== "undefined" ? window.innerHeight : 700);
 
   useCart(); // cart context kept mounted (drawer reads it)
-  const { toggleFavorite, isFavorite, favoriteCount } = useFavorites();
+  const { toggleFavorite, isFavorite } = useFavorites();
   const { toast } = useToast();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+
+  // Clamp currentIndex when the products list shrinks (e.g. user changes a
+  // filter and the previously-current item is no longer in the result set).
+  useEffect(() => {
+    if (currentIndex > products.length - 1) {
+      setCurrentIndex(Math.max(0, products.length - 1));
+    }
+  }, [products.length, currentIndex]);
+
+  // ── Top progress bar: fills left→right for each product. When it finishes,
+  // the gold "drop" icon fades in (matches the desktop look). Resets when the
+  // user moves to a different product (by id, so filter changes also reset).
+  const activeProductId = products[currentIndex]?.id ?? null;
+  const [progressDone, setProgressDone] = useState(false);
+  useEffect(() => {
+    setProgressDone(false);
+    if (activeProductId == null) return;
+    const t = setTimeout(() => setProgressDone(true), PROGRESS_DURATION_MS);
+    return () => clearTimeout(t);
+  }, [activeProductId]);
 
   // ── Complete a slide programmatically (button / tap zone) ──
   const triggerSlide = useCallback((dir: "up" | "down") => {
@@ -225,7 +249,9 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   }
 
   const current = products[currentIndex];
-  const visibleDots = Math.min(products.length, 8);
+  // Image indicators show one dot per image of the current product. Until
+  // multi-image support lands, this falls back to a single dot for imageUrl.
+  const imageCount = Math.max(1, (current as Product & { images?: unknown[] }).images?.length ?? (current?.imageUrl ? 1 : 1));
 
   // The "adjacent" card that slides in/out alongside the current card
   const adjacentIndex = slideDir === "up"
@@ -281,46 +307,68 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
       >
         <CardBg product={current} />
 
-        {/* Progress bars — top */}
-        <div className="absolute left-4 right-4 flex gap-1 z-10" style={{ top: `${topOffset}px` }}>
-          {Array.from({ length: visibleDots }).map((_, i) => (
-            <button
-              key={i}
-              onClick={() => !isAnimating && setCurrentIndex(i)}
-              className="flex-1 h-0.5 rounded-full transition-all"
-              style={{
-                background: i === currentIndex
-                  ? "#D4AF37"
-                  : i < currentIndex
-                  ? "rgba(212,175,55,0.35)"
-                  : "rgba(255,255,255,0.15)",
-              }}
-            />
-          ))}
+        {/* Top bar: image indicators (left), drop icon (center, reveals when
+            progress completes), filter button (right) */}
+        <div className="absolute left-4 right-4 z-10 flex items-center justify-between gap-3" style={{ top: `${topOffset}px` }}>
+          {/* Image indicators — one dot per image of the current product */}
+          <div className="flex gap-1 flex-1 max-w-[40%]">
+            {Array.from({ length: imageCount }).map((_, i) => (
+              <span
+                key={i}
+                className="flex-1 h-0.5 rounded-full bg-[#D4AF37]/80"
+                style={{ maxWidth: 28 }}
+              />
+            ))}
+          </div>
+
+          {/* Drop icon — fades in once progress bar completes */}
+          <div
+            className="w-9 h-9 rounded-full bg-black/60 border border-[#D4AF37]/40 flex items-center justify-center transition-opacity duration-500 pointer-events-none"
+            style={{
+              opacity: progressDone ? 1 : 0,
+              boxShadow: progressDone ? "0 0 12px rgba(212,175,55,0.25)" : "none",
+            }}
+            aria-hidden={!progressDone}
+          >
+            <Droplets className="w-5 h-5" style={{ animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }} />
+          </div>
+
+          {/* Filter button → opens bottom sheet */}
+          <button
+            onClick={() => onOpenFilters?.()}
+            aria-label="Filters"
+            className="w-9 h-9 rounded-full bg-black/60 border border-white/15 flex items-center justify-center hover:border-[#D4AF37]/60 transition-colors"
+          >
+            <SlidersHorizontal className="w-4 h-4 text-white" />
+          </button>
         </div>
 
-        {/* Counter + nav */}
-        <div className="absolute left-4 right-4 z-10 flex justify-between items-center" style={{ top: `${topOffset + 14}px` }}>
-          <span className="text-[10px] text-white/30 uppercase tracking-widest">
-            {currentIndex + 1} / {products.length}
-          </span>
-          <div className="flex items-center gap-2">
-            <WouterLink href="/favorites"
-              className="flex items-center gap-1 bg-black/50 backdrop-blur-sm border border-white/10 rounded-full px-2.5 py-1 hover:border-[#D4AF37]/40 transition-colors"
-            >
-              <Heart className={`w-3 h-3 transition-colors ${favoriteCount > 0 ? "fill-[#D4AF37] text-[#D4AF37]" : "text-white/40"}`} />
-              {favoriteCount > 0 && (
-                <span className="text-[9px] text-[#D4AF37] font-semibold leading-none">{favoriteCount}</span>
-              )}
-            </WouterLink>
-            <div className="flex gap-1">
-              <button onClick={() => triggerSlide("down")} disabled={currentIndex <= 0}
-                className="w-7 h-7 flex items-center justify-center text-white/25 hover:text-white/60 disabled:opacity-10 transition-colors text-sm">↑</button>
-              <button onClick={() => triggerSlide("up")} disabled={currentIndex >= products.length - 1}
-                className="w-7 h-7 flex items-center justify-center text-white/25 hover:text-white/60 disabled:opacity-10 transition-colors text-sm">↓</button>
-            </div>
-          </div>
+        {/* Thin gold progress bar — fills left→right over PROGRESS_DURATION_MS,
+            keyed on currentIndex so it resets on every swipe */}
+        <div
+          className="absolute left-4 right-4 z-10 h-0.5 bg-white/10 rounded-full overflow-hidden"
+          style={{ top: `${topOffset + 18}px` }}
+        >
+          <div
+            key={activeProductId ?? "none"}
+            className="h-full bg-[#D4AF37]"
+            style={{
+              width: "100%",
+              transformOrigin: "left center",
+              animation: `tiktokProgress ${PROGRESS_DURATION_MS}ms linear forwards`,
+            }}
+          />
         </div>
+        <style>{`
+          @keyframes tiktokProgress {
+            from { transform: scaleX(0); }
+            to { transform: scaleX(1); }
+          }
+          @keyframes goldShimmer {
+            0%, 100% { color: #D4AF37; filter: drop-shadow(0 0 3px rgba(212,175,55,0.4)); opacity: 0.85; }
+            50% { color: #f5e27a; filter: drop-shadow(0 0 8px rgba(245,226,122,0.9)); opacity: 1; }
+          }
+        `}</style>
 
         {/* Right-side actions */}
         <div
@@ -377,14 +425,6 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
             </div>
           </div>
         )}
-
-        {/* Right progress bar */}
-        <div className="absolute right-0 top-16 bottom-16 w-0.5 bg-white/5 z-10">
-          <div
-            className="bg-[#D4AF37]/50 w-full rounded-full transition-all duration-300"
-            style={{ height: `${((currentIndex + 1) / products.length) * 100}%` }}
-          />
-        </div>
 
         {/* Bottom info panel */}
         <BottomPanel

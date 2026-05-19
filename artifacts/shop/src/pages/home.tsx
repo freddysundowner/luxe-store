@@ -21,7 +21,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Helmet } from "react-helmet-async";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
@@ -148,7 +147,6 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
     // variant + quantity (if needed) and goes straight to the customer-info
     // checkout step on confirm. The dialog itself handles adding to cart, so
     // we don't mark the button as "added" here.
-    console.log("[QuickBuy] Buy Now clicked for", product.name, product.id);
     setQuickBuyProduct(product);
   };
 
@@ -456,6 +454,7 @@ export default function Home() {
     });
   };
   const [isMobile, setIsMobile] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -529,6 +528,27 @@ export default function Home() {
 
   // ── Mobile: true full-screen TikTok (bypasses RootLayout header) ──────────
   if (isMobile) {
+    const availabilityOptions: { key: string; label: string }[] = [
+      { key: "instock",    label: "In Stock" },
+      { key: "new",        label: "New Arrival" },
+      { key: "sale",       label: "Sale" },
+      { key: "hot",        label: "Hot / Trending" },
+      { key: "bestseller", label: "Bestseller" },
+      { key: "limited",    label: "Limited Edition" },
+      { key: "coming_soon", label: "Coming Soon" },
+    ];
+    const activeFilterCount =
+      (search ? 1 : 0) +
+      (selectedCategory !== undefined ? 1 : 0) +
+      priceRanges.size +
+      availability.size;
+    const clearAllMobileFilters = () => {
+      clearSearch();
+      setSelectedCategory(undefined);
+      setPriceRanges(new Set());
+      setAvailability(new Set());
+    };
+
     return (
       <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 100 }}>
         <Helmet>
@@ -537,7 +557,158 @@ export default function Home() {
           <meta property="og:title" content="Luxe Store — Curated Luxury Collection" />
           <meta property="og:type" content="website" />
         </Helmet>
-        <TikTokFeed products={displayProducts} isLoading={isLoading} topOffset={12} />
+        <TikTokFeed
+          products={displayProducts}
+          isLoading={isLoading}
+          topOffset={12}
+          onOpenFilters={() => setMobileFiltersOpen(true)}
+        />
+
+        {/* Mobile filter bottom sheet */}
+        {mobileFiltersOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-[300] bg-black/70"
+              onClick={() => setMobileFiltersOpen(false)}
+            />
+            <div
+              className="fixed bottom-0 left-0 right-0 z-[310] bg-[#0a0a0a] border-t border-[#D4AF37]/20 max-h-[85vh] flex flex-col"
+              style={{ animation: "slideUpFilters 0.28s cubic-bezier(0.16,1,0.3,1) forwards" }}
+            >
+              <style>{`@keyframes slideUpFilters { from { transform: translateY(100%); } to { transform: translateY(0); } }`}</style>
+              <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent" />
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-0.5 bg-zinc-700 rounded-full" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-3 border-b border-zinc-900">
+                <p className="text-xs uppercase tracking-widest text-zinc-300 font-light">
+                  Filters {activeFilterCount > 0 && <span className="text-[#D4AF37]">({activeFilterCount})</span>}
+                </p>
+                <div className="flex items-center gap-3">
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={clearAllMobileFilters}
+                      className="text-[10px] uppercase tracking-widest text-zinc-500 hover:text-[#D4AF37] transition-colors"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setMobileFiltersOpen(false)}
+                    className="text-zinc-600 hover:text-zinc-300 transition-colors p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable filter body */}
+              <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
+                {/* Search */}
+                <div className="relative group">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-600 group-focus-within:text-[#D4AF37] transition-colors pointer-events-none" />
+                  <input
+                    type="search"
+                    placeholder="Search collection..."
+                    className="w-full pl-9 pr-7 py-2.5 rounded-full text-xs placeholder-zinc-600 focus:outline-none focus:ring-1 transition-all bg-zinc-900/60 border border-zinc-800 text-zinc-200 focus:ring-[#D4AF37] focus:border-[#D4AF37]"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  {search && (
+                    <button
+                      onClick={clearSearch}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-300"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
+
+                {/* Categories */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Categories</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setSelectedCategory(undefined)}
+                      className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                        selectedCategory === undefined
+                          ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold"
+                          : "text-zinc-400 border-zinc-800 hover:border-zinc-700"
+                      }`}
+                    >
+                      All
+                    </button>
+                    {categories?.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategory(cat.id)}
+                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${
+                          selectedCategory === cat.id
+                            ? "bg-[#D4AF37] text-black border-[#D4AF37] font-semibold"
+                            : "text-zinc-400 border-zinc-800 hover:border-zinc-700"
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Price range */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Price Range</p>
+                  <div className="flex flex-col gap-2">
+                    {priceTiers.map((tier) => (
+                      <label key={tier.name} className="flex items-center gap-2 text-xs cursor-pointer select-none"
+                        style={{ color: priceRanges.has(tier.name) ? "#D4AF37" : "#a1a1aa" }}>
+                        <input type="checkbox" className="sr-only"
+                          checked={priceRanges.has(tier.name)}
+                          onChange={() => toggleSet(setPriceRanges, tier.name)} />
+                        <span className="w-3.5 h-3.5 border rounded-sm flex-shrink-0 flex items-center justify-center transition-colors"
+                          style={{ borderColor: priceRanges.has(tier.name) ? "#D4AF37" : "#3f3f46", background: priceRanges.has(tier.name) ? "#D4AF37" : "transparent" }}>
+                          {priceRanges.has(tier.name) && <span className="block w-1.5 h-1.5 bg-black rounded-sm" />}
+                        </span>
+                        {tier.name}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Availability */}
+                <div>
+                  <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Availability</p>
+                  <div className="flex flex-col gap-2">
+                    {availabilityOptions.map(({ key, label }) => (
+                      <label key={key} className="flex items-center gap-2 text-xs cursor-pointer select-none"
+                        style={{ color: availability.has(key) ? "#D4AF37" : "#a1a1aa" }}>
+                        <input type="checkbox" className="sr-only"
+                          checked={availability.has(key)}
+                          onChange={() => toggleSet(setAvailability, key)} />
+                        <span className="w-3.5 h-3.5 border rounded-sm flex-shrink-0 flex items-center justify-center transition-colors"
+                          style={{ borderColor: availability.has(key) ? "#D4AF37" : "#3f3f46", background: availability.has(key) ? "#D4AF37" : "transparent" }}>
+                          {availability.has(key) && <span className="block w-1.5 h-1.5 bg-black rounded-sm" />}
+                        </span>
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Apply footer */}
+              <div className="px-5 py-3 border-t border-zinc-900">
+                <button
+                  onClick={() => setMobileFiltersOpen(false)}
+                  className="w-full py-3 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors"
+                >
+                  Show {displayProducts.length} {displayProducts.length === 1 ? "result" : "results"}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     );
   }
