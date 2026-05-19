@@ -3,3 +3,4 @@ export * from "./products";
 export * from "./settings";
 export * from "./payments";
 export * from "./gifts";
+export * from "./availability-tags";

@@ -431,6 +431,68 @@ paths:
               schema:
                 $ref: "#/components/schemas/Gift"
 
+  /admin/availability-tags:
+    get:
+      operationId: listAvailabilityTags
+      tags: [admin]
+      summary: List all availability tags
+      responses:
+        "200":
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailabilityTag"
+    post:
+      operationId: createAvailabilityTag
+      tags: [admin]
+      summary: Create a new availability tag
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AvailabilityTagInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AvailabilityTag"
+
+  /admin/availability-tags/{id}:
+    delete:
+      operationId: deleteAvailabilityTag
+      tags: [admin]
+      summary: Delete an availability tag
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /availability-tags:
+    get:
+      operationId: listAvailabilityTagsPublic
+      tags: [availability-tags]
+      summary: List availability tags (public, for product form)
+      responses:
+        "200":
+          description: List of tags
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AvailabilityTag"
+
   /admin/settings:
     put:
       operationId: updateSettings
@@ -790,6 +852,27 @@ components:
           type: string
         success:
           type: boolean
+
+    AvailabilityTag:
+      type: object
+      required: [id, value, label, sortOrder]
+      properties:
+        id:
+          type: integer
+        value:
+          type: string
+        label:
+          type: string
+        sortOrder:
+          type: integer
+
+    AvailabilityTagInput:
+      type: object
+      required: [label]
+      properties:
+        label:
+          type: string
+          minLength: 1
 
     AdminStats:
       type: object

@@ -24,6 +24,8 @@ import type {
   AdminCredentials,
   AdminPayment,
   AdminStats,
+  AvailabilityTag,
+  AvailabilityTagInput,
   Category,
   CategoryInput,
   Gift,
@@ -1682,6 +1684,301 @@ export const useMarkGiftPaid = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getMarkGiftPaidMutationOptions(options));
     }
+
+export const getListAvailabilityTagsUrl = () => {
+
+
+
+
+  return `/api/admin/availability-tags`
+}
+
+/**
+ * @summary List all availability tags
+ */
+export const listAvailabilityTags = async ( options?: RequestInit): Promise<AvailabilityTag[]> => {
+
+  return customFetch<AvailabilityTag[]>(getListAvailabilityTagsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAvailabilityTagsQueryKey = () => {
+    return [
+    `/api/admin/availability-tags`
+    ] as const;
+    }
+
+
+export const getListAvailabilityTagsQueryOptions = <TData = Awaited<ReturnType<typeof listAvailabilityTags>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAvailabilityTags>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAvailabilityTagsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAvailabilityTags>>> = ({ signal }) => listAvailabilityTags({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAvailabilityTags>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAvailabilityTagsQueryResult = NonNullable<Awaited<ReturnType<typeof listAvailabilityTags>>>
+export type ListAvailabilityTagsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all availability tags
+ */
+
+export function useListAvailabilityTags<TData = Awaited<ReturnType<typeof listAvailabilityTags>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAvailabilityTags>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAvailabilityTagsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateAvailabilityTagUrl = () => {
+
+
+
+
+  return `/api/admin/availability-tags`
+}
+
+/**
+ * @summary Create a new availability tag
+ */
+export const createAvailabilityTag = async (availabilityTagInput: AvailabilityTagInput, options?: RequestInit): Promise<AvailabilityTag> => {
+
+  return customFetch<AvailabilityTag>(getCreateAvailabilityTagUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      availabilityTagInput,)
+  }
+);}
+
+
+
+
+export const getCreateAvailabilityTagMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAvailabilityTag>>, TError,{data: BodyType<AvailabilityTagInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createAvailabilityTag>>, TError,{data: BodyType<AvailabilityTagInput>}, TContext> => {
+
+const mutationKey = ['createAvailabilityTag'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createAvailabilityTag>>, {data: BodyType<AvailabilityTagInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createAvailabilityTag(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateAvailabilityTagMutationResult = NonNullable<Awaited<ReturnType<typeof createAvailabilityTag>>>
+    export type CreateAvailabilityTagMutationBody = BodyType<AvailabilityTagInput>
+    export type CreateAvailabilityTagMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a new availability tag
+ */
+export const useCreateAvailabilityTag = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createAvailabilityTag>>, TError,{data: BodyType<AvailabilityTagInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createAvailabilityTag>>,
+        TError,
+        {data: BodyType<AvailabilityTagInput>},
+        TContext
+      > => {
+      return useMutation(getCreateAvailabilityTagMutationOptions(options));
+    }
+
+export const getDeleteAvailabilityTagUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/availability-tags/${id}`
+}
+
+/**
+ * @summary Delete an availability tag
+ */
+export const deleteAvailabilityTag = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteAvailabilityTagUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteAvailabilityTagMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAvailabilityTag>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteAvailabilityTag>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteAvailabilityTag'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteAvailabilityTag>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteAvailabilityTag(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteAvailabilityTagMutationResult = NonNullable<Awaited<ReturnType<typeof deleteAvailabilityTag>>>
+
+    export type DeleteAvailabilityTagMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Delete an availability tag
+ */
+export const useDeleteAvailabilityTag = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteAvailabilityTag>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteAvailabilityTag>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteAvailabilityTagMutationOptions(options));
+    }
+
+export const getListAvailabilityTagsPublicUrl = () => {
+
+
+
+
+  return `/api/availability-tags`
+}
+
+/**
+ * @summary List availability tags (public, for product form)
+ */
+export const listAvailabilityTagsPublic = async ( options?: RequestInit): Promise<AvailabilityTag[]> => {
+
+  return customFetch<AvailabilityTag[]>(getListAvailabilityTagsPublicUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAvailabilityTagsPublicQueryKey = () => {
+    return [
+    `/api/availability-tags`
+    ] as const;
+    }
+
+
+export const getListAvailabilityTagsPublicQueryOptions = <TData = Awaited<ReturnType<typeof listAvailabilityTagsPublic>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAvailabilityTagsPublic>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAvailabilityTagsPublicQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAvailabilityTagsPublic>>> = ({ signal }) => listAvailabilityTagsPublic({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAvailabilityTagsPublic>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAvailabilityTagsPublicQueryResult = NonNullable<Awaited<ReturnType<typeof listAvailabilityTagsPublic>>>
+export type ListAvailabilityTagsPublicQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List availability tags (public, for product form)
+ */
+
+export function useListAvailabilityTagsPublic<TData = Awaited<ReturnType<typeof listAvailabilityTagsPublic>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAvailabilityTagsPublic>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAvailabilityTagsPublicQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getUpdateSettingsUrl = () => {
 

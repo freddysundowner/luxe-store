@@ -23,6 +23,7 @@ import AdminProductForm from "@/pages/admin/products/form";
 import AdminCategories from "@/pages/admin/categories/index";
 import AdminSettings from "@/pages/admin/settings";
 import AdminGifts from "@/pages/admin/gifts";
+import AdminAvailabilityTags from "@/pages/admin/availability-tags";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/admin/products/:id/edit" component={AdminProductForm} />
       <Route path="/admin/categories" component={AdminCategories} />
       <Route path="/admin/gifts" component={AdminGifts} />
+      <Route path="/admin/availability-tags" component={AdminAvailabilityTags} />
       <Route path="/admin/settings" component={AdminSettings} />
 
       {/* Fallback */}

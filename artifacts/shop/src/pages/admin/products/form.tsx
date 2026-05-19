@@ -10,21 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUpload } from "@/components/ImageUpload";
-import { useCreateProduct, useUpdateProduct, useGetProduct, getGetProductQueryKey, useListCategories, getListCategoriesQueryKey } from "@workspace/api-client-react";
+import { useCreateProduct, useUpdateProduct, useGetProduct, getGetProductQueryKey, useListCategories, getListCategoriesQueryKey, useListAvailabilityTagsPublic, getListAvailabilityTagsPublicQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-const AVAILABILITY_TAGS = [
-  { value: "none",        label: "None" },
-  { value: "new",         label: "New Arrival" },
-  { value: "sale",        label: "Sale" },
-  { value: "hot",         label: "Hot / Trending" },
-  { value: "bestseller",  label: "Bestseller" },
-  { value: "limited",     label: "Limited Edition" },
-  { value: "coming_soon", label: "Coming Soon" },
-] as const;
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -56,6 +47,10 @@ export default function ProductForm() {
 
   const { data: categories } = useListCategories({
     query: { queryKey: getListCategoriesQueryKey() }
+  });
+
+  const { data: availabilityTags } = useListAvailabilityTagsPublic({
+    query: { queryKey: getListAvailabilityTagsPublicQueryKey() }
   });
 
   const form = useForm<ProductFormValues>({
@@ -231,9 +226,10 @@ export default function ProductForm() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {AVAILABILITY_TAGS.map(({ value, label }) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
+                        <SelectItem value="none">No badge</SelectItem>
+                        {availabilityTags?.map((tag) => (
+                          <SelectItem key={tag.value} value={tag.value}>
+                            {tag.label}
                           </SelectItem>
                         ))}
                       </SelectContent>

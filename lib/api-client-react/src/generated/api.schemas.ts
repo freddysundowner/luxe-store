@@ -227,6 +227,18 @@ export interface AdminAuthResult {
   success: boolean;
 }
 
+export interface AvailabilityTag {
+  id: number;
+  value: string;
+  label: string;
+  sortOrder: number;
+}
+
+export interface AvailabilityTagInput {
+  /** @minLength 1 */
+  label: string;
+}
+
 export interface AdminStats {
   totalProducts: number;
   totalCategories: number;

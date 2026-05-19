@@ -10,6 +10,8 @@ export * from './adminAuthResult';
 export * from './adminCredentials';
 export * from './adminPayment';
 export * from './adminStats';
+export * from './availabilityTag';
+export * from './availabilityTagInput';
 export * from './category';
 export * from './categoryInput';
 export * from './gift';

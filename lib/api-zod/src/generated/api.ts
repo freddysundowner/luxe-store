@@ -431,6 +431,49 @@ export const MarkGiftPaidResponse = zod.object({
 
 
 /**
+ * @summary List all availability tags
+ */
+export const ListAvailabilityTagsResponseItem = zod.object({
+  "id": zod.number(),
+  "value": zod.string(),
+  "label": zod.string(),
+  "sortOrder": zod.number()
+})
+export const ListAvailabilityTagsResponse = zod.array(ListAvailabilityTagsResponseItem)
+
+
+/**
+ * @summary Create a new availability tag
+ */
+
+
+
+export const CreateAvailabilityTagBody = zod.object({
+  "label": zod.string().min(1)
+})
+
+
+/**
+ * @summary Delete an availability tag
+ */
+export const DeleteAvailabilityTagParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary List availability tags (public, for product form)
+ */
+export const ListAvailabilityTagsPublicResponseItem = zod.object({
+  "id": zod.number(),
+  "value": zod.string(),
+  "label": zod.string(),
+  "sortOrder": zod.number()
+})
+export const ListAvailabilityTagsPublicResponse = zod.array(ListAvailabilityTagsPublicResponseItem)
+
+
+/**
  * @summary Update store settings
  */
 export const UpdateSettingsBody = zod.object({

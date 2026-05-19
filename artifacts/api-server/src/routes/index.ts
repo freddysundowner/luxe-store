@@ -8,6 +8,7 @@ import aiRouter from "./ai";
 import paymentsRouter from "./payments";
 import uploadRouter from "./upload";
 import giftsRouter from "./gifts";
+import availabilityTagsRouter from "./availability-tags";
 
 const router: IRouter = Router();
 
@@ -20,5 +21,6 @@ router.use(aiRouter);
 router.use(paymentsRouter);
 router.use(uploadRouter);
 router.use(giftsRouter);
+router.use(availabilityTagsRouter);
 
 export default router;
