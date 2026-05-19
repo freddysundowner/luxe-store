@@ -1,13 +1,14 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { Product } from "@workspace/api-client-react";
 import { ShoppingBag } from "lucide-react";
-import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { isProductSoldOut } from "@/lib/stock";
 import { useAddBundleToCart } from "@/lib/bundle-add";
 import { Gift } from "lucide-react";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
 import { BundleBoxCover } from "@/components/BundleBoxCover";
+import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 
 // Hoist the formatter so we allocate it once per app, not once per card per
 // render — the grid can have 30+ cards and rerenders during scroll.
@@ -35,9 +36,9 @@ export function ProductCard({
    */
   onSelect?: (product: Product) => void;
 }) {
-  const { addItem, openCart } = useCart();
   const { toast } = useToast();
   const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
+  const [quickBuyOpen, setQuickBuyOpen] = useState(false);
 
   const isBundle = product.kind === "bundle";
   const activeVariants = (product.variants ?? []).filter((v) => v.isActive);
@@ -45,14 +46,16 @@ export function ProductCard({
 
   const isSoldOut = isProductSoldOut(product);
 
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleBuyNow = (e: React.MouseEvent) => {
     e.preventDefault();
     // Prevent the click from bubbling to the card wrapper. In onSelect mode
     // the wrapper is a div with onClick that would otherwise re-select the
-    // featured product when the user clicks Add to Bag.
+    // featured product when the user clicks Buy Now.
     e.stopPropagation();
     if (isSoldOut) return;
     if (isBundle) {
+      // Bundles skip QuickBuy (no variants/qty) — add component products
+      // straight to the cart, same as the featured swiper / PDP.
       if (!bundleReady) {
         toast({ title: "One moment — loading bundle contents…" });
         return;
@@ -60,9 +63,7 @@ export function ProductCard({
       addBundle(product);
       return;
     }
-    if (hasVariants) return;
-    addItem(product, { quantity: 1 });
-    openCart();
+    setQuickBuyOpen(true);
   };
 
   // "From KSh X" pricing: collect every active variant's effective price and
@@ -139,10 +140,12 @@ export function ProductCard({
           {!isSoldOut && (
             <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
               <button
-                onClick={handleAddToCart}
+                onClick={handleBuyNow}
                 className="w-full py-3 bg-[#D4AF37] text-black text-[11px] uppercase tracking-widest font-medium hover:bg-white transition-colors flex items-center justify-center gap-1.5"
               >
-                {isBundle ? <><Gift className="w-3 h-3" />Add Gift</> : hasVariants ? "Choose Options" : "Add to Bag"}
+                {isBundle
+                  ? <><Gift className="w-3 h-3" />Add Gift Bundle →</>
+                  : hasVariants ? "Choose Options →" : "Buy Now →"}
               </button>
             </div>
           )}
@@ -170,23 +173,42 @@ export function ProductCard({
       </div>
   );
 
+  // QuickBuy modal lives alongside the card so Buy Now works wherever the
+  // card is rendered (home grid, category page, related products) without
+  // requiring each parent to wire up its own dialog instance.
+  const quickBuy = (
+    <QuickBuyDialog
+      open={quickBuyOpen}
+      onOpenChange={(o) => { if (!o) setQuickBuyOpen(false); }}
+      product={product}
+    />
+  );
+
   if (onSelect) {
     return (
-      <div
-        role="button"
-        tabIndex={0}
-        onClick={() => onSelect(product)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onSelect(product);
-          }
-        }}
-      >
-        {inner}
-      </div>
+      <>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onSelect(product)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelect(product);
+            }
+          }}
+        >
+          {inner}
+        </div>
+        {quickBuy}
+      </>
     );
   }
 
-  return <Link href={`/product/${product.id}`}>{inner}</Link>;
+  return (
+    <>
+      <Link href={`/product/${product.id}`}>{inner}</Link>
+      {quickBuy}
+    </>
+  );
 }
