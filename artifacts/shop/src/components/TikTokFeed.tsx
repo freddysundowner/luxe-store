@@ -323,44 +323,47 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
         </div>
 
         {/* Right-side actions */}
-        <div className="absolute right-3 z-10 flex flex-col gap-4" style={{ bottom: "210px" }}>
+        <div
+          className="absolute right-2 z-10 flex flex-col gap-3"
+          style={{ bottom: "170px", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.55))" }}
+        >
           <button
             onClick={() => { toggleFavorite(current); toast({ title: isFavorite(current.id) ? "Removed from saved" : "Saved!", description: current.name, duration: 1500 }); }}
             className="flex flex-col items-center gap-1"
           >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl transition-all duration-200 ${isFavorite(current.id) ? "bg-[#D4AF37]/20 border border-[#D4AF37]" : "bg-black/50 backdrop-blur-sm border border-white/10 hover:border-[#D4AF37]/40"}`}>
+            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl ring-1 ring-black/30 transition-all duration-200 ${isFavorite(current.id) ? "bg-[#D4AF37]/25 border border-[#D4AF37]" : "bg-black/70 backdrop-blur-md border border-white/30 hover:border-[#D4AF37]/60"}`}>
               <Heart className={`w-5 h-5 transition-all duration-200 ${isFavorite(current.id) ? "fill-[#D4AF37] text-[#D4AF37] scale-110" : "text-white"}`} />
             </div>
-            <span className={`text-[9px] transition-colors ${isFavorite(current.id) ? "text-[#D4AF37]/80" : "text-white/35"}`}>Save</span>
+            <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Save</span>
           </button>
 
           <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/50 flex items-center justify-center shadow-xl transition-all duration-200 hover:bg-[#D4AF37]/25">
+            <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/70 ring-1 ring-black/30 flex items-center justify-center shadow-xl transition-all duration-200 hover:bg-[#D4AF37]/25">
               <Gift className="w-5 h-5 text-[#D4AF37]" />
             </div>
-            <span className="text-[9px] text-[#D4AF37]/60">Gift</span>
+            <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Gift</span>
           </button>
 
           <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/40 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/60 transition-colors">
               <MessageCircle className="w-5 h-5 text-white" />
             </div>
-            <span className="text-[9px] text-white/35">View</span>
+            <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>View</span>
           </Link>
 
           <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/40 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/60 transition-colors">
               <Share2 className="w-5 h-5 text-white" />
             </div>
-            <span className="text-[9px] text-white/35">Share</span>
+            <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Share</span>
           </button>
 
           {onOpenGiftFinder && (
             <button onClick={onOpenGiftFinder} className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 flex items-center justify-center shadow-xl">
+              <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/60 ring-1 ring-black/30 flex items-center justify-center shadow-xl">
                 <Sparkles className="w-5 h-5 text-[#D4AF37]" />
               </div>
-              <span className="text-[9px] text-[#D4AF37]/55">AI</span>
+              <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>AI</span>
             </button>
           )}
         </div>
@@ -504,14 +507,14 @@ function BottomPanel({
           <span className="text-[9px] border border-zinc-700 text-zinc-500 px-2 py-0.5 uppercase tracking-wider">Sold Out</span>
         )}
       </div>
-      {product.categoryName && (
-        <p className="text-[9px] uppercase tracking-widest text-[#D4AF37]/60 mb-1">{product.categoryName}</p>
-      )}
       <Link href={`/product/${product.id}`}>
-        <h2 className="text-lg font-light uppercase tracking-wide text-white mb-2 leading-snug hover:text-[#D4AF37] transition-colors cursor-pointer">
+        <h2 className="text-lg font-light uppercase tracking-wide text-white leading-snug hover:text-[#D4AF37] transition-colors cursor-pointer">
           {product.name}
         </h2>
       </Link>
+      {product.categoryName && (
+        <p className="text-[9px] uppercase tracking-wider text-[#D4AF37]/70 mt-0.5 mb-2">{product.categoryName}</p>
+      )}
       <div className="flex items-baseline gap-3 mb-4">
         <span className="text-2xl text-[#D4AF37] font-light">{fmt.format(product.price)}</span>
         {product.originalPrice != null && product.originalPrice > product.price && (

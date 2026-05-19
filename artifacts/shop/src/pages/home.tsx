@@ -223,39 +223,42 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
 
 
       {/* Action buttons */}
-      <div className="absolute right-10 z-10 flex flex-col gap-4" style={{ bottom: "220px" }}>
-        <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-0.5">
-          <div className="w-10 h-10 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/50 flex items-center justify-center shadow-lg transition-all hover:bg-[#D4AF37]/25">
+      <div
+        className="absolute right-4 z-10 flex flex-col gap-3.5"
+        style={{ bottom: "170px", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.5))" }}
+      >
+        <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-1">
+          <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/70 ring-1 ring-black/30 flex items-center justify-center shadow-lg transition-all hover:bg-[#D4AF37]/25">
             <Gift className="w-4 h-4 text-[#D4AF37]" />
           </div>
-          <span className="text-[9px] text-[#D4AF37]/60">Gift</span>
+          <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Gift</span>
         </button>
-        <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-0.5">
-          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/40 transition-colors">
+        <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-1">
+          <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/60 transition-colors">
             <MessageCircle className="w-4 h-4 text-white" />
           </div>
-          <span className="text-[9px] text-white/35">View</span>
+          <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>View</span>
         </Link>
-        <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-0.5">
-          <div className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm border border-white/10 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/40 transition-colors">
+        <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-1">
+          <div className="w-10 h-10 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-lg hover:border-[#D4AF37]/60 transition-colors">
             <Share2 className="w-4 h-4 text-white" />
           </div>
-          <span className="text-[9px] text-white/35">Share</span>
+          <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Share</span>
         </button>
       </div>
 
       {/* Product info overlay */}
       <div className="absolute bottom-0 left-0 right-0 p-5 z-10">
-        {current.categoryName && (
-          <p className="text-[10px] uppercase tracking-widest text-[#D4AF37]/60 mb-1">
-            {current.categoryName}
-          </p>
-        )}
         <Link href={`/product/${current.id}`}>
-          <h2 className="text-xl font-light uppercase tracking-wide mb-2 hover:text-[#D4AF37] transition-colors cursor-pointer leading-snug">
+          <h2 className="text-xl font-light uppercase tracking-wide hover:text-[#D4AF37] transition-colors cursor-pointer leading-snug">
             {current.name}
           </h2>
         </Link>
+        {current.categoryName && (
+          <p className="text-[9px] uppercase tracking-wider text-[#D4AF37]/70 mt-0.5 mb-2">
+            {current.categoryName}
+          </p>
+        )}
         <div className="flex items-baseline gap-3 mb-4">
           <span className="text-2xl text-[#D4AF37] font-light">{fmt.format(current.price)}</span>
           {current.originalPrice != null && current.originalPrice > current.price && (
