@@ -159,6 +159,66 @@ export interface AdminPayment {
   createdAt: string;
 }
 
+export type GiftPaymentMethod = typeof GiftPaymentMethod[keyof typeof GiftPaymentMethod];
+
+
+export const GiftPaymentMethod = {
+  whatsapp: 'whatsapp',
+  mpesa: 'mpesa',
+} as const;
+
+export type GiftStatus = typeof GiftStatus[keyof typeof GiftStatus];
+
+
+export const GiftStatus = {
+  pending: 'pending',
+  paid: 'paid',
+  claimed: 'claimed',
+} as const;
+
+export interface Gift {
+  id: number;
+  claimToken: string;
+  productId: number;
+  productName: string;
+  productPrice: number;
+  /** @nullable */
+  productImageUrl?: string | null;
+  /** @nullable */
+  recipientName?: string | null;
+  /** @nullable */
+  note?: string | null;
+  /** @nullable */
+  senderName?: string | null;
+  paymentMethod: GiftPaymentMethod;
+  /** @nullable */
+  paymentRef?: string | null;
+  status: GiftStatus;
+  /** @nullable */
+  claimedAt?: string | null;
+  createdAt: string;
+}
+
+export type GiftInputPaymentMethod = typeof GiftInputPaymentMethod[keyof typeof GiftInputPaymentMethod];
+
+
+export const GiftInputPaymentMethod = {
+  whatsapp: 'whatsapp',
+  mpesa: 'mpesa',
+} as const;
+
+export interface GiftInput {
+  productId: number;
+  productName: string;
+  productPrice: number;
+  productImageUrl?: string;
+  recipientName?: string;
+  note?: string;
+  senderName?: string;
+  paymentMethod: GiftInputPaymentMethod;
+  paymentRef?: string;
+}
+
 export interface AdminCredentials {
   password: string;
 }

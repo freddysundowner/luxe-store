@@ -318,6 +318,119 @@ export const ListAdminPaymentsResponse = zod.array(ListAdminPaymentsResponseItem
 
 
 /**
+ * @summary Create a gift (sender flow)
+ */
+export const CreateGiftBody = zod.object({
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "productPrice": zod.number(),
+  "productImageUrl": zod.string().optional(),
+  "recipientName": zod.string().optional(),
+  "note": zod.string().optional(),
+  "senderName": zod.string().optional(),
+  "paymentMethod": zod.enum(['whatsapp', 'mpesa']),
+  "paymentRef": zod.string().optional()
+})
+
+
+/**
+ * @summary Get gift by claim token
+ */
+export const GetGiftParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const GetGiftResponse = zod.object({
+  "id": zod.number(),
+  "claimToken": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "productPrice": zod.number(),
+  "productImageUrl": zod.string().nullish(),
+  "recipientName": zod.string().nullish(),
+  "note": zod.string().nullish(),
+  "senderName": zod.string().nullish(),
+  "paymentMethod": zod.enum(['whatsapp', 'mpesa']),
+  "paymentRef": zod.string().nullish(),
+  "status": zod.enum(['pending', 'paid', 'claimed']),
+  "claimedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary Mark gift as claimed by recipient
+ */
+export const ClaimGiftParams = zod.object({
+  "token": zod.coerce.string()
+})
+
+export const ClaimGiftResponse = zod.object({
+  "id": zod.number(),
+  "claimToken": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "productPrice": zod.number(),
+  "productImageUrl": zod.string().nullish(),
+  "recipientName": zod.string().nullish(),
+  "note": zod.string().nullish(),
+  "senderName": zod.string().nullish(),
+  "paymentMethod": zod.enum(['whatsapp', 'mpesa']),
+  "paymentRef": zod.string().nullish(),
+  "status": zod.enum(['pending', 'paid', 'claimed']),
+  "claimedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
+ * @summary List all gifts (admin)
+ */
+export const ListAdminGiftsResponseItem = zod.object({
+  "id": zod.number(),
+  "claimToken": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "productPrice": zod.number(),
+  "productImageUrl": zod.string().nullish(),
+  "recipientName": zod.string().nullish(),
+  "note": zod.string().nullish(),
+  "senderName": zod.string().nullish(),
+  "paymentMethod": zod.enum(['whatsapp', 'mpesa']),
+  "paymentRef": zod.string().nullish(),
+  "status": zod.enum(['pending', 'paid', 'claimed']),
+  "claimedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+export const ListAdminGiftsResponse = zod.array(ListAdminGiftsResponseItem)
+
+
+/**
+ * @summary Mark a gift as paid (admin or after WhatsApp checkout)
+ */
+export const MarkGiftPaidParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkGiftPaidResponse = zod.object({
+  "id": zod.number(),
+  "claimToken": zod.string(),
+  "productId": zod.number(),
+  "productName": zod.string(),
+  "productPrice": zod.number(),
+  "productImageUrl": zod.string().nullish(),
+  "recipientName": zod.string().nullish(),
+  "note": zod.string().nullish(),
+  "senderName": zod.string().nullish(),
+  "paymentMethod": zod.enum(['whatsapp', 'mpesa']),
+  "paymentRef": zod.string().nullish(),
+  "status": zod.enum(['pending', 'paid', 'claimed']),
+  "claimedAt": zod.coerce.date().nullish(),
+  "createdAt": zod.coerce.date()
+})
+
+
+/**
  * @summary Update store settings
  */
 export const UpdateSettingsBody = zod.object({

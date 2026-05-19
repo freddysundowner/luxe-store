@@ -26,6 +26,8 @@ import type {
   AdminStats,
   Category,
   CategoryInput,
+  Gift,
+  GiftInput,
   HealthStatus,
   ListProductsParams,
   PaymentInitiateBody,
@@ -1315,6 +1317,371 @@ export function useListAdminPayments<TData = Awaited<ReturnType<typeof listAdmin
 
 
 
+
+export const getCreateGiftUrl = () => {
+
+
+
+
+  return `/api/gifts`
+}
+
+/**
+ * @summary Create a gift (sender flow)
+ */
+export const createGift = async (giftInput: GiftInput, options?: RequestInit): Promise<Gift> => {
+
+  return customFetch<Gift>(getCreateGiftUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      giftInput,)
+  }
+);}
+
+
+
+
+export const getCreateGiftMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGift>>, TError,{data: BodyType<GiftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createGift>>, TError,{data: BodyType<GiftInput>}, TContext> => {
+
+const mutationKey = ['createGift'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createGift>>, {data: BodyType<GiftInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createGift(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateGiftMutationResult = NonNullable<Awaited<ReturnType<typeof createGift>>>
+    export type CreateGiftMutationBody = BodyType<GiftInput>
+    export type CreateGiftMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a gift (sender flow)
+ */
+export const useCreateGift = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createGift>>, TError,{data: BodyType<GiftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createGift>>,
+        TError,
+        {data: BodyType<GiftInput>},
+        TContext
+      > => {
+      return useMutation(getCreateGiftMutationOptions(options));
+    }
+
+export const getGetGiftUrl = (token: string,) => {
+
+
+
+
+  return `/api/gifts/${token}`
+}
+
+/**
+ * @summary Get gift by claim token
+ */
+export const getGift = async (token: string, options?: RequestInit): Promise<Gift> => {
+
+  return customFetch<Gift>(getGetGiftUrl(token),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetGiftQueryKey = (token: string,) => {
+    return [
+    `/api/gifts/${token}`
+    ] as const;
+    }
+
+
+export const getGetGiftQueryOptions = <TData = Awaited<ReturnType<typeof getGift>>, TError = ErrorType<void>>(token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGift>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGiftQueryKey(token);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGift>>> = ({ signal }) => getGift(token, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(token), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGift>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetGiftQueryResult = NonNullable<Awaited<ReturnType<typeof getGift>>>
+export type GetGiftQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get gift by claim token
+ */
+
+export function useGetGift<TData = Awaited<ReturnType<typeof getGift>>, TError = ErrorType<void>>(
+ token: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getGift>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetGiftQueryOptions(token,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getClaimGiftUrl = (token: string,) => {
+
+
+
+
+  return `/api/gifts/${token}/claim`
+}
+
+/**
+ * @summary Mark gift as claimed by recipient
+ */
+export const claimGift = async (token: string, options?: RequestInit): Promise<Gift> => {
+
+  return customFetch<Gift>(getClaimGiftUrl(token),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getClaimGiftMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimGift>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof claimGift>>, TError,{token: string}, TContext> => {
+
+const mutationKey = ['claimGift'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof claimGift>>, {token: string}> = (props) => {
+          const {token} = props ?? {};
+
+          return  claimGift(token,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ClaimGiftMutationResult = NonNullable<Awaited<ReturnType<typeof claimGift>>>
+
+    export type ClaimGiftMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark gift as claimed by recipient
+ */
+export const useClaimGift = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof claimGift>>, TError,{token: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof claimGift>>,
+        TError,
+        {token: string},
+        TContext
+      > => {
+      return useMutation(getClaimGiftMutationOptions(options));
+    }
+
+export const getListAdminGiftsUrl = () => {
+
+
+
+
+  return `/api/admin/gifts`
+}
+
+/**
+ * @summary List all gifts (admin)
+ */
+export const listAdminGifts = async ( options?: RequestInit): Promise<Gift[]> => {
+
+  return customFetch<Gift[]>(getListAdminGiftsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminGiftsQueryKey = () => {
+    return [
+    `/api/admin/gifts`
+    ] as const;
+    }
+
+
+export const getListAdminGiftsQueryOptions = <TData = Awaited<ReturnType<typeof listAdminGifts>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminGifts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminGiftsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminGifts>>> = ({ signal }) => listAdminGifts({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminGifts>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminGiftsQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminGifts>>>
+export type ListAdminGiftsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all gifts (admin)
+ */
+
+export function useListAdminGifts<TData = Awaited<ReturnType<typeof listAdminGifts>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminGifts>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminGiftsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getMarkGiftPaidUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/gifts/${id}/mark-paid`
+}
+
+/**
+ * @summary Mark a gift as paid (admin or after WhatsApp checkout)
+ */
+export const markGiftPaid = async (id: number, options?: RequestInit): Promise<Gift> => {
+
+  return customFetch<Gift>(getMarkGiftPaidUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getMarkGiftPaidMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markGiftPaid>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markGiftPaid>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['markGiftPaid'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markGiftPaid>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  markGiftPaid(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkGiftPaidMutationResult = NonNullable<Awaited<ReturnType<typeof markGiftPaid>>>
+
+    export type MarkGiftPaidMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark a gift as paid (admin or after WhatsApp checkout)
+ */
+export const useMarkGiftPaid = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markGiftPaid>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markGiftPaid>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getMarkGiftPaidMutationOptions(options));
+    }
 
 export const getUpdateSettingsUrl = () => {
 

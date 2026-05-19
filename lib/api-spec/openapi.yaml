@@ -17,6 +17,8 @@ tags:
     description: Store settings
   - name: admin
     description: Admin operations
+  - name: gifts
+    description: Gift operations
 
 paths:
   /healthz:
@@ -336,6 +338,99 @@ paths:
                 items:
                   $ref: "#/components/schemas/AdminPayment"
 
+  /gifts:
+    post:
+      operationId: createGift
+      tags: [gifts]
+      summary: Create a gift (sender flow)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GiftInput"
+      responses:
+        "201":
+          description: Gift created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gift"
+
+  /gifts/{token}:
+    get:
+      operationId: getGift
+      tags: [gifts]
+      summary: Get gift by claim token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Gift details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gift"
+        "404":
+          description: Not found
+
+  /gifts/{token}/claim:
+    post:
+      operationId: claimGift
+      tags: [gifts]
+      summary: Mark gift as claimed by recipient
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gift"
+
+  /admin/gifts:
+    get:
+      operationId: listAdminGifts
+      tags: [gifts, admin]
+      summary: List all gifts (admin)
+      responses:
+        "200":
+          description: List of gifts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Gift"
+
+  /admin/gifts/{id}/mark-paid:
+    post:
+      operationId: markGiftPaid
+      tags: [gifts, admin]
+      summary: Mark a gift as paid (admin or after WhatsApp checkout)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Gift"
+
   /admin/settings:
     put:
       operationId: updateSettings
@@ -617,6 +712,67 @@ components:
         externalRef:
           type: ["string", "null"]
         createdAt:
+          type: string
+
+    Gift:
+      type: object
+      required: [id, claimToken, productId, productName, productPrice, paymentMethod, status, createdAt]
+      properties:
+        id:
+          type: integer
+        claimToken:
+          type: string
+        productId:
+          type: integer
+        productName:
+          type: string
+        productPrice:
+          type: number
+        productImageUrl:
+          type: ["string", "null"]
+        recipientName:
+          type: ["string", "null"]
+        note:
+          type: ["string", "null"]
+        senderName:
+          type: ["string", "null"]
+        paymentMethod:
+          type: string
+          enum: [whatsapp, mpesa]
+        paymentRef:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, paid, claimed]
+        claimedAt:
+          type: ["string", "null"]
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    GiftInput:
+      type: object
+      required: [productId, productName, productPrice, paymentMethod]
+      properties:
+        productId:
+          type: integer
+        productName:
+          type: string
+        productPrice:
+          type: number
+        productImageUrl:
+          type: string
+        recipientName:
+          type: string
+        note:
+          type: string
+        senderName:
+          type: string
+        paymentMethod:
+          type: string
+          enum: [whatsapp, mpesa]
+        paymentRef:
           type: string
 
     AdminCredentials:
