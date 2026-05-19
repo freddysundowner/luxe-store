@@ -19,6 +19,7 @@ import { Card } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Trash2, Plus, ArrowLeft, Gift } from "lucide-react";
+import { ImageUpload } from "@/components/ImageUpload";
 
 interface ItemDraft {
   productId: number;
@@ -194,10 +195,11 @@ export default function AdminHamperForm() {
                 rows={3}
               />
             </div>
-            <div>
-              <Label htmlFor="imageUrl">Cover image URL</Label>
-              <Input id="imageUrl" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://..." />
-            </div>
+            <ImageUpload
+              value={imageUrl}
+              onChange={setImageUrl}
+              label="Cover image (optional — we'll collage product photos if blank)"
+            />
           </Card>
 
           <Card className="p-6 space-y-4">

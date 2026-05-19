@@ -15,6 +15,9 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useListAdminProducts, getListAdminProductsQueryKey } from "@workspace/api-client-react";
+import { HamperCover } from "@/components/HamperCover";
 
 export default function AdminHampers() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
@@ -24,6 +27,16 @@ export default function AdminHampers() {
   const { data: hampers, isLoading } = useListAdminHampers({
     query: { queryKey: getListAdminHampersQueryKey() },
   });
+  const { data: products } = useListAdminProducts({
+    query: { queryKey: getListAdminProductsQueryKey() },
+  });
+  // productId → product so the cover can fall back to component product
+  // images when the admin hasn't uploaded a dedicated cover.
+  const productById = useMemo(() => {
+    const m = new Map<number, { imageUrl: string | null }>();
+    (products ?? []).forEach((p) => m.set(p.id, { imageUrl: p.imageUrl ?? null }));
+    return m;
+  }, [products]);
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const currencySymbol = settings?.currencySymbol || "KSh";
 
@@ -82,13 +95,13 @@ export default function AdminHampers() {
                 {hampers.map((h) => (
                   <TableRow key={h.id}>
                     <TableCell>
-                      <div className="w-10 h-10 rounded bg-muted overflow-hidden">
-                        {h.imageUrl ? (
-                          <img src={h.imageUrl} alt={h.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <Gift className="w-5 h-5 text-muted-foreground m-2.5" />
-                        )}
-                      </div>
+                      <HamperCover
+                        imageUrl={h.imageUrl}
+                        fallbackImages={h.items.map((it) => productById.get(it.productId)?.imageUrl)}
+                        alt={h.name}
+                        className="w-10 h-10 rounded bg-muted"
+                        iconClassName="w-5 h-5"
+                      />
                     </TableCell>
                     <TableCell className="font-medium">{h.name}</TableCell>
                     <TableCell>{h.items.reduce((s, i) => s + i.quantity, 0)} items</TableCell>

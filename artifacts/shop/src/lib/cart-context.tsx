@@ -16,6 +16,9 @@ export interface CartItem {
   hamperGroupId?: string | null;
   hamperName?: string | null;
   hamperId?: number | null;
+  // Admin-uploaded cover for the hamper. When null/undefined the cart UI
+  // synthesizes a collage from the component products' images.
+  hamperImageUrl?: string | null;
 }
 
 export interface AddItemOptions {
@@ -37,7 +40,7 @@ interface CartContextType {
    * totals exactly that price. Otherwise each item keeps its base price.
    * Returns the generated hamperGroupId so callers can reference it.
    */
-  addHamper: (lines: HamperLineInput[], opts: { name: string; hamperId?: number | null; totalPrice?: number }) => string;
+  addHamper: (lines: HamperLineInput[], opts: { name: string; hamperId?: number | null; totalPrice?: number; imageUrl?: string | null }) => string;
   removeItem: (productId: number, variantId?: number | null, hamperGroupId?: string | null) => void;
   removeHamper: (hamperGroupId: string) => void;
   updateQuantity: (productId: number, variantId: number | null, quantity: number, hamperGroupId?: string | null) => void;
@@ -90,6 +93,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           hamperGroupId: i.hamperGroupId ?? null,
           hamperName: i.hamperName ?? null,
           hamperId: i.hamperId ?? null,
+          hamperImageUrl: i.hamperImageUrl ?? null,
         }));
       }
     } catch {}
@@ -138,11 +142,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
             : item
         );
       }
-      return [...current, { product, variantId, variantName, unitPrice, quantity, hamperGroupId: null, hamperName: null, hamperId: null }];
+      return [...current, { product, variantId, variantName, unitPrice, quantity, hamperGroupId: null, hamperName: null, hamperId: null, hamperImageUrl: null }];
     });
   };
 
-  const addHamper = (lines: HamperLineInput[], opts: { name: string; hamperId?: number | null; totalPrice?: number }): string => {
+  const addHamper = (lines: HamperLineInput[], opts: { name: string; hamperId?: number | null; totalPrice?: number; imageUrl?: string | null }): string => {
     const groupId = genGroupId();
     const hasOverride =
       typeof opts.totalPrice === "number" &&
@@ -155,6 +159,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         product: l.product, variantId: null, variantName: null,
         unitPrice: l.product.price, quantity: l.quantity,
         hamperGroupId: groupId, hamperName: opts.name, hamperId: opts.hamperId ?? null,
+        hamperImageUrl: opts.imageUrl ?? null,
       }));
     } else {
       // Cent-exact allocation: expand to one slot per unit, distribute target
@@ -191,6 +196,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           product: g.product, variantId: null, variantName: null,
           unitPrice: g.cents / 100, quantity: g.qty,
           hamperGroupId: groupId, hamperName: opts.name, hamperId: opts.hamperId ?? null,
+          hamperImageUrl: opts.imageUrl ?? null,
         }));
     }
 

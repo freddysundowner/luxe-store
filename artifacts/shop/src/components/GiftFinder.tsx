@@ -14,6 +14,7 @@ import {
 } from "@workspace/api-client-react";
 import { useCart, type HamperLineInput } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
+import { HamperCover } from "@/components/HamperCover";
 
 interface Message {
   role: "user" | "assistant";
@@ -203,7 +204,7 @@ export function GiftFinder() {
       toast({ variant: "destructive", title: "This hamper is currently out of stock." });
       return;
     }
-    addHamper(lines, { name: h.name, hamperId: h.id, totalPrice: h.price });
+    addHamper(lines, { name: h.name, hamperId: h.id, totalPrice: h.price, imageUrl: h.imageUrl });
     toast({ title: `${h.name} added to bag` });
     close();
     openCart();
@@ -370,15 +371,13 @@ export function GiftFinder() {
                         {referencedHampers.map((h) => (
                           <div key={`h-${h.id}`} className="ml-8 border border-[#D4AF37]/30 bg-zinc-950/60">
                             <div className="flex">
-                              {h.imageUrl ? (
-                                <div className="w-20 h-20 bg-zinc-900 shrink-0 overflow-hidden">
-                                  <img src={h.imageUrl} alt={h.name} className="w-full h-full object-cover" />
-                                </div>
-                              ) : (
-                                <div className="w-20 h-20 bg-[#D4AF37]/5 shrink-0 flex items-center justify-center">
-                                  <Gift className="w-6 h-6 text-[#D4AF37]/60" />
-                                </div>
-                              )}
+                              <HamperCover
+                                imageUrl={h.imageUrl}
+                                fallbackImages={h.items.map((it) => productById.get(it.productId)?.imageUrl)}
+                                alt={h.name}
+                                className="w-20 h-20 bg-zinc-900 shrink-0"
+                                iconClassName="w-6 h-6"
+                              />
                               <div className="flex-1 p-3 min-w-0">
                                 <p className="text-[10px] uppercase tracking-[0.2em] text-[#D4AF37]/80">Curated Hamper</p>
                                 <p className="text-sm text-white font-light tracking-wide truncate">{h.name}</p>

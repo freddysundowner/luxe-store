@@ -14,6 +14,7 @@ import {
   Receipt, User, MapPin, Mail, ChevronLeft,
   Gift as GiftIcon, ChevronDown,
 } from "lucide-react";
+import { HamperCover } from "@/components/HamperCover";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -586,7 +587,7 @@ export function CartDrawer() {
                   // first occurrence of a hamper preserves its position.
                   type Row =
                     | { kind: "item"; item: typeof items[number]; idx: number }
-                    | { kind: "hamper"; gid: string; name: string; lines: typeof items; subtotal: number };
+                    | { kind: "hamper"; gid: string; name: string; hamperCoverUrl: string | null; lines: typeof items; subtotal: number };
                   const rows: Row[] = [];
                   const seen = new Set<string>();
                   items.forEach((item, idx) => {
@@ -596,7 +597,7 @@ export function CartDrawer() {
                     seen.add(gid);
                     const lines = items.filter((x) => x.hamperGroupId === gid);
                     const subtotal = lines.reduce((s, x) => s + x.unitPrice * x.quantity, 0);
-                    rows.push({ kind: "hamper", gid, name: item.hamperName ?? "Gift Hamper", lines, subtotal });
+                    rows.push({ kind: "hamper", gid, name: item.hamperName ?? "Gift Hamper", hamperCoverUrl: item.hamperImageUrl ?? null, lines, subtotal });
                   });
                   return rows.map((row) => {
                     if (row.kind === "item") {
@@ -643,7 +644,6 @@ export function CartDrawer() {
                     // Hamper row — collapsed by default, expands to show line items.
                     const expanded = expandedHampers.has(row.gid);
                     const totalUnits = row.lines.reduce((s, x) => s + x.quantity, 0);
-                    const cover = row.lines.find((l) => l.product.imageUrl)?.product.imageUrl;
                     return (
                       <div key={`hamper:${row.gid}`} className="border border-[#D4AF37]/30 bg-zinc-900/50">
                         <button
@@ -652,11 +652,14 @@ export function CartDrawer() {
                           aria-expanded={expanded}
                           className="w-full flex gap-3 p-3 text-left hover:bg-zinc-900/80 transition-colors"
                         >
-                          <div className="w-16 h-16 bg-zinc-900 border border-[#D4AF37]/20 shrink-0 overflow-hidden relative">
-                            {cover
-                              ? <img src={cover} alt={row.name} className="w-full h-full object-cover opacity-90" />
-                              : <div className="w-full h-full flex items-center justify-center"><GiftIcon className="w-6 h-6 text-[#D4AF37]/60" /></div>
-                            }
+                          <div className="relative shrink-0">
+                            <HamperCover
+                              imageUrl={row.hamperCoverUrl}
+                              fallbackImages={row.lines.map((l) => l.product.imageUrl)}
+                              alt={row.name}
+                              className="w-16 h-16 bg-zinc-900 border border-[#D4AF37]/20"
+                              iconClassName="w-6 h-6"
+                            />
                             <div className="absolute bottom-0 right-0 bg-[#D4AF37] text-black text-[9px] uppercase tracking-widest px-1 leading-tight">Gift</div>
                           </div>
                           <div className="flex-1 min-w-0 flex flex-col justify-between">
