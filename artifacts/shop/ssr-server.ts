@@ -30,6 +30,45 @@ async function main() {
     );
   }
 
+  // Proxy /api/* to the API server
+  const API_TARGET = process.env.INTERNAL_API_URL || "http://localhost:8080";
+  app.use("/api", async (req, res) => {
+    try {
+      const targetUrl = `${API_TARGET}/api${req.originalUrl.replace(/^\/api/, "")}`;
+      const headers: Record<string, string> = {};
+      for (const [k, v] of Object.entries(req.headers)) {
+        if (v == null) continue;
+        if (["host", "connection", "content-length"].includes(k.toLowerCase())) continue;
+        headers[k] = Array.isArray(v) ? v.join(", ") : String(v);
+      }
+      const hasBody = !["GET", "HEAD"].includes(req.method);
+      let body: Buffer | undefined;
+      if (hasBody) {
+        body = await new Promise<Buffer>((resolve, reject) => {
+          const chunks: Buffer[] = [];
+          req.on("data", (c) => chunks.push(c));
+          req.on("end", () => resolve(Buffer.concat(chunks)));
+          req.on("error", reject);
+        });
+      }
+      const upstream = await fetch(targetUrl, {
+        method: req.method,
+        headers,
+        body: hasBody ? body : undefined,
+      });
+      res.status(upstream.status);
+      upstream.headers.forEach((value, key) => {
+        if (["content-encoding", "transfer-encoding", "connection"].includes(key.toLowerCase())) return;
+        res.setHeader(key, value);
+      });
+      const buf = Buffer.from(await upstream.arrayBuffer());
+      res.end(buf);
+    } catch (err) {
+      console.error("API proxy error:", err);
+      res.status(502).json({ error: "Bad gateway" });
+    }
+  });
+
   // Dynamic sitemap
   app.get(`${BASE_PATH}/sitemap.xml`, async (req, res) => {
     try {
