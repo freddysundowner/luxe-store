@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MultiImageUpload } from "@/components/MultiImageUpload";
-import { useCreateProduct, useUpdateProduct, useGetProduct, getGetProductQueryKey, useListCategories, getListCategoriesQueryKey, useListAvailabilityTagsPublic, getListAvailabilityTagsPublicQueryKey } from "@workspace/api-client-react";
+import { useCreateProduct, useUpdateProduct, useGetProduct, getGetProductQueryKey, useListCategories, getListCategoriesQueryKey, useListAvailabilityTagsPublic, getListAvailabilityTagsPublicQueryKey, getListProductsQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
@@ -122,11 +122,23 @@ export default function ProductForm() {
     }
   }, [product, isEditing, form]);
 
+  // After a successful create/update we have to invalidate every product
+  // query the storefront might be holding in cache — otherwise the home
+  // feed and product detail keep showing the stale single-image version.
+  const invalidateProductCaches = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+    queryClient.invalidateQueries({ queryKey: getListProductsQueryKey({}) });
+    queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[0] === "/api/products" });
+    if (isEditing) {
+      queryClient.invalidateQueries({ queryKey: getGetProductQueryKey(productId) });
+    }
+  };
+
   const createMutation = useCreateProduct({
     mutation: {
       onSuccess: () => {
         toast({ title: "Product created successfully" });
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+        invalidateProductCaches();
         setLocation("/admin/products");
       },
       onError: () => toast({ variant: "destructive", title: "Failed to create product" })
@@ -137,7 +149,7 @@ export default function ProductForm() {
     mutation: {
       onSuccess: () => {
         toast({ title: "Product updated successfully" });
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+        invalidateProductCaches();
         setLocation("/admin/products");
       },
       onError: () => toast({ variant: "destructive", title: "Failed to update product" })

@@ -274,7 +274,6 @@ router.put("/admin/products/:id", async (req, res): Promise<void> => {
   }
 
   const { price, originalPrice, variants, images, imageUrl, ...rest } = parsed.data;
-  console.log("[DEBUG update product]", { hasImages: images !== undefined, images, imageUrl, bodyKeys: Object.keys(req.body ?? {}) });
   const updateData: Record<string, unknown> = { ...rest };
   if (price !== undefined) updateData.price = String(price);
   if (originalPrice !== undefined) updateData.originalPrice = originalPrice != null ? String(originalPrice) : null;
