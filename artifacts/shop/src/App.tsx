@@ -24,6 +24,7 @@ import AdminSettings from "@/pages/admin/settings";
 import AdminGifts from "@/pages/admin/gifts";
 import AdminAvailabilityTags from "@/pages/admin/availability-tags";
 import AdminOrders from "@/pages/admin/orders";
+import AdminOrderDetail from "@/pages/admin/order-detail";
 import ReceiptPage from "@/pages/receipt";
 
 const queryClient = new QueryClient({
@@ -56,6 +57,7 @@ function Router() {
       <Route path="/admin/products/:id/edit" component={AdminProductForm} />
       <Route path="/admin/categories" component={AdminCategories} />
       <Route path="/admin/orders" component={AdminOrders} />
+      <Route path="/admin/orders/:id" component={AdminOrderDetail} />
       <Route path="/admin/gifts" component={AdminGifts} />
       <Route path="/admin/availability-tags" component={AdminAvailabilityTags} />
       <Route path="/admin/settings" component={AdminSettings} />
