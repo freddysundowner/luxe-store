@@ -1,4 +1,5 @@
 import express from "express";
+import http from "http";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -10,6 +11,7 @@ const BASE_PATH = (process.env.BASE_PATH || "/").replace(/\/$/, "");
 
 async function main() {
   const app = express();
+  const httpServer = http.createServer(app);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let vite: any;
 
@@ -17,7 +19,7 @@ async function main() {
     const { createServer: createViteServer } = await import("vite");
     vite = await createViteServer({
       configFile: path.resolve(__dirname, "vite.config.ts"),
-      server: { middlewareMode: true },
+      server: { middlewareMode: true, hmr: { server: httpServer } },
       appType: "custom",
     });
     app.use(vite.middlewares);
@@ -109,7 +111,7 @@ ${urls.join("\n")}
     }
   });
 
-  app.listen(Number(PORT), "0.0.0.0", () => {
+  httpServer.listen(Number(PORT), "0.0.0.0", () => {
     console.log(`SSR server running on port ${PORT}`);
   });
 }
