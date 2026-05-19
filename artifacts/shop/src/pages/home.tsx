@@ -55,6 +55,31 @@ function FeaturedSwiper({
     // Intentionally re-runs whenever the parent issues a new selection
     // (different nonce), even if the product id is the same.
   }, [selection, products]);
+
+  // When filters change (products array reference changes), preserve the
+  // currently-shown product if it's still in the filtered set; otherwise
+  // snap to the first match. Keeps the centre swiper in sync with what the
+  // user just narrowed the catalogue to.
+  const prevProductsRef = useRef(products);
+  const indexRef = useRef(index);
+  indexRef.current = index;
+  useEffect(() => {
+    if (prevProductsRef.current === products) return;
+    const prevId = prevProductsRef.current[indexRef.current]?.id ?? null;
+    prevProductsRef.current = products;
+    if (products.length === 0) {
+      if (indexRef.current !== 0) setIndex(0);
+      return;
+    }
+    if (prevId != null) {
+      const idx = products.findIndex((p) => p.id === prevId);
+      if (idx >= 0) {
+        if (idx !== indexRef.current) setIndex(idx);
+        return;
+      }
+    }
+    setIndex(0);
+  }, [products]);
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
   const [giftRecipient, setGiftRecipient] = useState("");
   const [giftNote, setGiftNote] = useState("");

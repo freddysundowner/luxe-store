@@ -100,13 +100,30 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
   const { toast } = useToast();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
-  // Clamp currentIndex when the products list shrinks (e.g. user changes a
-  // filter and the previously-current item is no longer in the result set).
+  // When the filtered/products list changes, keep showing the same product
+  // if it's still present (just at a different position); otherwise snap to
+  // the first item. Without this, applying a filter could land the user on
+  // a random index or strand them on an out-of-range card.
+  const prevProductsRef = useRef(products);
+  const currentIndexRef = useRef(currentIndex);
+  currentIndexRef.current = currentIndex;
   useEffect(() => {
-    if (currentIndex > products.length - 1) {
-      setCurrentIndex(Math.max(0, products.length - 1));
+    if (prevProductsRef.current === products) return;
+    const prevId = prevProductsRef.current[currentIndexRef.current]?.id ?? null;
+    prevProductsRef.current = products;
+    if (products.length === 0) {
+      if (currentIndexRef.current !== 0) setCurrentIndex(0);
+      return;
     }
-  }, [products.length, currentIndex]);
+    if (prevId != null) {
+      const idx = products.findIndex((p) => p.id === prevId);
+      if (idx >= 0) {
+        if (idx !== currentIndexRef.current) setCurrentIndex(idx);
+        return;
+      }
+    }
+    setCurrentIndex(0);
+  }, [products]);
 
   // ── Stories-style segmented progress bar.
   // For each product we walk through its images one at a time. The top bar
