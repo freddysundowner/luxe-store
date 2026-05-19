@@ -21,6 +21,9 @@ interface TikTokFeedProps {
   onOpenGiftFinder?: () => void;
   onOpenFilters?: () => void;
   topOffset?: number;
+  /** When > 0, renders a small "N new" badge near the filter button. */
+  newArrivalCount?: number;
+  onShowNewArrivals?: () => void;
 }
 
 // Duration (ms) for the top progress bar before the drop icon reveals on a
@@ -65,7 +68,7 @@ function CardBg({ product, imageIndex = 0 }: { product: Product; imageIndex?: nu
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilters, topOffset = 12 }: TikTokFeedProps) {
+export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilters, topOffset = 12, newArrivalCount = 0, onShowNewArrivals }: TikTokFeedProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
@@ -464,9 +467,22 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
           })}
         </div>
 
-        {/* Top bar: filter button on the right. The drop icon below is
-            absolutely centered so its position never depends on the bar. */}
-        <div className="absolute left-4 right-4 z-10 flex items-center justify-end" style={{ top: `${topOffset}px` }}>
+        {/* Top bar: new-arrivals badge on the left, filter button on the
+            right. The drop icon below is absolutely centered so its position
+            never depends on the bar. */}
+        <div className="absolute left-4 right-4 z-10 flex items-center justify-between gap-3" style={{ top: `${topOffset}px` }}>
+          {newArrivalCount > 0 ? (
+            <button
+              onClick={() => onShowNewArrivals?.()}
+              aria-label={`View ${newArrivalCount} new arrival${newArrivalCount === 1 ? "" : "s"}`}
+              className="inline-flex items-center gap-1.5 px-2.5 h-9 rounded-full bg-black/60 border border-[#D4AF37]/50 text-[#D4AF37] text-[11px] uppercase tracking-widest hover:bg-[#D4AF37]/15 hover:border-[#D4AF37] transition-colors animate-in fade-in slide-in-from-top-1 duration-300"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
+              {newArrivalCount} New
+            </button>
+          ) : (
+            <span />
+          )}
           <button
             onClick={() => onOpenFilters?.()}
             aria-label="Filters"

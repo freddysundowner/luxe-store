@@ -749,6 +749,10 @@ export default function Home() {
           categoryId: selectedCategory,
           search: search || undefined,
         }),
+        // Silently refresh on every navigation back to the home page. While
+        // refetching, cached data stays on screen (isLoading is false), so
+        // there's no skeleton flash — only fresh rows appear when ready.
+        refetchOnMount: "always",
       },
     }
   );
@@ -756,7 +760,15 @@ export default function Home() {
   // All products (for featured swiper — unfiltered)
   const { data: allProducts } = useListProducts(
     {},
-    { query: { queryKey: getListProductsQueryKey({}) } }
+    { query: { queryKey: getListProductsQueryKey({}), refetchOnMount: "always" } }
+  );
+
+  // Count of new arrivals across the *unfiltered* feed (allProducts, not
+  // the category/search-scoped products list) so the badge stays meaningful
+  // regardless of which filters are active.
+  const newArrivalCount = useMemo(
+    () => (allProducts ?? []).filter(p => p.availabilityTag === "new").length,
+    [allProducts]
   );
 
   const clearSearch = () => setSearch("");
@@ -790,10 +802,10 @@ export default function Home() {
 
   // ── Mobile: true full-screen TikTok (bypasses RootLayout header) ──────────
   if (isMobile) {
-    const availabilityOptions: { key: string; label: string }[] = [
+    const availabilityOptions: { key: string; label: string; count?: number }[] = [
       { key: "instock",    label: "In Stock" },
       { key: "gifts",      label: "Gifts (Bundles)" },
-      { key: "new",        label: "New Arrival" },
+      { key: "new",        label: "New Arrival", count: newArrivalCount },
       { key: "sale",       label: "Sale" },
       { key: "hot",        label: "Hot / Trending" },
       { key: "bestseller", label: "Bestseller" },
@@ -825,6 +837,8 @@ export default function Home() {
           isLoading={isLoading}
           topOffset={12}
           onOpenFilters={() => setMobileFiltersOpen(true)}
+          newArrivalCount={availability.has("new") ? 0 : newArrivalCount}
+          onShowNewArrivals={() => setAvailability(new Set(["new"]))}
         />
 
         {/* Mobile filter bottom sheet */}
@@ -943,7 +957,7 @@ export default function Home() {
                 <div>
                   <p className="text-[10px] uppercase tracking-widest text-zinc-500 mb-2">Availability</p>
                   <div className="flex flex-col gap-2">
-                    {availabilityOptions.map(({ key, label }) => (
+                    {availabilityOptions.map(({ key, label, count }) => (
                       <label key={key} className="flex items-center gap-2 text-xs cursor-pointer select-none"
                         style={{ color: availability.has(key) ? "#D4AF37" : "#a1a1aa" }}>
                         <input type="checkbox" className="sr-only"
@@ -953,7 +967,12 @@ export default function Home() {
                           style={{ borderColor: availability.has(key) ? "#D4AF37" : "#3f3f46", background: availability.has(key) ? "#D4AF37" : "transparent" }}>
                           {availability.has(key) && <span className="block w-1.5 h-1.5 bg-black rounded-sm" />}
                         </span>
-                        {label}
+                        <span className="flex-1">{label}</span>
+                        {count !== undefined && count > 0 && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30">
+                            {count}
+                          </span>
+                        )}
                       </label>
                     ))}
                   </div>
@@ -1136,13 +1155,13 @@ export default function Home() {
                 {([
                   { key: "instock",    label: "In Stock" },
                   { key: "gifts",      label: "Gifts (Bundles)" },
-                  { key: "new",        label: "New Arrival" },
+                  { key: "new",        label: "New Arrival", count: newArrivalCount },
                   { key: "sale",       label: "Sale" },
                   { key: "hot",        label: "Hot / Trending" },
                   { key: "bestseller", label: "Bestseller" },
                   { key: "limited",    label: "Limited Edition" },
                   { key: "coming_soon", label: "Coming Soon" },
-                ] as { key: string; label: string }[]).map(({ key, label }) => (
+                ] as { key: string; label: string; count?: number }[]).map(({ key, label, count }) => (
                   <label key={key} className="flex items-center gap-2 text-xs cursor-pointer hover:text-zinc-200 transition-colors select-none"
                     style={{ color: availability.has(key) ? "#D4AF37" : "#71717a" }}>
                     <input type="checkbox" className="sr-only"
@@ -1152,7 +1171,12 @@ export default function Home() {
                       style={{ borderColor: availability.has(key) ? "#D4AF37" : "#3f3f46", background: availability.has(key) ? "#D4AF37" : "transparent" }}>
                       {availability.has(key) && <span className="block w-1.5 h-1.5 bg-black rounded-sm" />}
                     </span>
-                    {label}
+                    <span className="flex-1">{label}</span>
+                    {count !== undefined && count > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30">
+                        {count}
+                      </span>
+                    )}
                   </label>
                 ))}
               </div>
@@ -1179,6 +1203,20 @@ export default function Home() {
         {/* Right — All products grid */}
         <div className="flex-1 overflow-y-auto bg-[#0a0a0a]">
           <div className="p-5 lg:p-6">
+
+            {/* New arrivals badge — clickable filter shortcut. Hidden when the
+                "new" availability filter is already active or there are no
+                new arrivals. */}
+            {newArrivalCount > 0 && !availability.has("new") && (
+              <button
+                onClick={() => setAvailability(new Set(["new"]))}
+                className="mb-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10 text-[#D4AF37] text-[11px] uppercase tracking-widest hover:bg-[#D4AF37]/20 hover:border-[#D4AF37] transition-colors animate-in fade-in slide-in-from-top-1 duration-300"
+              >
+                <span className="w-1.5 h-1.5 rounded-full bg-[#D4AF37] animate-pulse" />
+                {newArrivalCount} New Arrival{newArrivalCount === 1 ? "" : "s"}
+                <span className="text-[#D4AF37]/60">— view</span>
+              </button>
+            )}
 
             {/* Content */}
             {isError ? (
