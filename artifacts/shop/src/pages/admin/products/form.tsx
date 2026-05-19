@@ -55,11 +55,13 @@ const productSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().min(0, "Price must be positive"),
   originalPrice: z.coerce.number().optional().nullable(),
-  // Category is required for simple products; bundles can live without one
-  // (they have their own "Gifts" filter on the storefront).
+  // Category is required for every product (simple and bundle alike). The
+  // server's ProductInput contract requires it, and the admin list's bulk
+  // actions skip rows without a category — leaving bundles uncategorised
+  // makes them effectively un-manageable from the list view.
   categoryId: z.preprocess(
     (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
-    z.number().int().positive().optional()
+    z.number({ required_error: "Category is required" }).int().positive()
   ),
   images: z.array(z.string()).default([]),
   imageSettings: z.record(z.string(), imageDisplaySettingsSchema).default({}),
@@ -75,14 +77,10 @@ const productSchema = z.object({
   variants: z.array(variantSchema).default([]),
   bundleItems: z.array(bundleItemSchema).default([]),
 }).superRefine((val, ctx) => {
-  if (val.kind === "simple") {
-    if (val.categoryId == null) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Category is required", path: ["categoryId"] });
-    }
-  } else if (val.kind === "bundle") {
-    if (val.bundleItems.length === 0) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Add at least one product to the bundle", path: ["bundleItems"] });
-    }
+  // categoryId is already enforced by the base schema for every kind. Only
+  // bundle-specific item validation remains.
+  if (val.kind === "bundle" && val.bundleItems.length === 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Add at least one product to the bundle", path: ["bundleItems"] });
   }
 });
 
@@ -259,10 +257,8 @@ export default function ProductForm() {
     const payload = {
       ...data,
       originalPrice: data.originalPrice || null,
-      // Server requires categoryId in the schema, but bundles don't need one.
-      // Send 0 when missing — the server route doesn't enforce existence and
-      // we keep it nullable on the DB. (categoriesTable.id starts at 1.)
-      categoryId: data.categoryId ?? 0,
+      // categoryId is required by the form schema for every kind now.
+      categoryId: data.categoryId,
       images: data.images,
       imageSettings: data.imageSettings,
       availabilityTag: data.availabilityTag === "none" ? null : (data.availabilityTag || null),
