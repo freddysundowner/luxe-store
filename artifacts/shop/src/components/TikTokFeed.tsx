@@ -708,12 +708,10 @@ function BottomPanel({
           className={`flex-[3] py-3.5 text-sm uppercase tracking-widest font-semibold transition-all duration-200 ${
             !product.inStock
               ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-              : cartAdded.has(product.id)
-              ? "bg-zinc-800 text-[#D4AF37] border border-[#D4AF37]/40"
               : "bg-[#D4AF37] text-black hover:bg-white"
           }`}
         >
-          {!product.inStock ? "Sold Out" : cartAdded.has(product.id) ? "✓ Added" : "Buy Now →"}
+          {!product.inStock ? "Sold Out" : "Buy Now →"}
         </button>
         <button
           onClick={isActive ? onGift : undefined}
