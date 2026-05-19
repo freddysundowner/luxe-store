@@ -78,6 +78,9 @@ router.post("/payments/initiate", async (req, res): Promise<void> => {
     return;
   }
 
+  // M-Pesa and the payments table both require whole-number amounts (KES)
+  const amountInt = Math.round(amount);
+
   // Build callback URL from request host
   const protocol = req.headers["x-forwarded-proto"] || "https";
   const host = req.headers["x-forwarded-host"] || req.headers.host;
@@ -95,7 +98,7 @@ router.post("/payments/initiate", async (req, res): Promise<void> => {
       },
       body: JSON.stringify({
         phoneNumber,
-        amount,
+        amount: amountInt,
         externalRef: ref,
         callbackUrl,
       }),
@@ -125,7 +128,7 @@ router.post("/payments/initiate", async (req, res): Promise<void> => {
     transactionId: sunpayRes.transactionId,
     checkoutRequestId: sunpayRes.checkoutRequestId,
     phoneNumber,
-    amount,
+    amount: amountInt,
     status: "pending",
     externalRef: ref,
     cartSnapshot: cartSnapshot as Record<string, unknown> | undefined,
