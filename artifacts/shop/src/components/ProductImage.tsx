@@ -31,6 +31,9 @@ interface ProductImageProps {
   /** Show a placeholder bag icon when src is missing. */
   showFallback?: boolean;
   draggable?: boolean;
+  /** Browser-native lazy loading. Defaults to "lazy" so grids defer offscreen
+   *  images; pass "eager" for above-the-fold hero/feed images. */
+  loading?: "lazy" | "eager";
 }
 
 /**
@@ -52,6 +55,7 @@ export function ProductImage({
   imgClassName = "",
   showFallback = true,
   draggable,
+  loading = "lazy",
 }: ProductImageProps) {
   const cfg = settings ?? DEFAULT_IMAGE_SETTINGS;
   // Tailwind's compiled stylesheet declares `.relative` after `.absolute`,
@@ -85,6 +89,8 @@ export function ProductImage({
           alt=""
           aria-hidden
           draggable={false}
+          loading={loading}
+          decoding="async"
           className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-70"
         />
         <div className="absolute inset-0 bg-black/20" />
@@ -92,6 +98,8 @@ export function ProductImage({
           src={src}
           alt={alt}
           draggable={draggable}
+          loading={loading}
+          decoding="async"
           className={`absolute inset-0 w-full h-full object-contain ${imgClassName}`}
         />
       </div>
@@ -104,6 +112,8 @@ export function ProductImage({
         src={src}
         alt={alt}
         draggable={draggable}
+        loading={loading}
+        decoding="async"
         className={`absolute inset-0 w-full h-full object-cover ${imgClassName}`}
         style={{ objectPosition }}
       />
