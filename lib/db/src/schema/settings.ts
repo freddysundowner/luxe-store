@@ -13,6 +13,9 @@ export const storeSettingsTable = pgTable("store_settings", {
   priceTiers: jsonb("price_tiers").$type<Array<{ name: string; min: number; max: number | null }>>(),
   sunpayApiKey: text("sunpay_api_key"),
   sunpayEnabled: text("sunpay_enabled").notNull().default("false"),
+  brevoApiKey: text("brevo_api_key"),
+  brevoSenderEmail: text("brevo_sender_email"),
+  brevoSenderName: text("brevo_sender_name"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

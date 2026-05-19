@@ -94,6 +94,12 @@ export interface StoreSettings {
   sunpayEnabled?: string;
   /** @nullable */
   sunpayApiKey?: string | null;
+  /** @nullable */
+  brevoApiKey?: string | null;
+  /** @nullable */
+  brevoSenderEmail?: string | null;
+  /** @nullable */
+  brevoSenderName?: string | null;
 }
 
 export interface StoreSettingsInput {
@@ -106,6 +112,9 @@ export interface StoreSettingsInput {
   priceTiers?: PriceTier[];
   sunpayEnabled?: string;
   sunpayApiKey?: string;
+  brevoApiKey?: string;
+  brevoSenderEmail?: string;
+  brevoSenderName?: string;
 }
 
 export type PaymentInitiateBodyCartSnapshot = { [key: string]: unknown };

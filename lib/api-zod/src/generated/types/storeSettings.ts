@@ -20,4 +20,10 @@ export interface StoreSettings {
   sunpayEnabled?: string;
   /** @nullable */
   sunpayApiKey?: string | null;
+  /** @nullable */
+  brevoApiKey?: string | null;
+  /** @nullable */
+  brevoSenderEmail?: string | null;
+  /** @nullable */
+  brevoSenderName?: string | null;
 }

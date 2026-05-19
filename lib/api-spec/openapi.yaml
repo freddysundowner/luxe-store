@@ -683,6 +683,12 @@ components:
           type: string
         sunpayApiKey:
           type: ["string", "null"]
+        brevoApiKey:
+          type: ["string", "null"]
+        brevoSenderEmail:
+          type: ["string", "null"]
+        brevoSenderName:
+          type: ["string", "null"]
 
     StoreSettingsInput:
       type: object
@@ -707,6 +713,12 @@ components:
         sunpayEnabled:
           type: string
         sunpayApiKey:
+          type: string
+        brevoApiKey:
+          type: string
+        brevoSenderEmail:
+          type: string
+        brevoSenderName:
           type: string
 
     PaymentInitiateBody:

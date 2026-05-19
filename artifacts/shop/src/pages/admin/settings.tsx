@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetSettings, getGetSettingsQueryKey, useUpdateSettings } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash2, Smartphone, Store, MessageCircle, Globe, Eye, EyeOff } from "lucide-react";
+import { Loader2, Plus, Trash2, Smartphone, Store, MessageCircle, Globe, Eye, EyeOff, Mail } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/ImageUpload";
 
@@ -34,6 +34,9 @@ const settingsSchema = z.object({
   priceTiers: z.array(priceTierSchema).min(1, "At least one price tier is required"),
   sunpayApiKey: z.string().optional(),
   sunpayEnabled: z.boolean().default(false),
+  brevoApiKey: z.string().optional(),
+  brevoSenderEmail: z.string().optional(),
+  brevoSenderName: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -49,6 +52,7 @@ export default function AdminSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showApiKey, setShowApiKey] = useState(false);
+  const [showBrevoKey, setShowBrevoKey] = useState(false);
 
   const { data: settings, isLoading } = useGetSettings({
     query: { queryKey: getGetSettingsQueryKey() }
@@ -66,6 +70,9 @@ export default function AdminSettings() {
       priceTiers: DEFAULT_TIERS,
       sunpayApiKey: "",
       sunpayEnabled: false,
+      brevoApiKey: "",
+      brevoSenderEmail: "",
+      brevoSenderName: "",
     },
   });
 
@@ -86,6 +93,9 @@ export default function AdminSettings() {
         priceTiers: (settings.priceTiers as typeof DEFAULT_TIERS | undefined) ?? DEFAULT_TIERS,
         sunpayApiKey: settings.sunpayApiKey || "",
         sunpayEnabled: settings.sunpayEnabled === "true",
+        brevoApiKey: settings.brevoApiKey || "",
+        brevoSenderEmail: settings.brevoSenderEmail || "",
+        brevoSenderName: settings.brevoSenderName || "",
       });
     }
   }, [settings, form]);
@@ -101,12 +111,15 @@ export default function AdminSettings() {
   });
 
   const onSubmit = (data: SettingsFormValues) => {
-    const { sunpayEnabled, sunpayApiKey, ...rest } = data;
+    const { sunpayEnabled, sunpayApiKey, brevoApiKey, brevoSenderEmail, brevoSenderName, ...rest } = data;
     updateMutation.mutate({
       data: {
         ...rest,
         sunpayEnabled: sunpayEnabled ? "true" : "false",
         sunpayApiKey: sunpayApiKey || "",
+        brevoApiKey: brevoApiKey || "",
+        brevoSenderEmail: brevoSenderEmail || "",
+        brevoSenderName: brevoSenderName || "",
       } as Parameters<typeof updateMutation.mutate>[0]["data"]
     });
   };
@@ -137,6 +150,10 @@ export default function AdminSettings() {
               <TabsTrigger value="payments" className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 <Smartphone className="w-4 h-4" />
                 Payments
+              </TabsTrigger>
+              <TabsTrigger value="email" className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Mail className="w-4 h-4" />
+                Email
               </TabsTrigger>
               <TabsTrigger value="localization" className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 <Globe className="w-4 h-4" />
@@ -305,6 +322,113 @@ export default function AdminSettings() {
                 <div className="rounded-lg border border-green-900/30 bg-green-950/20 p-4 text-sm space-y-1">
                   <p className="font-medium text-green-400">How STK Push works</p>
                   <p className="text-muted-foreground">Customer enters their M-Pesa phone number → receives a PIN prompt on their phone → confirms → payment is processed instantly.</p>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* ── Email (Brevo) ────────────────────────────────────────── */}
+            <TabsContent value="email">
+              <div className="bg-card border border-border rounded-xl shadow-sm p-6 space-y-6">
+                <div>
+                  <h3 className="font-semibold text-base flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-blue-400" />
+                    Brevo Email
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Connect your{" "}
+                    <a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">
+                      Brevo
+                    </a>{" "}
+                    account to send transactional emails (order confirmations, receipts, etc.).
+                  </p>
+                </div>
+
+                <FormField control={form.control} name="brevoApiKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Brevo API Key</FormLabel>
+                      {settings?.brevoApiKey && !field.value && (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-blue-950/40 border border-blue-800/50 text-xs text-blue-400">
+                          <span className="font-semibold">✓ Key saved:</span>
+                          <code className="font-mono tracking-wide">
+                            {settings.brevoApiKey.slice(0, 10)}••••••••{settings.brevoApiKey.slice(-4)}
+                          </code>
+                          <span className="ml-auto text-blue-600 text-[10px]">Enter a new key below to replace</span>
+                        </div>
+                      )}
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showBrevoKey ? "text" : "password"}
+                            placeholder={settings?.brevoApiKey ? "Enter new key to replace…" : "xkeysib-xxxxxxxxxxxxxxxx"}
+                            autoComplete="off"
+                            {...field}
+                            value={field.value ?? ""}
+                            className={settings?.brevoApiKey && !field.value ? "border-blue-800/50 focus:border-blue-600" : ""}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowBrevoKey(v => !v)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showBrevoKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Found in your Brevo account under{" "}
+                        <a href="https://app.brevo.com/settings/keys/api" target="_blank" rel="noopener noreferrer" className="underline">
+                          Settings → API Keys
+                        </a>.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField control={form.control} name="brevoSenderEmail"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sender Email</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="orders@yourstore.com"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormDescription>Must be a verified sender in Brevo.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField control={form.control} name="brevoSenderName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Sender Name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Luxe Store"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormDescription>Display name shown to email recipients.</FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="rounded-lg border border-blue-900/30 bg-blue-950/20 p-4 text-sm space-y-1">
+                  <p className="font-medium text-blue-400">How Brevo email works</p>
+                  <p className="text-muted-foreground">
+                    After a customer pays via M-Pesa and the payment is confirmed, an order receipt is emailed to them automatically using these credentials.
+                  </p>
                 </div>
               </div>
             </TabsContent>

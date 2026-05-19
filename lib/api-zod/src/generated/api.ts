@@ -257,7 +257,10 @@ export const GetSettingsResponse = zod.object({
   "max": zod.number().nullish()
 })).optional(),
   "sunpayEnabled": zod.string().optional(),
-  "sunpayApiKey": zod.string().nullish()
+  "sunpayApiKey": zod.string().nullish(),
+  "brevoApiKey": zod.string().nullish(),
+  "brevoSenderEmail": zod.string().nullish(),
+  "brevoSenderName": zod.string().nullish()
 })
 
 
@@ -489,7 +492,10 @@ export const UpdateSettingsBody = zod.object({
   "max": zod.number().nullish()
 })).optional(),
   "sunpayEnabled": zod.string().optional(),
-  "sunpayApiKey": zod.string().optional()
+  "sunpayApiKey": zod.string().optional(),
+  "brevoApiKey": zod.string().optional(),
+  "brevoSenderEmail": zod.string().optional(),
+  "brevoSenderName": zod.string().optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
@@ -505,7 +511,10 @@ export const UpdateSettingsResponse = zod.object({
   "max": zod.number().nullish()
 })).optional(),
   "sunpayEnabled": zod.string().optional(),
-  "sunpayApiKey": zod.string().nullish()
+  "sunpayApiKey": zod.string().nullish(),
+  "brevoApiKey": zod.string().nullish(),
+  "brevoSenderEmail": zod.string().nullish(),
+  "brevoSenderName": zod.string().nullish()
 })
 
 

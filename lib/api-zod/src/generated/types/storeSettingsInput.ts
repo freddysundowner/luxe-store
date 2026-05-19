@@ -17,4 +17,7 @@ export interface StoreSettingsInput {
   priceTiers?: PriceTier[];
   sunpayEnabled?: string;
   sunpayApiKey?: string;
+  brevoApiKey?: string;
+  brevoSenderEmail?: string;
+  brevoSenderName?: string;
 }
