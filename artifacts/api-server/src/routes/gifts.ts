@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { randomBytes } from "crypto";
 import { db, giftsTable } from "@workspace/db";
 const router = Router();
@@ -16,7 +16,10 @@ interface CreateGiftBodyType {
   recipientName?: string;
   note?: string;
   senderName?: string;
-  paymentMethod: "whatsapp" | "mpesa";
+  // Kept on the type for backwards-compat with the OpenAPI schema, but the
+  // sender flow now only supports M-Pesa. WhatsApp self-checkout was removed
+  // (gifts must be paid for before they can be shared).
+  paymentMethod: "mpesa";
   paymentRef?: string;
 }
 
@@ -25,10 +28,11 @@ function validateCreateGift(body: unknown): { data: CreateGiftBodyType } | { err
   if (!b || typeof b.productId !== "number" || typeof b.productName !== "string" || typeof b.productPrice !== "number") {
     return { error: "productId, productName and productPrice are required" };
   }
-  if (b.paymentMethod !== "whatsapp" && b.paymentMethod !== "mpesa") {
-    return { error: "paymentMethod must be 'whatsapp' or 'mpesa'" };
-  }
-  return { data: b as unknown as CreateGiftBodyType };
+  // Only M-Pesa is supported now. Older clients sending `paymentMethod:
+  // "whatsapp"` are silently coerced — server treats every gift as pending
+  // until the linked M-Pesa payment completes.
+  const data = { ...b, paymentMethod: "mpesa" } as unknown as CreateGiftBodyType;
+  return { data };
 }
 
 function serializeGift(g: typeof giftsTable.$inferSelect) {
@@ -61,9 +65,9 @@ router.post("/gifts", async (req, res): Promise<void> => {
   const d = parsed.data;
   const claimToken = makeToken();
 
-  // WhatsApp gifts start as "paid" immediately — sender self-certifies payment
-  // M-Pesa gifts start as "pending" until webhook / manual mark-paid
-  const status = d.paymentMethod === "whatsapp" ? "paid" : "pending";
+  // Every gift starts as "pending" until the linked M-Pesa payment completes
+  // (webhook or polled status will flip it to "paid" via markGiftPaidForRef).
+  const status = "pending";
 
   const [gift] = await db.insert(giftsTable).values({
     claimToken,
@@ -156,5 +160,46 @@ router.post("/admin/gifts/:id/mark-paid", async (req, res): Promise<void> => {
 
   res.json(serializeGift(updated));
 });
+
+// Mark the gift linked to a payment as paid. Called from the payments webhook
+// + status poller. The link is by `externalRef = "GIFT-<claimToken>"` which
+// the client sets when initiating the M-Pesa STK push.
+//
+// Security guards (architect-flagged):
+//   - Only flips gifts that are currently `pending` — prevents a malicious
+//     client from regressing a `claimed` / `refunded` gift back to `paid` by
+//     replaying a payment.
+//   - Requires the payment to be `completed` AND its amount to cover the gift
+//     price — prevents a "cheap payment, expensive gift" unlock by forging an
+//     `externalRef` that points at someone else's gift.
+//   - Stamps the payment's transaction reference on the gift for traceability.
+export async function markGiftPaidForExternalRef(payment: {
+  externalRef: string | null;
+  amount: number;
+  status: string;
+  transactionId: string;
+  mpesaRef?: string | null;
+}): Promise<void> {
+  if (!payment.externalRef || !payment.externalRef.startsWith("GIFT-")) return;
+  if (payment.status !== "completed") return;
+  const token = payment.externalRef.slice("GIFT-".length);
+  if (!token) return;
+
+  await db
+    .update(giftsTable)
+    .set({
+      status: "paid",
+      paymentRef: payment.mpesaRef ?? payment.transactionId,
+    })
+    .where(
+      and(
+        eq(giftsTable.claimToken, token),
+        eq(giftsTable.status, "pending"),
+        // productPrice is a numeric/decimal column — cast on the SQL side so
+        // the comparison happens in numeric space, not string space.
+        sql`${giftsTable.productPrice}::numeric <= ${payment.amount}`,
+      ),
+    );
+}
 
 export default router;

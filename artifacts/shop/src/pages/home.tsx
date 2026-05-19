@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import {
   Search, Sparkles, X, Gift, Heart, ShoppingBag, RefreshCw,
-  MessageCircle, Share2, Droplets, Send
+  MessageCircle, Share2, Droplets
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useAddBundleToCart } from "@/lib/bundle-add";
@@ -13,7 +13,6 @@ import {
   useListProducts, getListProductsQueryKey,
   useListCategories, getListCategoriesQueryKey,
   useGetSettings, getGetSettingsQueryKey,
-  useCreateGift,
   Product,
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
+import { GiftSheet } from "@/components/GiftSheet";
 import { Helmet } from "react-helmet-async";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
@@ -80,12 +80,9 @@ function FeaturedSwiper({
     }
     setIndex(0);
   }, [products]);
+  // Gift sheet is fully self-contained (form → pay → share) — we just hand it
+  // the product the user picked. See GiftSheet for the flow.
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
-  const [giftRecipient, setGiftRecipient] = useState("");
-  const [giftNote, setGiftNote] = useState("");
-  const [giftSender, setGiftSender] = useState("");
-  const [giftStep, setGiftStep] = useState<"form" | "pay" | "done">("form");
-  const [giftLink, setGiftLink] = useState("");
   const { toast } = useToast();
   const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
   const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
@@ -264,66 +261,8 @@ function FeaturedSwiper({
     window.addEventListener("mouseup", onUp);
   };
 
-  const createGiftMutation = useCreateGift({
-    mutation: {
-      onSuccess: (gift) => {
-        const link = `${window.location.origin}/gift/${gift.claimToken}`;
-        setGiftLink(link);
-        setGiftStep("pay");
-      },
-      onError: () => toast({ variant: "destructive", title: "Could not create gift. Try again." }),
-    },
-  });
-
-  const openGiftSheet = (product: Product) => {
-    setGiftProduct(product);
-    setGiftRecipient("");
-    setGiftNote("");
-    setGiftSender("");
-    setGiftStep("form");
-    setGiftLink("");
-  };
-
-  const closeGiftSheet = () => {
-    setGiftProduct(null);
-    setGiftStep("form");
-    setGiftLink("");
-  };
-
-  const handleCreateGift = (method: "whatsapp" | "mpesa") => {
-    if (!giftProduct) return;
-    createGiftMutation.mutate({
-      data: {
-        productId: giftProduct.id,
-        productName: giftProduct.name,
-        productPrice: Number(giftProduct.price),
-        productImageUrl: giftProduct.imageUrl ?? undefined,
-        recipientName: giftRecipient.trim() || undefined,
-        note: giftNote.trim() || undefined,
-        senderName: giftSender.trim() || undefined,
-        paymentMethod: method,
-      },
-    });
-  };
-
-  const sendGiftWhatsApp = () => {
-    if (!giftProduct || !giftLink) return;
-    const storeName = settings?.storeName || "Luxe Store";
-    const price = fmt.format(giftProduct.price);
-    const to = giftRecipient.trim() || "you";
-    const notePreview = giftNote.trim() ? `\n\n"${giftNote.trim()}"` : "";
-    const message =
-      `🎁 Hey ${to}! I've sent you a gift!\n\n` +
-      `*${giftProduct.name}*\n${price} — from ${storeName}${notePreview}\n\n` +
-      `Unwrap your gift here: ${giftLink}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    setGiftStep("done");
-  };
-
-  const copyGiftLink = () => {
-    navigator.clipboard.writeText(giftLink);
-    toast({ title: "Gift link copied!" });
-  };
+  const openGiftSheet = (product: Product) => setGiftProduct(product);
+  const closeGiftSheet = () => setGiftProduct(null);
 
   const handleCart = (product: Product) => {
     // Bundles bypass QuickBuy (no variants/qty) — add component products as a
@@ -578,123 +517,8 @@ function FeaturedSwiper({
         </span>
       </div>
 
-      {/* Gift Sheet */}
-      {giftProduct && (
-        <>
-          <div className="absolute inset-0 z-[200] bg-black/70" onClick={closeGiftSheet} />
-          <div className="absolute bottom-0 left-0 right-0 z-[210] bg-[#0a0a0a] border-t border-[#D4AF37]/20"
-            style={{ animation: "slideUp 0.28s cubic-bezier(0.16,1,0.3,1) forwards" }}>
-            <style>{`@keyframes slideUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }`}</style>
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent" />
-            <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-0.5 bg-zinc-700 rounded-full" /></div>
-
-            {/* Product header */}
-            <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-900">
-              <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
-                {giftProduct.imageUrl
-                  ? <img src={giftProduct.imageUrl} alt={giftProduct.name} className="w-full h-full object-cover" />
-                  : <Gift className="w-6 h-6 text-zinc-700 m-4" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wide text-zinc-300 font-light truncate">{giftProduct.name}</p>
-                <p className="text-[#D4AF37] text-sm font-light mt-0.5">{fmt.format(giftProduct.price)}</p>
-              </div>
-              <button onClick={closeGiftSheet} className="text-zinc-600 hover:text-zinc-300 transition-colors p-1">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Step 1 — Fill details */}
-            {giftStep === "form" && (
-              <>
-                <div className="px-5 pt-4 pb-3 space-y-3">
-                  <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Recipient name</label>
-                    <input type="text" value={giftRecipient} onChange={(e) => setGiftRecipient(e.target.value)}
-                      placeholder="Who's the lucky one? (optional)"
-                      className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors" />
-                  </div>
-                  <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Your name</label>
-                    <input type="text" value={giftSender} onChange={(e) => setGiftSender(e.target.value)}
-                      placeholder="So they know it's from you (optional)"
-                      className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors" />
-                  </div>
-                  <div>
-                    <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Personal note</label>
-                    <textarea value={giftNote} onChange={(e) => setGiftNote(e.target.value)}
-                      placeholder="Add a heartfelt message… (optional)" rows={2}
-                      className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors resize-none" />
-                  </div>
-                </div>
-                <div className="px-5 pb-5 space-y-2">
-                  <p className="text-[9px] text-zinc-600 uppercase tracking-widest text-center mb-3">How will you pay?</p>
-                  <button
-                    onClick={() => handleCreateGift("whatsapp")}
-                    disabled={createGiftMutation.isPending}
-                    className="w-full py-3.5 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                    <MessageCircle className="w-3.5 h-3.5" />
-                    {createGiftMutation.isPending ? "Creating…" : "Pay via WhatsApp checkout"}
-                  </button>
-                  <button
-                    onClick={() => handleCreateGift("mpesa")}
-                    disabled={createGiftMutation.isPending}
-                    className="w-full py-3.5 border border-zinc-800 text-zinc-300 text-xs uppercase tracking-widest hover:border-[#D4AF37]/40 hover:text-white transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
-                    <span className="text-green-400 font-bold text-[10px]">M</span>
-                    {createGiftMutation.isPending ? "Creating…" : "Pay via M-Pesa"}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* Step 2 — Pay & share */}
-            {giftStep === "pay" && (
-              <div className="px-5 pt-4 pb-5 space-y-4">
-                <div className="text-center space-y-1">
-                  <p className="text-[10px] uppercase tracking-widest text-[#D4AF37]/60">Gift created!</p>
-                  <p className="text-sm text-zinc-300 font-light">Complete your payment, then share the link below.</p>
-                </div>
-                {/* Gift link */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded px-3 py-2 flex items-center gap-2">
-                  <p className="flex-1 text-[11px] text-zinc-400 truncate">{giftLink}</p>
-                  <button onClick={copyGiftLink} className="text-[#D4AF37]/60 hover:text-[#D4AF37] transition-colors shrink-0">
-                    <Share2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-                <button onClick={sendGiftWhatsApp}
-                  className="w-full py-4 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors flex items-center justify-center gap-2">
-                  <MessageCircle className="w-3.5 h-3.5" />Send & share via WhatsApp
-                </button>
-                <button onClick={copyGiftLink}
-                  className="w-full py-3 border border-zinc-800 text-zinc-500 text-xs uppercase tracking-widest hover:border-zinc-600 hover:text-zinc-300 transition-colors">
-                  Copy link only
-                </button>
-              </div>
-            )}
-
-            {/* Step 3 — Done */}
-            {giftStep === "done" && (
-              <div className="px-5 pt-4 pb-5 flex flex-col items-center gap-4 text-center">
-                <div className="w-12 h-12 rounded-full border border-[#D4AF37]/40 flex items-center justify-center">
-                  <Gift className="w-5 h-5 text-[#D4AF37]" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-sm font-light text-white">Gift sent!</p>
-                  <p className="text-xs text-zinc-500">
-                    {giftRecipient ? `${giftRecipient} will see a beautiful gift reveal` : "They'll see a beautiful gift reveal"} when they open the link.
-                  </p>
-                </div>
-                <button onClick={closeGiftSheet}
-                  className="w-full py-3 border border-zinc-800 text-zinc-500 text-xs uppercase tracking-widest hover:border-zinc-600 hover:text-zinc-300 transition-colors">
-                  Done
-                </button>
-              </div>
-            )}
-
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" />
-          </div>
-        </>
-      )}
+      {/* Gift Sheet — fully self-contained (form → M-Pesa pay → share). */}
+      <GiftSheet open={giftProduct !== null} product={giftProduct} onClose={closeGiftSheet} />
 
       <ShareDialog
         open={shareTarget !== null}

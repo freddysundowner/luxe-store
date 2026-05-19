@@ -3,6 +3,7 @@ import { eq, desc, and, sql } from "drizzle-orm";
 import { db, storeSettingsTable, paymentsTable, productsTable, productVariantsTable } from "@workspace/db";
 import https from "node:https";
 import { sendOrderConfirmationEmail } from "../lib/email";
+import { markGiftPaidForExternalRef } from "./gifts";
 
 interface OrderSnapshotItem {
   id?: number;
@@ -299,6 +300,12 @@ router.get("/payments/:transactionId/status", async (req, res): Promise<void> =>
               sendOrderEmailForPayment(payment, req.log).catch((err) =>
                 req.log.error({ err }, "Order email task failed")
               );
+              // Gift payments use externalRef "GIFT-<claimToken>" — flip the
+              // gift to "paid" so the sender can share and the recipient can
+              // claim it.
+              await markGiftPaidForExternalRef(payment).catch((err) =>
+                req.log.error({ err }, "Mark gift paid (poll) failed")
+              );
             }
           }
         }
@@ -351,6 +358,11 @@ router.post("/webhooks/sunpay", async (req, res): Promise<void> => {
         );
         sendOrderEmailForPayment(updated, req.log).catch((err) =>
           req.log.error({ err }, "Order email task failed")
+        );
+        // See note in /status handler — gift payments need to flip the gift's
+        // status to "paid" alongside the standard order side-effects.
+        await markGiftPaidForExternalRef(updated).catch((err) =>
+          req.log.error({ err }, "Mark gift paid (webhook) failed")
         );
       }
     }

@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Link } from "wouter";
-import { Gift, MessageCircle, Share2, ShoppingBag, Sparkles, X, Send, SlidersHorizontal, Droplets } from "lucide-react";
+import { Gift, MessageCircle, Share2, ShoppingBag, Sparkles, X, SlidersHorizontal, Droplets } from "lucide-react";
 import { Product, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { useCart } from "@/lib/cart-context";
 import { useFavorites } from "@/lib/favorites-context";
@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
+import { GiftSheet } from "@/components/GiftSheet";
 import { isProductSoldOut } from "@/lib/stock";
 import { useAddBundleToCart } from "@/lib/bundle-add";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
@@ -82,8 +83,6 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
   const [currentIndex, setCurrentIndex] = useState(0);
   const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
-  const [giftRecipient, setGiftRecipient] = useState("");
-  const [giftNote, setGiftNote] = useState("");
 
   // ── Slide animation state ──
   const [dragOffset, setDragOffset] = useState(0);       // px, follows finger live
@@ -364,30 +363,10 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
     setShareTarget({ title: product.name, url });
   };
 
-  const openGiftSheet = (product: Product) => {
-    setGiftProduct(product);
-    setGiftRecipient("");
-    setGiftNote("");
-  };
-
-  const sendGiftViaWhatsApp = () => {
-    if (!giftProduct) return;
-    const storeName = settings?.storeName || "Luxe Store";
-    const price = fmt.format(giftProduct.price);
-    const to = giftRecipient.trim() ? giftRecipient.trim() : "you";
-    const params = new URLSearchParams();
-    if (giftRecipient.trim()) params.set("recipient", giftRecipient.trim());
-    if (giftNote.trim()) params.set("note", giftNote.trim());
-    params.set("store", storeName);
-    const giftUrl = `${window.location.origin}/gift/${giftProduct.id}?${params.toString()}`;
-    const notePreview = giftNote.trim() ? `\n\n"${giftNote.trim()}"` : "";
-    const message =
-      `🎁 Hey ${to}! I'd love to gift you something special.\n\n` +
-      `*${giftProduct.name}*\n${price} — from ${storeName}${notePreview}\n\n` +
-      `Unwrap your gift here: ${giftUrl}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, "_blank");
-    setGiftProduct(null);
-  };
+  // Gift flow is now fully handled by <GiftSheet/> — pay-before-share. We just
+  // tell it which product the user picked. Recipient/note collection lives in
+  // the sheet itself.
+  const openGiftSheet = (product: Product) => setGiftProduct(product);
 
   // ── Loading / empty ──
   if (isLoading) {
@@ -656,62 +635,8 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
         </div>
       </div>
 
-      {/* Gift sheet */}
-      {giftProduct && (
-        <>
-          <div className="absolute inset-0 z-[200] bg-black/70" onClick={() => setGiftProduct(null)} />
-          <div
-            className="absolute bottom-0 left-0 right-0 z-[210] bg-[#0a0a0a] border-t border-[#D4AF37]/20"
-            style={{ animation: "slideUp 0.28s cubic-bezier(0.16,1,0.3,1) forwards" }}
-          >
-            <style>{`
-              @keyframes slideUp {
-                from { transform: translateY(100%); opacity: 0; }
-                to   { transform: translateY(0);    opacity: 1; }
-              }
-            `}</style>
-            <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37] to-transparent" />
-            <div className="flex justify-center pt-3 pb-1">
-              <div className="w-10 h-0.5 bg-zinc-700 rounded-full" />
-            </div>
-            <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-900">
-              <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
-                {giftProduct.imageUrl
-                  ? <img src={giftProduct.imageUrl} alt={giftProduct.name} className="w-full h-full object-cover" />
-                  : <Gift className="w-6 h-6 text-zinc-700 m-auto mt-4" />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs uppercase tracking-wide text-zinc-300 font-light truncate">{giftProduct.name}</p>
-                <p className="text-[#D4AF37] text-sm font-light mt-0.5">{fmt.format(giftProduct.price)}</p>
-              </div>
-              <button onClick={() => setGiftProduct(null)} className="text-zinc-600 hover:text-zinc-300 transition-colors p-1">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="px-5 pt-4 pb-3 space-y-3">
-              <div>
-                <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Who's the lucky one?</label>
-                <input type="text" value={giftRecipient} onChange={(e) => setGiftRecipient(e.target.value)}
-                  placeholder="Their name (optional)"
-                  className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors" />
-              </div>
-              <div>
-                <label className="text-[9px] uppercase tracking-[0.2em] text-zinc-600 block mb-1.5">Personal note</label>
-                <textarea value={giftNote} onChange={(e) => setGiftNote(e.target.value)}
-                  placeholder="Add a heartfelt message… (optional)" rows={2}
-                  className="w-full bg-zinc-900/80 border border-zinc-800 px-4 py-2.5 text-sm text-zinc-200 placeholder-zinc-700 focus:outline-none focus:border-[#D4AF37]/40 transition-colors resize-none" />
-              </div>
-            </div>
-            <div className="px-5 pb-6">
-              <button onClick={sendGiftViaWhatsApp}
-                className="w-full py-4 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors flex items-center justify-center gap-2">
-                <Send className="w-3.5 h-3.5" />Send Gift via WhatsApp
-              </button>
-              <p className="text-[9px] text-zinc-700 text-center tracking-widest uppercase mt-2">Opens WhatsApp — you pick who to send it to</p>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Gift sheet — form → M-Pesa pay → share. */}
+      <GiftSheet open={giftProduct !== null} product={giftProduct} onClose={() => setGiftProduct(null)} />
 
       <ShareDialog
         open={shareTarget !== null}
