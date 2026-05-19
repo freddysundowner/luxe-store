@@ -775,6 +775,8 @@ components:
           type: integer
         transactionId:
           type: string
+        checkoutRequestId:
+          type: ["string", "null"]
         phoneNumber:
           type: string
         amount:
@@ -785,6 +787,11 @@ components:
           type: ["string", "null"]
         externalRef:
           type: ["string", "null"]
+        cartSnapshot:
+          type: object
+          nullable: true
+        updatedAt:
+          type: string
         createdAt:
           type: string
 

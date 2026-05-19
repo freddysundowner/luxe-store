@@ -5,10 +5,13 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { AdminPaymentCartSnapshot } from './adminPaymentCartSnapshot';
 
 export interface AdminPayment {
   id: number;
   transactionId: string;
+  /** @nullable */
+  checkoutRequestId?: string | null;
   phoneNumber: string;
   amount: number;
   status: string;
@@ -16,5 +19,7 @@ export interface AdminPayment {
   mpesaRef?: string | null;
   /** @nullable */
   externalRef?: string | null;
+  cartSnapshot?: AdminPaymentCartSnapshot;
+  updatedAt?: string;
   createdAt: string;
 }

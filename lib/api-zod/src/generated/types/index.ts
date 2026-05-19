@@ -9,6 +9,7 @@
 export * from './adminAuthResult';
 export * from './adminCredentials';
 export * from './adminPayment';
+export * from './adminPaymentCartSnapshot';
 export * from './adminStats';
 export * from './availabilityTag';
 export * from './availabilityTagInput';

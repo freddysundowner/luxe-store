@@ -236,11 +236,14 @@ router.get("/admin/payments", async (req, res): Promise<void> => {
     payments.map((p) => ({
       id: p.id,
       transactionId: p.transactionId,
+      checkoutRequestId: p.checkoutRequestId,
       phoneNumber: p.phoneNumber,
       amount: p.amount,
       status: p.status,
       mpesaRef: p.mpesaRef,
       externalRef: p.externalRef,
+      cartSnapshot: p.cartSnapshot,
+      updatedAt: p.updatedAt,
       createdAt: p.createdAt,
     }))
   );

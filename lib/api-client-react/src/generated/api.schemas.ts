@@ -154,9 +154,13 @@ export interface PaymentStatusResponse {
   createdAt?: string;
 }
 
+export type AdminPaymentCartSnapshot = { [key: string]: unknown } | null;
+
 export interface AdminPayment {
   id: number;
   transactionId: string;
+  /** @nullable */
+  checkoutRequestId?: string | null;
   phoneNumber: string;
   amount: number;
   status: string;
@@ -164,6 +168,8 @@ export interface AdminPayment {
   mpesaRef?: string | null;
   /** @nullable */
   externalRef?: string | null;
+  cartSnapshot?: AdminPaymentCartSnapshot;
+  updatedAt?: string;
   createdAt: string;
 }
 

@@ -310,11 +310,16 @@ export const GetPaymentStatusResponse = zod.object({
 export const ListAdminPaymentsResponseItem = zod.object({
   "id": zod.number(),
   "transactionId": zod.string(),
+  "checkoutRequestId": zod.string().nullish(),
   "phoneNumber": zod.string(),
   "amount": zod.number(),
   "status": zod.string(),
   "mpesaRef": zod.string().nullish(),
   "externalRef": zod.string().nullish(),
+  "cartSnapshot": zod.object({
+
+}).passthrough().nullish(),
+  "updatedAt": zod.string().optional(),
   "createdAt": zod.string()
 })
 export const ListAdminPaymentsResponse = zod.array(ListAdminPaymentsResponseItem)
