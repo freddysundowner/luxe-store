@@ -676,7 +676,7 @@ function BottomPanel({
         {product.originalPrice != null && product.originalPrice > product.price && (
           <span className="text-[9px] border border-[#D4AF37]/40 text-[#D4AF37] px-2 py-0.5 uppercase tracking-wider">Sale</span>
         )}
-        {!product.inStock && (
+        {(!product.inStock || product.stockQuantity === 0) && (
           <span className="text-[9px] border border-zinc-700 text-zinc-500 px-2 py-0.5 uppercase tracking-wider">Sold Out</span>
         )}
       </div>
