@@ -23,8 +23,8 @@ interface TikTokFeedProps {
 // Duration (ms) for the top progress bar before the drop icon reveals on a
 // single-image product. Multi-image products use PER_IMAGE_MS_MULTI per
 // segment instead, so longer galleries don't blur past too fast.
-const PROGRESS_DURATION_MS = 5000;
-const PER_IMAGE_MS_MULTI = 3000;
+const PROGRESS_DURATION_MS = 6000;
+const PER_IMAGE_MS_MULTI = 5000;
 
 // Pull a product's gallery, falling back to the legacy single cover image so
 // the feed keeps working for rows that pre-date the `images` column.
@@ -114,28 +114,65 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
 
   const [imageIndex, setImageIndex] = useState(0);
   const [progressDone, setProgressDone] = useState(false);
+  // WhatsApp-Status style hold-to-pause. Set true while a finger (or mouse
+  // button) is held on the card so the progress bar and image advance both
+  // freeze; cleared on release so they resume from where they left off.
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Track elapsed time within the current segment so a resume picks up where
+  // the pause happened instead of restarting from zero.
+  const segmentStartedAtRef = useRef<number>(0);
+  const segmentElapsedRef = useRef<number>(0);
+  // Held timeout id + mirrored pause flag so we can cancel synchronously
+  // from touchstart (avoiding the effect-cleanup race where the timer could
+  // still fire between `setIsPaused(true)` and the cleanup pass).
+  const segmentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isPausedRef = useRef(false);
 
   // Reset to first image whenever the active product changes.
   useEffect(() => {
     setImageIndex(0);
     setProgressDone(false);
+    segmentElapsedRef.current = 0;
   }, [activeProductId]);
 
-  // Drive segment advance. When the current segment finishes, either move to
-  // the next image or — on the final segment — mark progressDone (revealing
-  // the drop icon). We re-arm whenever activeProductId or imageIndex changes.
+  // Zero the elapsed counter whenever we move to a new segment.
+  useEffect(() => {
+    segmentElapsedRef.current = 0;
+  }, [imageIndex]);
+
+  // Drive segment advance with pause/resume support. When unpaused we start a
+  // timeout for the remaining time; on pause (or unmount) we record elapsed
+  // and clear the timeout so the next resume continues, not restarts.
+  // We also freeze while `isAnimating` (vertical swipe transition) so the
+  // outgoing card's progress doesn't jump forward during the slide.
   useEffect(() => {
     if (activeProductId == null) return;
+    if (isPaused || isAnimating) return;
     const isLast = imageIndex >= segmentCount - 1;
+    const remaining = Math.max(50, perSegmentMs - segmentElapsedRef.current);
+    segmentStartedAtRef.current = Date.now();
     const t = setTimeout(() => {
+      segmentTimerRef.current = null;
+      // Late-fire guard: if the timer happens to fire in the same tick that
+      // a touchstart synchronously paused us, just drop it on the floor —
+      // the resume path will re-schedule with the right remaining time.
+      if (isPausedRef.current) return;
       if (isLast) {
         setProgressDone(true);
       } else {
         setImageIndex((i) => i + 1);
       }
-    }, perSegmentMs);
-    return () => clearTimeout(t);
-  }, [activeProductId, imageIndex, segmentCount, perSegmentMs]);
+    }, remaining);
+    segmentTimerRef.current = t;
+    return () => {
+      if (segmentTimerRef.current === t) {
+        segmentElapsedRef.current += Date.now() - segmentStartedAtRef.current;
+        clearTimeout(t);
+        segmentTimerRef.current = null;
+      }
+    };
+  }, [activeProductId, imageIndex, segmentCount, perSegmentMs, isPaused, isAnimating]);
 
   // Tap left/right halves of the image to skip between segments manually.
   const skipImage = useCallback((dir: 1 | -1) => {
@@ -172,10 +209,24 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
   }, [isAnimating, currentIndex, products.length, vh]);
 
   // ── Touch handlers ──
+  // WhatsApp Status: any finger-down on the card pauses progress so a
+  // customer can linger on an image; release resumes. We pause on
+  // touchstart and clear the pause in *every* exit path (touchend,
+  // touchcancel, or when the swipe completes a slide).
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isAnimating) return;
     touchStartY.current = e.touches[0].clientY;
     liveOffset.current = 0;
+    // Pause synchronously: flip the ref so any in-flight timer callback
+    // bails out, then clear the timer id directly so we don't depend on
+    // the effect cleanup landing in time.
+    isPausedRef.current = true;
+    if (segmentTimerRef.current !== null) {
+      segmentElapsedRef.current += Date.now() - segmentStartedAtRef.current;
+      clearTimeout(segmentTimerRef.current);
+      segmentTimerRef.current = null;
+    }
+    setIsPaused(true);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -190,6 +241,8 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
   };
 
   const handleTouchEnd = () => {
+    isPausedRef.current = false;
+    setIsPaused(false);
     if (isAnimating) return;
     const offset = liveOffset.current;
     const threshold = vh * 0.22;
@@ -325,6 +378,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchEnd}
       onWheel={handleWheel}
     >
       {/* ── Adjacent card (slides in) ── */}
@@ -378,6 +432,9 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
                       width: "100%",
                       transformOrigin: "left center",
                       animation: `tiktokProgress ${perSegmentMs}ms linear forwards`,
+                      // Freeze the bar in lock-step with the JS timer when
+                      // the customer is holding the card (WhatsApp Status).
+                      animationPlayState: isPaused ? "paused" : "running",
                     }}
                   />
                 ) : state === "past" ? (
