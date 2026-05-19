@@ -194,11 +194,12 @@ function MpesaFlow({
   }, [statusData]);
 
   const handleSubmit = () => {
-    const clean = phone.trim().replace(/\s/g, "");
-    if (!/^254\d{9}$/.test(clean)) {
-      setPhoneError("Enter a valid number starting with 254 (e.g. 254712345678)");
+    const local = phone.replace(/\D/g, "").replace(/^0+/, "");
+    if (!/^\d{9}$/.test(local)) {
+      setPhoneError("Enter your 9-digit Safaricom number (e.g. 712345678)");
       return;
     }
+    const clean = `254${local}`;
     setPhoneError("");
     setApiError(null);
     const snapshot = {
@@ -321,16 +322,23 @@ function MpesaFlow({
         <label className="text-[10px] uppercase tracking-widest text-zinc-500 block mb-1.5">
           M-Pesa Phone Number
         </label>
-        <input
-          type="tel"
-          value={phone}
-          onChange={(e) => { setPhone(e.target.value); setPhoneError(""); }}
-          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          placeholder="254712345678"
-          className="w-full bg-zinc-900 border border-zinc-700 text-zinc-200 text-sm px-3 py-2.5 outline-none focus:border-[#D4AF37] transition-colors placeholder:text-zinc-700"
-        />
+        <div className="flex w-full bg-zinc-900 border border-zinc-700 focus-within:border-[#D4AF37] transition-colors">
+          <span className="flex items-center gap-1.5 px-3 py-2.5 text-zinc-400 text-sm border-r border-zinc-700 bg-zinc-950/60 select-none">
+            <span className="text-base leading-none">🇰🇪</span>
+            <span className="font-mono">+254</span>
+          </span>
+          <input
+            type="tel"
+            inputMode="numeric"
+            value={phone}
+            onChange={(e) => { setPhone(e.target.value.replace(/\D/g, "").slice(0, 9)); setPhoneError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+            placeholder="712345678"
+            className="flex-1 bg-transparent text-zinc-200 text-sm px-3 py-2.5 outline-none placeholder:text-zinc-700"
+          />
+        </div>
         {phoneError && <p className="text-red-400 text-xs mt-1">{phoneError}</p>}
-        <p className="text-zinc-600 text-[11px] mt-1">Format: 254XXXXXXXXX</p>
+        <p className="text-zinc-600 text-[11px] mt-1">Kenyan Safaricom number — country code is added automatically.</p>
       </div>
 
       <div className="flex gap-2">
