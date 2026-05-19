@@ -189,8 +189,11 @@ set +a
 log "Installing workspace dependencies (this can take a few minutes)…"
 sudo -u "$APP_USER" -H bash -lc "cd '$REPO_DIR' && pnpm install --frozen-lockfile || pnpm install"
 
-log "Building all artifacts…"
-sudo -u "$APP_USER" -H bash -lc "cd '$REPO_DIR' && pnpm -r --if-present run build"
+log "Building production artifacts (api-server + shop)…"
+# Note: we deliberately skip @workspace/mockup-sandbox — it's a dev-only
+# Canvas preview tool that requires PORT at build time and isn't deployed.
+sudo -u "$APP_USER" -H bash -lc \
+  "cd '$REPO_DIR' && pnpm --filter @workspace/api-server --filter @workspace/shop run build"
 
 # ── 5. Drizzle push (schema sync) ───────────────────────────────────────────
 if [[ "${RUN_PUSH:-false}" == "true" ]]; then
