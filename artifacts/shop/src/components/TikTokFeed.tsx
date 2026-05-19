@@ -7,6 +7,7 @@ import { useFavorites } from "@/lib/favorites-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
+import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
@@ -176,14 +177,16 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
     import("@/lib/gift-finder-trigger").then(m => m.triggerGiftFinder());
   };
 
+  const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
+
   const handleShare = (product: Product) => {
     const url = `${window.location.origin}/product/${product.id}`;
-    if (navigator.share) {
+    // Native share sheet on touch devices; custom modal on desktop.
+    if (isCoarsePointer() && navigator.share) {
       navigator.share({ title: product.name, url }).catch(() => {});
-    } else {
-      navigator.clipboard.writeText(url);
-      toast({ title: "Link copied!", duration: 1500 });
+      return;
     }
+    setShareTarget({ title: product.name, url });
   };
 
   const openGiftSheet = (product: Product) => {
@@ -460,6 +463,12 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
           </div>
         </>
       )}
+
+      <ShareDialog
+        open={shareTarget !== null}
+        onOpenChange={(o) => { if (!o) setShareTarget(null); }}
+        target={shareTarget}
+      />
     </div>
   );
 }
