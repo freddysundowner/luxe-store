@@ -300,7 +300,7 @@ export default function ProductDetail() {
         <RelatedProducts categoryId={product.categoryId} currentProductId={product.id} />
       </div>
 
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0a]/95 backdrop-blur border-t border-zinc-900 z-50">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0a]/98 border-t border-zinc-900 z-50">
         <button onClick={handleBuyNow} disabled={buyNowDisabled} data-testid="pdp-buy-now-mobile" className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
           {buyNowLabel}
         </button>
@@ -381,7 +381,7 @@ function ProductGallery({ images, imageSettings, activeIdx, onChange, name, sold
         }
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-40 pointer-events-none" />
         {soldOut && (
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
             <span className="text-sm uppercase tracking-widest text-zinc-300 px-4 py-2 border border-zinc-700">Sold Out</span>
           </div>
         )}

@@ -860,7 +860,7 @@ export default function Home() {
       <div className="fixed top-4 right-4 z-50 flex items-center gap-2">
         <Link
           href="/favorites"
-          className="flex items-center gap-1.5 bg-[#0a0a0a]/80 backdrop-blur border border-zinc-800 rounded-full px-3 py-2 text-zinc-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-all"
+          className="flex items-center gap-1.5 bg-[#0a0a0a]/95 border border-zinc-800 rounded-full px-3 py-2 text-zinc-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-all"
         >
           <Heart className={`w-4 h-4 transition-colors ${favoriteCount > 0 ? "fill-[#D4AF37] text-[#D4AF37]" : ""}`} />
           {favoriteCount > 0 && (

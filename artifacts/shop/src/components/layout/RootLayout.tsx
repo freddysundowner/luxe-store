@@ -48,7 +48,7 @@ export function RootLayout({ children, title, showBack, searchBar, noHeader, noM
 
           {/* Header */}
           <header
-            className="sticky top-0 z-50 bg-[#0a0a0a]/92 backdrop-blur-md text-zinc-100 transition-all duration-300"
+            className="sticky top-0 z-50 bg-[#0a0a0a]/97 text-zinc-100 transition-all duration-300"
             style={{
               borderBottom: scrolled
                 ? "1px solid rgba(212,175,55,0.3)"

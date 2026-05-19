@@ -149,7 +149,7 @@ export default function Cart() {
       </div>
 
       {/* Mobile sticky footer */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0a]/95 backdrop-blur border-t border-zinc-900 z-50 p-4">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-[#0a0a0a]/98 border-t border-zinc-900 z-50 p-4">
         <div className="flex justify-between items-center mb-3">
           <span className="text-[10px] uppercase tracking-widest text-zinc-600">Total</span>
           <span className="text-2xl font-light text-[#D4AF37]">{formatter.format(subtotal)}</span>

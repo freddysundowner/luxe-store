@@ -26,7 +26,7 @@ export default function Favorites() {
   return (
     <div className="min-h-[100dvh] bg-[#0a0a0a] flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-[#0a0a0a]/92 backdrop-blur-md border-b border-zinc-900">
+      <header className="sticky top-0 z-50 bg-[#0a0a0a]/97 border-b border-zinc-900">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 h-16 flex items-center gap-4">
           <Link href="/" className="text-zinc-500 hover:text-[#D4AF37] transition-colors p-1 -ml-1">
             <ArrowLeft className="w-5 h-5" />
@@ -85,7 +85,7 @@ export default function Favorites() {
                 {/* Remove heart */}
                 <button
                   onClick={() => toggleFavorite(product)}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center transition-all hover:bg-red-500/20"
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/85 flex items-center justify-center transition-all hover:bg-red-500/20"
                   title="Remove from saved"
                 >
                   <Heart className="w-3.5 h-3.5 fill-[#D4AF37] text-[#D4AF37]" />
