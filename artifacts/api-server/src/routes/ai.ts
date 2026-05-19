@@ -55,13 +55,21 @@ async function getActiveProducts() {
   }));
 }
 
-function buildCatalogText(products: Awaited<ReturnType<typeof getActiveProducts>>) {
+function buildCatalogText(products: Awaited<ReturnType<typeof getActiveProducts>>, currency: string) {
   return products
     .map(
       (p) =>
-        `ID:${p.id} | "${p.name}" | Category: ${p.categoryName ?? "Uncategorized"} | Price: $${p.price.toFixed(2)} | In stock: ${p.inStock} | ${p.description ? p.description.slice(0, 80) : ""}`
+        `ID:${p.id} | "${p.name}" | Category: ${p.categoryName ?? "Uncategorized"} | Price: ${currency} ${p.price.toFixed(2)} | In stock: ${p.inStock} | ${p.description ? p.description.slice(0, 80) : ""}`
     )
     .join("\n");
+}
+
+async function getCurrencySymbol(): Promise<string> {
+  const rows = await db
+    .select({ currencySymbol: storeSettingsTable.currencySymbol })
+    .from(storeSettingsTable)
+    .limit(1);
+  return rows[0]?.currencySymbol?.trim() || "KSh";
 }
 
 async function getActiveHampers() {
@@ -90,6 +98,7 @@ async function getActiveHampers() {
 function buildHamperCatalogText(
   hampers: Awaited<ReturnType<typeof getActiveHampers>>,
   products: Awaited<ReturnType<typeof getActiveProducts>>,
+  currency: string,
 ) {
   if (hampers.length === 0) return "(no curated hampers available)";
   const productNameById = new Map(products.map((p) => [p.id, p.name]));
@@ -98,7 +107,7 @@ function buildHamperCatalogText(
       const contents = h.items
         .map((i) => `${i.quantity}× ${productNameById.get(i.productId) ?? `product#${i.productId}`}`)
         .join(", ");
-      return `HAMPER:${h.id} | "${h.name}" | Price: $${h.price.toFixed(2)} | Contains: ${contents} | ${h.description ? h.description.slice(0, 100) : ""}`;
+      return `HAMPER:${h.id} | "${h.name}" | Price: ${currency} ${h.price.toFixed(2)} | Contains: ${contents} | ${h.description ? h.description.slice(0, 100) : ""}`;
     })
     .join("\n");
 }
@@ -114,9 +123,13 @@ router.post("/ai/suggest", async (req, res): Promise<void> => {
   }
 
   try {
-    const [products, hampers] = await Promise.all([getActiveProducts(), getActiveHampers()]);
-    const catalog = buildCatalogText(products);
-    const hamperCatalog = buildHamperCatalogText(hampers, products);
+    const [products, hampers, currency] = await Promise.all([
+      getActiveProducts(),
+      getActiveHampers(),
+      getCurrencySymbol(),
+    ]);
+    const catalog = buildCatalogText(products, currency);
+    const hamperCatalog = buildHamperCatalogText(hampers, products, currency);
     const client = await getClient();
 
     const response = await client.messages.create({
@@ -130,8 +143,15 @@ How to recommend:
 - Prefer a curated hamper when one cleanly matches the recipient/occasion — hampers are pre-assembled gifts.
 - You may also suggest 2-3 products that would combine into a great custom hamper, and invite the customer to "build a hamper" with them.
 
+Currency:
+- The store currency is "${currency}". ALWAYS use this exact symbol for prices.
+- Never use "$", "USD", or any other currency symbol. Format prices as "${currency} 8,500" or "${currency} 8.5K".
+
 Output format:
-- Reply in 2-4 short sentences, warm and concise.
+- Keep the whole reply under ~80 words.
+- Write 2-3 short paragraphs separated by a single BLANK LINE. Each paragraph should be 1-2 sentences.
+- When listing 2 or more products, put each one on its own bullet line starting with "- " (hyphen + space), not inline.
+- Do NOT use markdown bold/italics, asterisks, or headings. Plain text only.
 - For a product, append its ID like (ID:5).
 - For a curated hamper, append its ID like (HAMPER:3).
 - Never invent products or hampers not in the catalog.
@@ -162,8 +182,8 @@ router.post("/ai/search", async (req, res): Promise<void> => {
   }
 
   try {
-    const products = await getActiveProducts();
-    const catalog = buildCatalogText(products);
+    const [products, currency] = await Promise.all([getActiveProducts(), getCurrencySymbol()]);
+    const catalog = buildCatalogText(products, currency);
     const client = await getClient();
 
     const response = await client.messages.create({

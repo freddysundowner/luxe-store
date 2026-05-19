@@ -21,24 +21,55 @@ interface Message {
   content: string;
 }
 
+type ReplyBlock =
+  | { kind: "para"; text: string }
+  | { kind: "list"; items: string[] };
+
 interface ParsedReply {
-  text: string;
+  blocks: ReplyBlock[];
   productIds: number[];
   hamperIds: number[];
 }
 
-// Strip "(ID:n)" / "(HAMPER:n)" markers from the assistant text and collect
-// the referenced ids so we can render rich follow-up cards below the bubble.
+// Strip "(ID:n)" / "(HAMPER:n)" markers from the assistant text, drop any
+// stray markdown bold/italic markers the model emits despite the prompt,
+// then split the result into paragraphs and bullet lists so we can render
+// it as structured prose instead of a wall of text.
 function parseAssistantMessage(raw: string): ParsedReply {
   const productIds: number[] = [];
   const hamperIds: number[] = [];
-  const text = raw.replace(/\s*\((ID|HAMPER):(\d+)\)/g, (_m, kind: string, num: string) => {
-    const n = parseInt(num, 10);
-    if (kind === "ID" && !productIds.includes(n)) productIds.push(n);
-    if (kind === "HAMPER" && !hamperIds.includes(n)) hamperIds.push(n);
-    return "";
-  }).replace(/[ \t]{2,}/g, " ").trim();
-  return { text, productIds, hamperIds };
+  const stripped = raw
+    .replace(/\s*\((ID|HAMPER):(\d+)\)/g, (_m, kind: string, num: string) => {
+      const n = parseInt(num, 10);
+      if (kind === "ID" && !productIds.includes(n)) productIds.push(n);
+      if (kind === "HAMPER" && !hamperIds.includes(n)) hamperIds.push(n);
+      return "";
+    })
+    // Drop **bold**, *italic*, __bold__, _italic_ markers but keep the inner
+    // text. The order matters: handle the double-marker variants first.
+    .replace(/\*\*(.+?)\*\*/g, "$1")
+    .replace(/__(.+?)__/g, "$1")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1$2")
+    .replace(/(^|[^_])_([^_\n]+)_/g, "$1$2")
+    // Collapse runs of horizontal whitespace but preserve newlines.
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
+
+  // Split into blocks separated by blank lines; within a block, lines that
+  // start with "- " or "* " become bullet items.
+  const blocks: ReplyBlock[] = [];
+  const paragraphs = stripped.split(/\n\s*\n/);
+  for (const para of paragraphs) {
+    const lines = para.split(/\n/).map((l) => l.trim()).filter(Boolean);
+    if (lines.length === 0) continue;
+    const allBullets = lines.every((l) => /^[-*•]\s+/.test(l));
+    if (allBullets && lines.length >= 2) {
+      blocks.push({ kind: "list", items: lines.map((l) => l.replace(/^[-*•]\s+/, "")) });
+    } else {
+      blocks.push({ kind: "para", text: lines.join(" ") });
+    }
+  }
+  return { blocks, productIds, hamperIds };
 }
 
 const OCCASIONS = [
@@ -384,10 +415,26 @@ export function GiftFinder() {
                           <div className="w-6 h-6 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 flex items-center justify-center shrink-0 mr-2.5 mt-0.5">
                             <Gift className="w-3 h-3 text-[#D4AF37]" />
                           </div>
-                          <div className="max-w-[78%] px-4 py-3 text-sm leading-relaxed font-light bg-zinc-900/80 text-zinc-300 border border-zinc-800/60">
-                            {parsed.text || (referencedHampers.length === 0 && referencedProductIds.length === 0
-                              ? "I couldn't pin down a match — tell me a little more about them and I'll try again."
-                              : "Here's what I'd suggest:")}
+                          <div className="max-w-[78%] px-4 py-3 text-sm leading-relaxed font-light bg-zinc-900/80 text-zinc-300 border border-zinc-800/60 space-y-2.5">
+                            {parsed.blocks.length === 0 ? (
+                              <p>
+                                {referencedHampers.length === 0 && referencedProductIds.length === 0
+                                  ? "I couldn't pin down a match — tell me a little more about them and I'll try again."
+                                  : "Here's what I'd suggest:"}
+                              </p>
+                            ) : (
+                              parsed.blocks.map((block, bi) =>
+                                block.kind === "para" ? (
+                                  <p key={bi}>{block.text}</p>
+                                ) : (
+                                  <ul key={bi} className="list-disc pl-5 space-y-1 marker:text-[#D4AF37]/70">
+                                    {block.items.map((item, ii) => (
+                                      <li key={ii}>{item}</li>
+                                    ))}
+                                  </ul>
+                                )
+                              )
+                            )}
                           </div>
                         </div>
 
