@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImageUpload } from "@/components/ImageUpload";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function AdminCategories() {
   const { toast } = useToast();
@@ -17,6 +18,7 @@ export default function AdminCategories() {
   const [isOpen, setIsOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formData, setFormData] = useState({ name: "", description: "", imageUrl: "" });
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const { data: categories, isLoading } = useListCategories({
     query: { queryKey: getListCategoriesQueryKey() }
@@ -74,11 +76,7 @@ export default function AdminCategories() {
     setIsOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure? This will not delete the products, but they will become uncategorized.")) {
-      deleteMutation.mutate({ id });
-    }
-  };
+  const handleDelete = (id: number) => setDeleteId(id);
 
   return (
     <AdminLayout title="Categories">
@@ -177,6 +175,15 @@ export default function AdminCategories() {
           </Table>
         )}
       </div>
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => { if (!open) setDeleteId(null); }}
+        title="Delete category?"
+        description="This will not delete the products in this category — they will become uncategorized."
+        confirmLabel="Delete"
+        loading={deleteMutation.isPending}
+        onConfirm={() => { if (deleteId !== null) deleteMutation.mutate({ id: deleteId }); }}
+      />
     </AdminLayout>
   );
 }

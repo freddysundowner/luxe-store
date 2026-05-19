@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 const TAG_COLORS: Record<string, { label: string; color: string }> = {
   new:         { label: "New Arrival",     color: "#D4AF37" },
@@ -21,6 +22,7 @@ const TAG_COLORS: Record<string, { label: string; color: string }> = {
 
 export default function AdminProducts() {
   const [search, setSearch] = useState("");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -40,11 +42,7 @@ export default function AdminProducts() {
     }
   });
 
-  const handleDelete = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      deleteMutation.mutate({ id });
-    }
-  };
+  const handleDelete = (id: number) => setDeleteId(id);
 
   const filteredProducts = products?.filter(p => 
     p.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -161,6 +159,15 @@ export default function AdminProducts() {
           </div>
         )}
       </div>
+      <ConfirmDialog
+        open={deleteId !== null}
+        onOpenChange={(open) => { if (!open) setDeleteId(null); }}
+        title="Delete product?"
+        description="This action cannot be undone. The product will be permanently removed from your catalog."
+        confirmLabel="Delete"
+        loading={deleteMutation.isPending}
+        onConfirm={() => { if (deleteId !== null) deleteMutation.mutate({ id: deleteId }); }}
+      />
     </AdminLayout>
   );
 }
