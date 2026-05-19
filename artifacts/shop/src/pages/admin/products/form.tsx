@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ImageUpload } from "@/components/ImageUpload";
+import { MultiImageUpload } from "@/components/MultiImageUpload";
 import { useCreateProduct, useUpdateProduct, useGetProduct, getGetProductQueryKey, useListCategories, getListCategoriesQueryKey, useListAvailabilityTagsPublic, getListAvailabilityTagsPublicQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -37,7 +37,7 @@ const productSchema = z.object({
   price: z.coerce.number().min(0, "Price must be positive"),
   originalPrice: z.coerce.number().optional().nullable(),
   categoryId: z.coerce.number({ required_error: "Category is required" }).min(1, "Category is required"),
-  imageUrl: z.string().optional().or(z.literal("")),
+  images: z.array(z.string()).default([]),
   inStock: z.boolean().default(true),
   stockQuantity: z.preprocess(
     (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
@@ -80,7 +80,7 @@ export default function ProductForm() {
       price: 0,
       originalPrice: null,
       categoryId: undefined,
-      imageUrl: "",
+      images: [],
       inStock: true,
       stockQuantity: 0,
       isActive: true,
@@ -104,7 +104,7 @@ export default function ProductForm() {
         price: product.price,
         originalPrice: product.originalPrice,
         categoryId: product.categoryId ?? undefined,
-        imageUrl: product.imageUrl || "",
+        images: product.images ?? (product.imageUrl ? [product.imageUrl] : []),
         inStock: product.inStock,
         stockQuantity: product.stockQuantity,
         isActive: product.isActive,
@@ -149,7 +149,7 @@ export default function ProductForm() {
       ...data,
       originalPrice: data.originalPrice || null,
       categoryId: data.categoryId,
-      imageUrl: data.imageUrl || undefined,
+      images: data.images,
       availabilityTag: data.availabilityTag === "none" ? null : (data.availabilityTag || null),
       variants: data.variants.map((v, i) => ({
         id: v.id,
@@ -306,13 +306,13 @@ export default function ProductForm() {
 
               <FormField
                 control={form.control}
-                name="imageUrl"
+                name="images"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
                     <FormControl>
-                      <ImageUpload
-                        label="Product Image"
-                        value={field.value ?? ""}
+                      <MultiImageUpload
+                        label="Product Images"
+                        value={field.value ?? []}
                         onChange={field.onChange}
                       />
                     </FormControl>

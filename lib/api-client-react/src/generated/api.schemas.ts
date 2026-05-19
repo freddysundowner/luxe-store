@@ -69,8 +69,13 @@ export interface Product {
   categoryId?: number | null;
   /** @nullable */
   categoryName?: string | null;
-  /** @nullable */
+  /**
+     * Cover image URL. Convenience field — always equals images[0] when images is non-empty.
+     * @nullable
+     */
   imageUrl?: string | null;
+  /** Ordered gallery of image URLs. First entry is the cover. */
+  images?: string[];
   inStock: boolean;
   /**
      * Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.
@@ -99,7 +104,10 @@ export interface ProductInput {
   /** @nullable */
   originalPrice?: number | null;
   categoryId: number;
+  /** Optional cover image URL. Ignored when 'images' is provided — images[0] becomes the cover. */
   imageUrl?: string;
+  /** Ordered gallery of image URLs. First entry is treated as the cover. */
+  images?: string[];
   inStock?: boolean;
   /**
      * Remaining inventory. 0 means out of stock.

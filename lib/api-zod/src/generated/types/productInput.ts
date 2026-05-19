@@ -16,7 +16,10 @@ export interface ProductInput {
   /** @nullable */
   originalPrice?: number | null;
   categoryId: number;
+  /** Optional cover image URL. Ignored when 'images' is provided — images[0] becomes the cover. */
   imageUrl?: string;
+  /** Ordered gallery of image URLs. First entry is treated as the cover. */
+  images?: string[];
   inStock?: boolean;
   /**
      * Remaining inventory. 0 means out of stock.

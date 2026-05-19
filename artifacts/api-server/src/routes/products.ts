@@ -24,6 +24,7 @@ const productSelect = {
   originalPrice: productsTable.originalPrice,
   categoryId: productsTable.categoryId,
   imageUrl: productsTable.imageUrl,
+  images: productsTable.images,
   inStock: productsTable.inStock,
   isActive: productsTable.isActive,
   isDropship: productsTable.isDropship,
@@ -75,6 +76,7 @@ function mapRow(
     originalPrice: string | null;
     categoryId: number | null;
     imageUrl: string | null;
+    images: string[];
     inStock: boolean;
     isActive: boolean;
     isDropship: boolean;
@@ -94,7 +96,11 @@ function mapRow(
     originalPrice: row.originalPrice != null ? parseFloat(row.originalPrice) : null,
     categoryId: row.categoryId,
     categoryName: row.categoryName,
-    imageUrl: row.imageUrl,
+    // For legacy rows that pre-date the `images` column, fall back to the
+    // single cover. Keep `imageUrl` and `images[0]` in lock-step so existing
+    // consumers (cards, OG tags, JSON-LD) keep working.
+    imageUrl: row.images.length > 0 ? row.images[0] : row.imageUrl,
+    images: row.images.length > 0 ? row.images : (row.imageUrl ? [row.imageUrl] : []),
     inStock: row.inStock,
     isActive: row.isActive,
     isDropship: row.isDropship,
@@ -223,13 +229,20 @@ router.post("/admin/products", async (req, res): Promise<void> => {
     return;
   }
 
-  const { price, originalPrice, variants, ...rest } = parsed.data;
+  const { price, originalPrice, variants, images, imageUrl, ...rest } = parsed.data;
+  // Normalise the gallery: drop blanks/dupes, and keep `imageUrl` in sync with
+  // the cover so single-image consumers keep working.
+  const normalisedImages = (images ?? []).map((s) => s.trim()).filter(Boolean);
+  const dedupedImages = Array.from(new Set(normalisedImages));
+  const coverUrl = dedupedImages[0] ?? (imageUrl?.trim() || null);
   const [product] = await db
     .insert(productsTable)
     .values({
       ...rest,
       price: String(price),
       originalPrice: originalPrice != null ? String(originalPrice) : null,
+      images: dedupedImages,
+      imageUrl: coverUrl,
     })
     .returning();
 
@@ -260,10 +273,21 @@ router.put("/admin/products/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const { price, originalPrice, variants, ...rest } = parsed.data;
+  const { price, originalPrice, variants, images, imageUrl, ...rest } = parsed.data;
   const updateData: Record<string, unknown> = { ...rest };
   if (price !== undefined) updateData.price = String(price);
   if (originalPrice !== undefined) updateData.originalPrice = originalPrice != null ? String(originalPrice) : null;
+  // When the client supplies a gallery, normalise it and keep `imageUrl` in
+  // sync with the cover. When only `imageUrl` is supplied, leave `images`
+  // untouched — the legacy single-image flow still works.
+  if (images !== undefined) {
+    const normalised = images.map((s) => s.trim()).filter(Boolean);
+    const deduped = Array.from(new Set(normalised));
+    updateData.images = deduped;
+    updateData.imageUrl = deduped[0] ?? (imageUrl?.trim() || null);
+  } else if (imageUrl !== undefined) {
+    updateData.imageUrl = imageUrl?.trim() || null;
+  }
 
   const [product] = await db
     .update(productsTable)

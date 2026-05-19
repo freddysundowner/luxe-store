@@ -665,6 +665,12 @@ components:
           type: ["string", "null"]
         imageUrl:
           type: ["string", "null"]
+          description: "Cover image URL. Convenience field — always equals images[0] when images is non-empty."
+        images:
+          type: array
+          description: "Ordered gallery of image URLs. First entry is the cover."
+          items:
+            type: string
         inStock:
           type: boolean
         stockQuantity:
@@ -706,6 +712,12 @@ components:
           type: integer
         imageUrl:
           type: string
+          description: "Optional cover image URL. Ignored when 'images' is provided — images[0] becomes the cover."
+        images:
+          type: array
+          description: "Ordered gallery of image URLs. First entry is treated as the cover."
+          items:
+            type: string
         inStock:
           type: boolean
         stockQuantity:

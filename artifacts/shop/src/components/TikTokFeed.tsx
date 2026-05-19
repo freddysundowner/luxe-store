@@ -20,18 +20,32 @@ interface TikTokFeedProps {
   topOffset?: number;
 }
 
-// Duration (ms) for the top progress bar before the drop icon reveals.
+// Duration (ms) for the top progress bar before the drop icon reveals on a
+// single-image product. Multi-image products use PER_IMAGE_MS_MULTI per
+// segment instead, so longer galleries don't blur past too fast.
 const PROGRESS_DURATION_MS = 5000;
+const PER_IMAGE_MS_MULTI = 3000;
+
+// Pull a product's gallery, falling back to the legacy single cover image so
+// the feed keeps working for rows that pre-date the `images` column.
+function getImages(product: Product): string[] {
+  const arr = (product as Product & { images?: string[] | null }).images;
+  if (arr && arr.length > 0) return arr;
+  return product.imageUrl ? [product.imageUrl] : [];
+}
 
 // ── Card background (image + gradient) ───────────────────────────────────────
-function CardBg({ product }: { product: Product }) {
+function CardBg({ product, imageIndex = 0 }: { product: Product; imageIndex?: number }) {
+  const images = getImages(product);
+  const src = images[Math.min(imageIndex, images.length - 1)] ?? null;
   return (
     <>
-      {product.imageUrl ? (
+      {src ? (
         <img
-          src={product.imageUrl}
+          key={src}
+          src={src}
           alt={product.name}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-300"
           draggable={false}
         />
       ) : (
@@ -85,17 +99,54 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
     }
   }, [products.length, currentIndex]);
 
-  // ── Top progress bar: fills left→right for each product. When it finishes,
-  // the gold "drop" icon fades in (matches the desktop look). Resets when the
-  // user moves to a different product (by id, so filter changes also reset).
-  const activeProductId = products[currentIndex]?.id ?? null;
+  // ── Stories-style segmented progress bar.
+  // For each product we walk through its images one at a time. The top bar
+  // splits into one segment per image; the current segment fills left→right,
+  // earlier segments stay full, later ones stay empty. Once the last segment
+  // completes, the gold "drop" icon fades in (matches the desktop look).
+  // All segment + done state resets when the user moves to a different
+  // product (by id, so filter changes also reset).
+  const activeProduct = products[currentIndex] ?? null;
+  const activeProductId = activeProduct?.id ?? null;
+  const activeImages = activeProduct ? getImages(activeProduct) : [];
+  const segmentCount = Math.max(1, activeImages.length);
+  const perSegmentMs = segmentCount === 1 ? PROGRESS_DURATION_MS : PER_IMAGE_MS_MULTI;
+
+  const [imageIndex, setImageIndex] = useState(0);
   const [progressDone, setProgressDone] = useState(false);
+
+  // Reset to first image whenever the active product changes.
   useEffect(() => {
+    setImageIndex(0);
     setProgressDone(false);
-    if (activeProductId == null) return;
-    const t = setTimeout(() => setProgressDone(true), PROGRESS_DURATION_MS);
-    return () => clearTimeout(t);
   }, [activeProductId]);
+
+  // Drive segment advance. When the current segment finishes, either move to
+  // the next image or — on the final segment — mark progressDone (revealing
+  // the drop icon). We re-arm whenever activeProductId or imageIndex changes.
+  useEffect(() => {
+    if (activeProductId == null) return;
+    const isLast = imageIndex >= segmentCount - 1;
+    const t = setTimeout(() => {
+      if (isLast) {
+        setProgressDone(true);
+      } else {
+        setImageIndex((i) => i + 1);
+      }
+    }, perSegmentMs);
+    return () => clearTimeout(t);
+  }, [activeProductId, imageIndex, segmentCount, perSegmentMs]);
+
+  // Tap left/right halves of the image to skip between segments manually.
+  const skipImage = useCallback((dir: 1 | -1) => {
+    setProgressDone(false);
+    setImageIndex((i) => {
+      const next = i + dir;
+      if (next < 0) return 0;
+      if (next > segmentCount - 1) return segmentCount - 1;
+      return next;
+    });
+  }, [segmentCount]);
 
   // ── Complete a slide programmatically (button / tap zone) ──
   const triggerSlide = useCallback((dir: "up" | "down") => {
@@ -249,9 +300,6 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
   }
 
   const current = products[currentIndex];
-  // Image indicators show one dot per image of the current product. Until
-  // multi-image support lands, this falls back to a single dot for imageUrl.
-  const imageCount = Math.max(1, (current as Product & { images?: unknown[] }).images?.length ?? (current?.imageUrl ? 1 : 1));
 
   // The "adjacent" card that slides in/out alongside the current card
   const adjacentIndex = slideDir === "up"
@@ -305,23 +353,44 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
           willChange: "transform",
         }}
       >
-        <CardBg product={current} />
+        <CardBg product={current} imageIndex={imageIndex} />
 
-        {/* Top bar: image indicators (left), drop icon (absolutely centered so
-            its position never depends on the indicators), filter button (right) */}
-        <div className="absolute left-4 right-4 z-10 flex items-center justify-between gap-3" style={{ top: `${topOffset}px` }}>
-          {/* Image indicators — one dot per image of the current product */}
-          <div className="flex gap-1 flex-1">
-            {Array.from({ length: imageCount }).map((_, i) => (
-              <span
+        {/* Stories-style segmented progress bar — flush to the top edge,
+            edge-to-edge, one segment per image. Earlier segments are full,
+            the active one fills left→right, future ones are empty. */}
+        <div
+          className="absolute top-0 left-0 right-0 z-20 flex gap-1 px-1 pt-1"
+          aria-label={`Image ${imageIndex + 1} of ${segmentCount}`}
+        >
+          {Array.from({ length: segmentCount }).map((_, i) => {
+            const state: "past" | "active" | "future" =
+              i < imageIndex ? "past" : i === imageIndex ? "active" : "future";
+            return (
+              <div
                 key={i}
-                className="flex-1 h-0.5 rounded-full bg-[#D4AF37]/80"
-                style={{ maxWidth: 28 }}
-              />
-            ))}
-          </div>
+                className="flex-1 h-0.5 bg-white/20 overflow-hidden rounded-full"
+              >
+                {state === "active" ? (
+                  <div
+                    key={`${activeProductId}-${i}`}
+                    className="h-full bg-[#D4AF37]"
+                    style={{
+                      width: "100%",
+                      transformOrigin: "left center",
+                      animation: `tiktokProgress ${perSegmentMs}ms linear forwards`,
+                    }}
+                  />
+                ) : state === "past" ? (
+                  <div className="h-full w-full bg-[#D4AF37]" />
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
 
-          {/* Filter button → opens bottom sheet */}
+        {/* Top bar: filter button on the right. The drop icon below is
+            absolutely centered so its position never depends on the bar. */}
+        <div className="absolute left-4 right-4 z-10 flex items-center justify-end" style={{ top: `${topOffset}px` }}>
           <button
             onClick={() => onOpenFilters?.()}
             aria-label="Filters"
@@ -331,9 +400,29 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
           </button>
         </div>
 
+        {/* Tap zones — left/right halves cycle through images of the current
+            product. Vertical center band only, so the bottom panel buttons
+            and right-side actions stay clickable. */}
+        {segmentCount > 1 && (
+          <>
+            <button
+              type="button"
+              aria-label="Previous image"
+              onClick={() => skipImage(-1)}
+              className="absolute left-0 top-[15%] bottom-[35%] w-1/3 z-[5] cursor-default"
+            />
+            <button
+              type="button"
+              aria-label="Next image"
+              onClick={() => skipImage(1)}
+              className="absolute right-0 top-[15%] bottom-[35%] w-1/3 z-[5] cursor-default"
+            />
+          </>
+        )}
+
         {/* Drop icon — absolutely centered at the top, independent of the
-            indicators / filter button on either side. Fades in once the
-            progress bar completes. */}
+            filter button on either side. Fades in once the final segment of
+            the progress bar completes. */}
         <div
           className="absolute left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-black/60 border border-[#D4AF37]/40 flex items-center justify-center transition-opacity duration-500 pointer-events-none"
           style={{
@@ -346,22 +435,6 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
           <Droplets className="w-5 h-5" style={{ animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }} />
         </div>
 
-        {/* Thin gold progress bar — fills left→right over PROGRESS_DURATION_MS,
-            keyed on currentIndex so it resets on every swipe. Flush to the
-            very top edge, edge-to-edge. */}
-        <div
-          className="absolute top-0 left-0 right-0 z-20 h-0.5 bg-white/10 overflow-hidden"
-        >
-          <div
-            key={activeProductId ?? "none"}
-            className="h-full bg-[#D4AF37]"
-            style={{
-              width: "100%",
-              transformOrigin: "left center",
-              animation: `tiktokProgress ${PROGRESS_DURATION_MS}ms linear forwards`,
-            }}
-          />
-        </div>
         <style>{`
           @keyframes tiktokProgress {
             from { transform: scaleX(0); }

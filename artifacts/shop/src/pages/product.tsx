@@ -1,8 +1,8 @@
 import { useParams, Link } from "wouter";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { useGetProduct, getGetProductQueryKey, ProductVariant } from "@workspace/api-client-react";
-import { ShoppingBag, Minus, Plus } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ShoppingBag, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,6 +14,11 @@ export default function ProductDetail() {
   const productId = parseInt(id || "0", 10);
   const [quantity, setQuantity] = useState(1);
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
+  const [activeImageIdx, setActiveImageIdx] = useState(0);
+
+  // Reset the gallery when navigating between products so the previous
+  // product's image index doesn't carry over.
+  useEffect(() => { setActiveImageIdx(0); }, [productId]);
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
 
@@ -83,6 +88,12 @@ export default function ProductDetail() {
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : null;
 
+  // Gallery: prefer the new `images` array, fall back to the single cover for
+  // backwards compatibility with rows that pre-date multi-image support.
+  const gallery: string[] = (product.images && product.images.length > 0)
+    ? product.images
+    : (product.imageUrl ? [product.imageUrl] : []);
+
   // "From KSh X" when active variants disagree on price
   const variantPrices = activeVariants.map((v) => v.price ?? product.price);
   const showFromPrice = hasVariants && new Set(variantPrices).size > 1 && !selectedVariant;
@@ -126,28 +137,15 @@ export default function ProductDetail() {
       </Helmet>
       <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
         <div className="lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-20">
-          <div className="relative bg-zinc-900 overflow-hidden aspect-square lg:aspect-auto lg:min-h-[560px]">
-            {product.imageUrl
-              ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover animate-in fade-in duration-700 opacity-90" />
-              : <div className="w-full h-full flex items-center justify-center bg-zinc-900"><ShoppingBag className="w-16 h-16 text-zinc-700" /></div>
-            }
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-40 pointer-events-none" />
-            {!product.inStock && (
-              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
-                <span className="text-sm uppercase tracking-widest text-zinc-300 px-4 py-2 border border-zinc-700">Sold Out</span>
-              </div>
-            )}
-            {product.isFeatured && product.inStock && (
-              <div className="absolute top-4 left-4 px-3 py-1 bg-black/80 border border-[#D4AF37]/40 text-[10px] uppercase tracking-widest text-[#D4AF37]">
-                Featured
-              </div>
-            )}
-            {discount && product.inStock && (
-              <div className="absolute top-4 right-4 px-3 py-1 bg-black/80 border border-[#D4AF37]/30 text-[10px] uppercase tracking-widest text-[#D4AF37]">
-                {discount}% off
-              </div>
-            )}
-          </div>
+          <ProductGallery
+            images={gallery}
+            activeIdx={Math.min(activeImageIdx, Math.max(0, gallery.length - 1))}
+            onChange={setActiveImageIdx}
+            name={product.name}
+            soldOut={!product.inStock}
+            featured={!!product.isFeatured}
+            discount={discount}
+          />
 
           <div className="mt-8 lg:mt-0 flex flex-col">
             {product.categoryName && (
@@ -240,5 +238,114 @@ export default function ProductDetail() {
         </button>
       </div>
     </RootLayout>
+  );
+}
+
+interface ProductGalleryProps {
+  images: string[];
+  activeIdx: number;
+  onChange: (idx: number) => void;
+  name: string;
+  soldOut: boolean;
+  featured: boolean;
+  discount: number | null;
+}
+
+function ProductGallery({ images, activeIdx, onChange, name, soldOut, featured, discount }: ProductGalleryProps) {
+  // Track touch start so we can support horizontal swipe-to-paginate on mobile.
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const hasMultiple = images.length > 1;
+  const current = images[activeIdx] ?? images[0];
+
+  // Reset to first image when the gallery itself changes (e.g. between
+  // products on the same route).
+  useEffect(() => { if (activeIdx >= images.length) onChange(0); }, [images.length, activeIdx, onChange]);
+
+  const go = (delta: number) => {
+    if (images.length === 0) return;
+    const next = (activeIdx + delta + images.length) % images.length;
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      <div
+        className="relative bg-zinc-900 overflow-hidden aspect-square lg:aspect-auto lg:min-h-[560px]"
+        onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+        onTouchEnd={(e) => {
+          if (touchStartX == null) return;
+          const dx = e.changedTouches[0].clientX - touchStartX;
+          if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
+          setTouchStartX(null);
+        }}
+      >
+        {current
+          ? <img key={current} src={current} alt={name} className="w-full h-full object-cover animate-in fade-in duration-500 opacity-90" />
+          : <div className="w-full h-full flex items-center justify-center bg-zinc-900"><ShoppingBag className="w-16 h-16 text-zinc-700" /></div>
+        }
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-40 pointer-events-none" />
+        {soldOut && (
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
+            <span className="text-sm uppercase tracking-widest text-zinc-300 px-4 py-2 border border-zinc-700">Sold Out</span>
+          </div>
+        )}
+        {featured && !soldOut && (
+          <div className="absolute top-4 left-4 px-3 py-1 bg-black/80 border border-[#D4AF37]/40 text-[10px] uppercase tracking-widest text-[#D4AF37]">
+            Featured
+          </div>
+        )}
+        {discount && !soldOut && (
+          <div className="absolute top-4 right-4 px-3 py-1 bg-black/80 border border-[#D4AF37]/30 text-[10px] uppercase tracking-widest text-[#D4AF37]">
+            {discount}% off
+          </div>
+        )}
+        {hasMultiple && (
+          <>
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              aria-label="Previous image"
+              className="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 border border-white/15 text-white items-center justify-center hover:border-[#D4AF37]/60 transition-colors"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              aria-label="Next image"
+              className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 border border-white/15 text-white items-center justify-center hover:border-[#D4AF37]/60 transition-colors"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            <div className="lg:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {images.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all ${i === activeIdx ? "w-5 bg-[#D4AF37]" : "w-1.5 bg-white/40"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      {hasMultiple && (
+        <div className="hidden lg:flex gap-2 overflow-x-auto pb-1">
+          {images.map((url, i) => (
+            <button
+              key={`${url}-${i}`}
+              type="button"
+              onClick={() => onChange(i)}
+              className={`shrink-0 w-20 h-20 border overflow-hidden bg-zinc-900 transition-all ${
+                i === activeIdx ? "border-[#D4AF37] ring-1 ring-[#D4AF37]/40" : "border-zinc-800 hover:border-zinc-700 opacity-70 hover:opacity-100"
+              }`}
+              aria-label={`Show image ${i + 1}`}
+            >
+              <img src={url} alt={`${name} ${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
