@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
+import { isProductSoldOut } from "@/lib/stock";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
@@ -676,7 +677,7 @@ function BottomPanel({
         {product.originalPrice != null && product.originalPrice > product.price && (
           <span className="text-[9px] border border-[#D4AF37]/40 text-[#D4AF37] px-2 py-0.5 uppercase tracking-wider">Sale</span>
         )}
-        {(!product.inStock || product.stockQuantity === 0) && (
+        {isProductSoldOut(product) && (
           <span className="text-[9px] border border-zinc-700 text-zinc-500 px-2 py-0.5 uppercase tracking-wider">Sold Out</span>
         )}
       </div>
@@ -702,7 +703,7 @@ function BottomPanel({
         .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
       `}</style>
       {(() => {
-        const isSoldOut = !product.inStock || product.stockQuantity === 0;
+        const isSoldOut = isProductSoldOut(product);
         return (
         <div className="flex gap-2">
         <button

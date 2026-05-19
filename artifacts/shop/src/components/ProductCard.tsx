@@ -3,6 +3,7 @@ import { Product } from "@workspace/api-client-react";
 import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
+import { isProductSoldOut } from "@/lib/stock";
 
 const TAG_CONFIG: Record<string, { label: string; color: string; textColor: string }> = {
   new:         { label: "New",          color: "#D4AF37", textColor: "#000" },
@@ -20,10 +21,7 @@ export function ProductCard({ product }: { product: Product }) {
   const activeVariants = (product.variants ?? []).filter((v) => v.isActive);
   const hasVariants = activeVariants.length > 0;
 
-  // `stockQuantity` of exactly 0 means sold out (vs `null`/`undefined`, which
-  // is "not tracked" and treated as available). Mirrors the rule used in the
-  // mobile feed and Quick Buy dialog so the desktop grid stays consistent.
-  const isSoldOut = !product.inStock || product.stockQuantity === 0;
+  const isSoldOut = isProductSoldOut(product);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

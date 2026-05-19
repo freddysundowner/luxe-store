@@ -17,6 +17,7 @@ import {
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useFavorites } from "@/lib/favorites-context";
+import { isProductSoldOut } from "@/lib/stock";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
@@ -276,17 +277,20 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
             50% { color: #f5e27a; filter: drop-shadow(0 0 8px rgba(245,226,122,0.9)); opacity: 1; }
           }
         `}</style>
+        {(() => {
+          const isSoldOut = isProductSoldOut(current);
+          return (
         <div className="flex gap-2">
           <button
-            onClick={() => handleCart(current)}
-            disabled={!current.inStock}
+            onClick={isSoldOut ? undefined : () => handleCart(current)}
+            disabled={isSoldOut}
             className={`flex-[3] py-3 text-xs uppercase tracking-widest font-semibold transition-colors ${
-              !current.inStock
+              isSoldOut
                 ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
                 : "bg-[#D4AF37] text-black hover:bg-white"
             }`}
           >
-            {!current.inStock ? "Sold Out" : "Buy Now →"}
+            {isSoldOut ? "Sold Out" : "Buy Now →"}
           </button>
           <button
             onClick={handleGift}
@@ -296,6 +300,8 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
             Find a Gift
           </button>
         </div>
+          );
+        })()}
       </div>
 
       {/* Scroll hint */}
