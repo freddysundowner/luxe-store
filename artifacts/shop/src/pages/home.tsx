@@ -31,7 +31,6 @@ const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES",
 function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: () => void }) {
   const [index, setIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
-  const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
   const [touchStartY, setTouchStartY] = useState(0);
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
   const [giftRecipient, setGiftRecipient] = useState("");
@@ -147,9 +146,9 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
   const handleCart = (product: Product) => {
     // Skip the cart drawer entirely — open the QuickBuy modal which collects
     // variant + quantity (if needed) and goes straight to the customer-info
-    // checkout step on confirm.
+    // checkout step on confirm. The dialog itself handles adding to cart, so
+    // we don't mark the button as "added" here.
     setQuickBuyProduct(product);
-    setCartAdded((prev) => new Set(prev).add(product.id));
   };
 
   const handleGift = () => {
@@ -285,12 +284,10 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
             className={`flex-[3] py-3 text-xs uppercase tracking-widest font-semibold transition-colors ${
               !current.inStock
                 ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-                : cartAdded.has(current.id)
-                ? "bg-zinc-800 text-[#D4AF37] border border-[#D4AF37]/40"
                 : "bg-[#D4AF37] text-black hover:bg-white"
             }`}
           >
-            {!current.inStock ? "Sold Out" : cartAdded.has(current.id) ? "✓ Added" : "Buy Now →"}
+            {!current.inStock ? "Sold Out" : "Buy Now →"}
           </button>
           <button
             onClick={handleGift}
