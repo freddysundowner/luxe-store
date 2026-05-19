@@ -18,8 +18,86 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!--ssr-head-->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+      body {
+        background-color: #0a0a0a;
+        color: #ffffff;
+        font-family: 'Inter', system-ui, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      #root { min-height: 100vh; }
+
+      /* Branded splash screen shown before React mounts */
+      #splash {
+        position: fixed;
+        inset: 0;
+        background: #0a0a0a;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        z-index: 9999;
+        transition: opacity 0.3s ease;
+      }
+      #splash.hidden { opacity: 0; pointer-events: none; }
+
+      .splash-wordmark {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+      }
+      .splash-letters {
+        font-size: 42px;
+        font-weight: 700;
+        letter-spacing: 0.25em;
+        color: #D4AF37;
+        font-family: 'Inter', system-ui, sans-serif;
+      }
+      .splash-sub {
+        font-size: 11px;
+        letter-spacing: 0.4em;
+        color: #D4AF37;
+        opacity: 0.7;
+        text-transform: uppercase;
+      }
+
+      .splash-bar-track {
+        width: 120px;
+        height: 2px;
+        background: rgba(212,175,55,0.2);
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .splash-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #D4AF37, #f5d77e, #D4AF37);
+        background-size: 200% 100%;
+        border-radius: 999px;
+        animation: shimmer 1.2s ease-in-out infinite;
+        width: 60%;
+      }
+      @keyframes shimmer {
+        0%   { background-position: 200% center; }
+        100% { background-position: -200% center; }
+      }
+    </style>
   </head>
   <body>
+    <!-- Branded splash — hidden once React renders -->
+    <div id="splash">
+      <div class="splash-wordmark">
+        <span class="splash-letters">LUXE</span>
+        <span class="splash-sub">Store</span>
+      </div>
+      <div class="splash-bar-track">
+        <div class="splash-bar-fill"></div>
+      </div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/entry-client.tsx"></script>
   </body>
