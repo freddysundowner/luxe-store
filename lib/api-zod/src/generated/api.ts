@@ -100,6 +100,10 @@ export const ListProductsQueryParams = zod.object({
   "featured": zod.coerce.boolean().optional()
 })
 
+export const listProductsResponseStockQuantityMin = 0;
+
+
+
 export const ListProductsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -110,7 +114,7 @@ export const ListProductsResponseItem = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().nullish().describe('Remaining inventory. Null means unlimited \/ not tracked.'),
+  "stockQuantity": zod.number().min(listProductsResponseStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
@@ -127,6 +131,10 @@ export const GetProductParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const getProductResponseStockQuantityMin = 0;
+
+
+
 export const GetProductResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -137,7 +145,7 @@ export const GetProductResponse = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().nullish().describe('Remaining inventory. Null means unlimited \/ not tracked.'),
+  "stockQuantity": zod.number().min(getProductResponseStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
@@ -149,6 +157,10 @@ export const GetProductResponse = zod.object({
 /**
  * @summary List all products (admin)
  */
+export const listAdminProductsResponseStockQuantityMin = 0;
+
+
+
 export const ListAdminProductsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -159,7 +171,7 @@ export const ListAdminProductsResponseItem = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().nullish().describe('Remaining inventory. Null means unlimited \/ not tracked.'),
+  "stockQuantity": zod.number().min(listAdminProductsResponseStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
@@ -175,6 +187,8 @@ export const ListAdminProductsResponse = zod.array(ListAdminProductsResponseItem
 
 export const createProductBodyPriceMin = 0;
 
+export const createProductBodyStockQuantityMin = 0;
+
 
 
 export const CreateProductBody = zod.object({
@@ -185,7 +199,7 @@ export const CreateProductBody = zod.object({
   "categoryId": zod.number(),
   "imageUrl": zod.string().optional(),
   "inStock": zod.boolean().optional(),
-  "stockQuantity": zod.number().nullish().describe('Remaining inventory. Leave empty for unlimited \/ untracked stock.'),
+  "stockQuantity": zod.number().min(createProductBodyStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
   "isActive": zod.boolean().optional(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
@@ -203,6 +217,8 @@ export const UpdateProductParams = zod.object({
 
 export const updateProductBodyPriceMin = 0;
 
+export const updateProductBodyStockQuantityMin = 0;
+
 
 
 export const UpdateProductBody = zod.object({
@@ -213,12 +229,16 @@ export const UpdateProductBody = zod.object({
   "categoryId": zod.number(),
   "imageUrl": zod.string().optional(),
   "inStock": zod.boolean().optional(),
-  "stockQuantity": zod.number().nullish().describe('Remaining inventory. Leave empty for unlimited \/ untracked stock.'),
+  "stockQuantity": zod.number().min(updateProductBodyStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
   "isActive": zod.boolean().optional(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
   "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon')
 })
+
+export const updateProductResponseStockQuantityMin = 0;
+
+
 
 export const UpdateProductResponse = zod.object({
   "id": zod.number(),
@@ -230,7 +250,7 @@ export const UpdateProductResponse = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().nullish().describe('Remaining inventory. Null means unlimited \/ not tracked.'),
+  "stockQuantity": zod.number().min(updateProductResponseStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),

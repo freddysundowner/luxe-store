@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, desc, and, isNotNull, sql } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { db, storeSettingsTable, paymentsTable, productsTable } from "@workspace/db";
 import https from "node:https";
 import { sendOrderConfirmationEmail } from "../lib/email";
@@ -40,16 +40,15 @@ async function decrementStockForPayment(
 
   for (const [productId, qty] of perProduct) {
     try {
-      // Atomic decrement in a single SQL statement. Skips untracked products
-      // (NULL stockQuantity) and prevents lost updates from concurrent payments
-      // for the same SKU.
+      // Atomic decrement in a single SQL statement. Prevents lost updates
+      // from concurrent payments for the same SKU.
       await db
         .update(productsTable)
         .set({
           stockQuantity: sql`GREATEST(0, ${productsTable.stockQuantity} - ${qty})`,
           inStock: sql`CASE WHEN GREATEST(0, ${productsTable.stockQuantity} - ${qty}) = 0 THEN false ELSE ${productsTable.inStock} END`,
         })
-        .where(and(eq(productsTable.id, productId), isNotNull(productsTable.stockQuantity)));
+        .where(eq(productsTable.id, productId));
     } catch (err) {
       log.warn({ err, productId }, "Failed to decrement product stock");
     }

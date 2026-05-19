@@ -606,7 +606,7 @@ components:
 
     Product:
       type: object
-      required: [id, name, price, inStock, isActive]
+      required: [id, name, price, inStock, isActive, stockQuantity]
       properties:
         id:
           type: integer
@@ -627,8 +627,9 @@ components:
         inStock:
           type: boolean
         stockQuantity:
-          type: ["integer", "null"]
-          description: "Remaining inventory. Null means unlimited / not tracked."
+          type: integer
+          minimum: 0
+          description: "Remaining inventory. 0 means out of stock."
         isActive:
           type: boolean
         isDropship:
@@ -644,7 +645,7 @@ components:
 
     ProductInput:
       type: object
-      required: [name, price, categoryId]
+      required: [name, price, categoryId, stockQuantity]
       properties:
         name:
           type: string
@@ -663,8 +664,9 @@ components:
         inStock:
           type: boolean
         stockQuantity:
-          type: ["integer", "null"]
-          description: "Remaining inventory. Leave empty for unlimited / untracked stock."
+          type: integer
+          minimum: 0
+          description: "Remaining inventory. 0 means out of stock."
         isActive:
           type: boolean
         isDropship:

@@ -61,35 +61,28 @@ export default function AdminProducts() {
     },
   });
 
-  const startEditStock = (id: number, current: number | null | undefined) => {
+  const startEditStock = (id: number, current: number) => {
     setEditingStockId(id);
-    setStockDraft(current == null ? "" : String(current));
+    setStockDraft(String(current));
   };
 
   const saveStock = (product: { id: number; name: string; description?: string | null; price: number; originalPrice?: number | null; categoryId?: number | null; imageUrl?: string | null; inStock: boolean; isActive: boolean; isDropship: boolean; isFeatured: boolean; availabilityTag?: string | null; }) => {
     const trimmed = stockDraft.trim();
-    let stockQuantity: number | null;
-    if (trimmed === "") {
-      stockQuantity = null;
-    } else {
-      const n = Number(trimmed);
-      if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
-        toast({ variant: "destructive", title: "Enter a whole number ≥ 0, or leave blank for unlimited" });
-        return;
-      }
-      stockQuantity = n;
+    const n = Number(trimmed);
+    if (trimmed === "" || !Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+      toast({ variant: "destructive", title: "Enter a whole number 0 or greater" });
+      return;
     }
+    const stockQuantity = n;
     if (product.categoryId == null) {
       toast({ variant: "destructive", title: "Set a category on this product first (open the product to edit)." });
       return;
     }
-    // Build a ProductInput-shaped payload. Optional string fields must be
-    // omitted (not null); categoryId is required and non-null.
     const data: Record<string, unknown> = {
       name: product.name,
       price: product.price,
       categoryId: product.categoryId,
-      inStock: stockQuantity === 0 ? false : (stockQuantity == null ? product.inStock : true),
+      inStock: stockQuantity > 0,
       isActive: product.isActive,
       isDropship: product.isDropship,
       isFeatured: product.isFeatured,
@@ -185,7 +178,7 @@ export default function AdminProducts() {
                               if (e.key === "Enter") saveStock(product);
                               if (e.key === "Escape") setEditingStockId(null);
                             }}
-                            placeholder="∞"
+                            placeholder="0"
                             className="h-8 w-20"
                             autoFocus
                           />
@@ -214,9 +207,7 @@ export default function AdminProducts() {
                           className="text-left hover:underline text-sm"
                           title="Click to edit stock"
                         >
-                          {product.stockQuantity == null ? (
-                            <span className="text-muted-foreground">Unlimited</span>
-                          ) : product.stockQuantity === 0 ? (
+                          {product.stockQuantity === 0 ? (
                             <span className="text-destructive font-medium">0</span>
                           ) : product.stockQuantity <= 5 ? (
                             <span className="text-amber-600 font-medium">{product.stockQuantity}</span>

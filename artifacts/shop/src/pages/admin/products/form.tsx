@@ -26,8 +26,8 @@ const productSchema = z.object({
   imageUrl: z.string().optional().or(z.literal("")),
   inStock: z.boolean().default(true),
   stockQuantity: z.preprocess(
-    (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
-    z.number().int().min(0).nullable()
+    (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
+    z.number({ required_error: "Stock quantity is required" }).int().min(0, "Stock must be 0 or more")
   ),
   isActive: z.boolean().default(true),
   isDropship: z.boolean().default(false),
@@ -67,7 +67,7 @@ export default function ProductForm() {
       categoryId: undefined,
       imageUrl: "",
       inStock: true,
-      stockQuantity: null,
+      stockQuantity: 0,
       isActive: true,
       isDropship: false,
       isFeatured: false,
@@ -85,7 +85,7 @@ export default function ProductForm() {
         categoryId: product.categoryId ?? undefined,
         imageUrl: product.imageUrl || "",
         inStock: product.inStock,
-        stockQuantity: product.stockQuantity ?? null,
+        stockQuantity: product.stockQuantity,
         isActive: product.isActive,
         isDropship: product.isDropship,
         isFeatured: product.isFeatured,
@@ -177,18 +177,18 @@ export default function ProductForm() {
                 name="stockQuantity"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Stock Quantity — Optional</FormLabel>
+                    <FormLabel>Stock Quantity</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
                         min={0}
                         step="1"
-                        placeholder="Unlimited"
-                        value={field.value ?? ""}
-                        onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                        placeholder="0"
+                        value={field.value ?? 0}
+                        onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
                       />
                     </FormControl>
-                    <FormDescription>Leave empty for unlimited. Auto-decrements on each paid order.</FormDescription>
+                    <FormDescription>Auto-decrements on each paid order. Product is marked out of stock at 0.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -45,7 +45,7 @@ function mapRow(row: {
   isActive: boolean;
   isDropship: boolean;
   isFeatured: boolean;
-  stockQuantity: number | null;
+  stockQuantity: number;
   createdAt: Date;
   categoryName: string | null;
 }) {

@@ -11,7 +11,7 @@ export const productsTable = pgTable("products", {
   categoryId: integer("category_id"),
   imageUrl: text("image_url"),
   inStock: boolean("in_stock").notNull().default(true),
-  stockQuantity: integer("stock_quantity"),
+  stockQuantity: integer("stock_quantity").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
   isDropship: boolean("is_dropship").notNull().default(false),
   isFeatured: boolean("is_featured").notNull().default(false),

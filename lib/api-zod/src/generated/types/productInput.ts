@@ -18,10 +18,10 @@ export interface ProductInput {
   imageUrl?: string;
   inStock?: boolean;
   /**
-     * Remaining inventory. Leave empty for unlimited / untracked stock.
-     * @nullable
+     * Remaining inventory. 0 means out of stock.
+     * @minimum 0
      */
-  stockQuantity?: number | null;
+  stockQuantity: number;
   isActive?: boolean;
   isDropship?: boolean;
   isFeatured?: boolean;
