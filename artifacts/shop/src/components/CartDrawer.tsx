@@ -222,7 +222,7 @@ function MpesaFlow({
       const base = window.location.origin + (import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "");
       msg += `🔗 Receipt: ${base}/receipt/${transactionId}`;
     }
-    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   // ── Success ──
