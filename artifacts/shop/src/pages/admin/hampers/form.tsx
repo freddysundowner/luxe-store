@@ -112,7 +112,9 @@ export default function AdminHamperForm() {
         setLocation("/admin/hampers");
       },
       onError: (e: unknown) => {
-        const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+        // ApiError exposes the parsed body directly on `.data` (see customFetch).
+        const msg = (e as { data?: { error?: string }; message?: string })?.data?.error
+          ?? (e as { message?: string })?.message;
         toast({ variant: "destructive", title: msg || "Failed to create hamper" });
       },
     },
@@ -126,7 +128,8 @@ export default function AdminHamperForm() {
         setLocation("/admin/hampers");
       },
       onError: (e: unknown) => {
-        const msg = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+        const msg = (e as { data?: { error?: string }; message?: string })?.data?.error
+          ?? (e as { message?: string })?.message;
         toast({ variant: "destructive", title: msg || "Failed to save hamper" });
       },
     },

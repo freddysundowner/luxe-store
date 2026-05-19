@@ -12,7 +12,7 @@ import {
   X, Minus, Plus, Trash2, ShoppingBag, MessageCircle,
   Smartphone, CheckCircle2, XCircle, Loader2, ArrowRight,
   Receipt, User, MapPin, Mail, ChevronLeft,
-  Gift as GiftIcon,
+  Gift as GiftIcon, ChevronDown,
 } from "lucide-react";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -379,6 +379,15 @@ export function CartDrawer() {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // Hamper groups render collapsed by default; the user can expand any group
+  // to see component products. Keyed by hamperGroupId.
+  const [expandedHampers, setExpandedHampers] = useState<Set<string>>(new Set());
+  const toggleHamperExpanded = (gid: string) =>
+    setExpandedHampers((prev) => {
+      const next = new Set(prev);
+      if (next.has(gid)) next.delete(gid); else next.add(gid);
+      return next;
+    });
 
   const formatter = new Intl.NumberFormat("en-KE", {
     style: "currency",
@@ -570,85 +579,136 @@ export function CartDrawer() {
               </div>
             ) : (
               <div className="p-4 space-y-3">
-                {items.map((item, idx) => {
-                  const prev = idx > 0 ? items[idx - 1] : null;
-                  const isHamperGroupStart = item.hamperGroupId && (!prev || prev.hamperGroupId !== item.hamperGroupId);
-                  const isHamper = !!item.hamperGroupId;
-                  // Hamper subtotal = sum of all lines sharing this group id (for the header chip).
-                  const hamperSubtotal = isHamperGroupStart
-                    ? items.filter((x) => x.hamperGroupId === item.hamperGroupId).reduce((s, x) => s + x.unitPrice * x.quantity, 0)
-                    : 0;
-                  return (
-                    <div key={`${item.hamperGroupId ?? 'std'}:${item.product.id}:${item.variantId ?? 'base'}:${idx}`}>
-                      {isHamperGroupStart && (
-                        <div className="flex items-center justify-between gap-2 mt-2 mb-1 px-1">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <div className="w-5 h-5 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/40 flex items-center justify-center shrink-0">
-                              <GiftIcon className="w-2.5 h-2.5 text-[#D4AF37]" />
+                {(() => {
+                  // Build a render plan: each entry is either a single standalone
+                  // item or a hamper group (one row in the cart that expands to
+                  // show its component products). We walk items in order so the
+                  // first occurrence of a hamper preserves its position.
+                  type Row =
+                    | { kind: "item"; item: typeof items[number]; idx: number }
+                    | { kind: "hamper"; gid: string; name: string; lines: typeof items; subtotal: number };
+                  const rows: Row[] = [];
+                  const seen = new Set<string>();
+                  items.forEach((item, idx) => {
+                    const gid = item.hamperGroupId ?? null;
+                    if (!gid) { rows.push({ kind: "item", item, idx }); return; }
+                    if (seen.has(gid)) return;
+                    seen.add(gid);
+                    const lines = items.filter((x) => x.hamperGroupId === gid);
+                    const subtotal = lines.reduce((s, x) => s + x.unitPrice * x.quantity, 0);
+                    rows.push({ kind: "hamper", gid, name: item.hamperName ?? "Gift Hamper", lines, subtotal });
+                  });
+                  return rows.map((row) => {
+                    if (row.kind === "item") {
+                      const item = row.item;
+                      return (
+                        <div key={`std:${item.product.id}:${item.variantId ?? 'base'}:${row.idx}`}>
+                          <div className="flex gap-3 bg-zinc-900/50 border border-zinc-800/60 p-3">
+                            <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 shrink-0 overflow-hidden">
+                              {item.product.imageUrl
+                                ? <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover opacity-90" />
+                                : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-zinc-700" /></div>
+                              }
                             </div>
-                            <p className="text-[10px] uppercase tracking-[0.2em] text-[#D4AF37]/80 font-medium truncate">
-                              Gift Hamper · {item.hamperName}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-[10px] text-[#D4AF37]">{formatter.format(hamperSubtotal)}</span>
-                            <button
-                              onClick={() => removeHamper(item.hamperGroupId!)}
-                              aria-label="Remove hamper"
-                              title="Remove hamper"
-                              className="text-zinc-700 hover:text-red-400 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                      <div className={`flex gap-3 bg-zinc-900/50 border p-3 ${isHamper ? "border-[#D4AF37]/20" : "border-zinc-800/60"}`}>
-                        <div className="w-16 h-16 bg-zinc-900 border border-zinc-800 shrink-0 overflow-hidden">
-                          {item.product.imageUrl
-                            ? <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover opacity-90" />
-                            : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-5 h-5 text-zinc-700" /></div>
-                          }
-                        </div>
-                        <div className="flex-1 min-w-0 flex flex-col justify-between">
-                          <div>
-                            <p className="text-[11px] uppercase tracking-wide text-zinc-200 font-light line-clamp-2 leading-snug">{item.product.name}</p>
-                            {item.variantName && (
-                              <p className="text-[10px] uppercase tracking-widest text-zinc-500 mt-0.5">{item.variantName}</p>
-                            )}
-                            <p className="text-[#D4AF37] text-sm font-medium mt-0.5">{formatter.format(item.unitPrice)}</p>
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            {isHamper ? (
-                              // Hamper lines are immutable as a group — per-line edits would
-                              // break the curated price reconciliation. Use the header
-                              // trash to remove the whole hamper.
-                              <span className="text-[10px] uppercase tracking-widest text-zinc-500">Qty {item.quantity}</span>
-                            ) : (
-                              <div className="flex items-center border border-zinc-800">
-                                <button onClick={() => updateQuantity(item.product.id, item.variantId, item.quantity - 1, null)} className="px-2 py-1 text-zinc-500 hover:text-[#D4AF37] transition-colors">
-                                  <Minus className="w-3 h-3" />
-                                </button>
-                                <span className="text-zinc-300 text-xs w-5 text-center">{item.quantity}</span>
-                                <button onClick={() => updateQuantity(item.product.id, item.variantId, item.quantity + 1, null)} className="px-2 py-1 text-zinc-500 hover:text-[#D4AF37] transition-colors">
-                                  <Plus className="w-3 h-3" />
-                                </button>
+                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                              <div>
+                                <p className="text-[11px] uppercase tracking-wide text-zinc-200 font-light line-clamp-2 leading-snug">{item.product.name}</p>
+                                {item.variantName && (
+                                  <p className="text-[10px] uppercase tracking-widest text-zinc-500 mt-0.5">{item.variantName}</p>
+                                )}
+                                <p className="text-[#D4AF37] text-sm font-medium mt-0.5">{formatter.format(item.unitPrice)}</p>
                               </div>
-                            )}
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-zinc-400">{formatter.format(item.unitPrice * item.quantity)}</span>
-                              {!isHamper && (
-                                <button onClick={() => removeItem(item.product.id, item.variantId, null)} className="text-zinc-700 hover:text-red-400 transition-colors">
+                              <div className="flex items-center justify-between mt-2">
+                                <div className="flex items-center border border-zinc-800">
+                                  <button onClick={() => updateQuantity(item.product.id, item.variantId, item.quantity - 1, null)} className="px-2 py-1 text-zinc-500 hover:text-[#D4AF37] transition-colors">
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="text-zinc-300 text-xs w-5 text-center">{item.quantity}</span>
+                                  <button onClick={() => updateQuantity(item.product.id, item.variantId, item.quantity + 1, null)} className="px-2 py-1 text-zinc-500 hover:text-[#D4AF37] transition-colors">
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  <span className="text-xs text-zinc-400">{formatter.format(item.unitPrice * item.quantity)}</span>
+                                  <button onClick={() => removeItem(item.product.id, item.variantId, null)} className="text-zinc-700 hover:text-red-400 transition-colors">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    // Hamper row — collapsed by default, expands to show line items.
+                    const expanded = expandedHampers.has(row.gid);
+                    const totalUnits = row.lines.reduce((s, x) => s + x.quantity, 0);
+                    const cover = row.lines.find((l) => l.product.imageUrl)?.product.imageUrl;
+                    return (
+                      <div key={`hamper:${row.gid}`} className="border border-[#D4AF37]/30 bg-zinc-900/50">
+                        <button
+                          type="button"
+                          onClick={() => toggleHamperExpanded(row.gid)}
+                          aria-expanded={expanded}
+                          className="w-full flex gap-3 p-3 text-left hover:bg-zinc-900/80 transition-colors"
+                        >
+                          <div className="w-16 h-16 bg-zinc-900 border border-[#D4AF37]/20 shrink-0 overflow-hidden relative">
+                            {cover
+                              ? <img src={cover} alt={row.name} className="w-full h-full object-cover opacity-90" />
+                              : <div className="w-full h-full flex items-center justify-center"><GiftIcon className="w-6 h-6 text-[#D4AF37]/60" /></div>
+                            }
+                            <div className="absolute bottom-0 right-0 bg-[#D4AF37] text-black text-[9px] uppercase tracking-widest px-1 leading-tight">Gift</div>
+                          </div>
+                          <div className="flex-1 min-w-0 flex flex-col justify-between">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-[0.2em] text-[#D4AF37]/80 font-medium">Gift Hamper</p>
+                              <p className="text-[11px] uppercase tracking-wide text-zinc-200 font-light line-clamp-2 leading-snug">{row.name}</p>
+                              <p className="text-[10px] text-zinc-500 mt-0.5">
+                                {row.lines.length} product{row.lines.length === 1 ? "" : "s"} · {totalUnits} item{totalUnits === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                            <div className="flex items-center justify-between mt-2">
+                              <span className="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-1">
+                                <ChevronDown className={`w-3 h-3 transition-transform ${expanded ? "rotate-180" : ""}`} />
+                                {expanded ? "Hide items" : "View items"}
+                              </span>
+                              <div className="flex items-center gap-3">
+                                <span className="text-[#D4AF37] text-sm font-medium">{formatter.format(row.subtotal)}</span>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); removeHamper(row.gid); }}
+                                  aria-label="Remove hamper"
+                                  title="Remove hamper"
+                                  className="text-zinc-700 hover:text-red-400 transition-colors"
+                                >
                                   <Trash2 className="w-3.5 h-3.5" />
                                 </button>
-                              )}
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </button>
+                        {expanded && (
+                          <div className="border-t border-[#D4AF37]/20 px-3 py-2 space-y-2 bg-black/40">
+                            {row.lines.map((line, lidx) => (
+                              <div key={`${row.gid}:${line.product.id}:${lidx}`} className="flex items-center gap-2">
+                                <div className="w-9 h-9 bg-zinc-900 border border-zinc-800 shrink-0 overflow-hidden">
+                                  {line.product.imageUrl
+                                    ? <img src={line.product.imageUrl} alt={line.product.name} className="w-full h-full object-cover" />
+                                    : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-3.5 h-3.5 text-zinc-700" /></div>
+                                  }
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[11px] text-zinc-300 truncate">{line.product.name}</p>
+                                  <p className="text-[10px] text-zinc-600">Qty {line.quantity} · {formatter.format(line.unitPrice)} ea</p>
+                                </div>
+                                <span className="text-[11px] text-zinc-400">{formatter.format(line.unitPrice * line.quantity)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  });
+                })()}
                 <button
                   onClick={clearCart}
                   className="text-zinc-700 hover:text-red-400 transition-colors text-[10px] uppercase tracking-widest w-full text-left pt-1"

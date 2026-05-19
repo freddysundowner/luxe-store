@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { eq, and, ilike, inArray, asc } from "drizzle-orm";
 import { db, productsTable, productVariantsTable, categoriesTable } from "@workspace/db";
+import { getHamperReservations } from "./hampers";
 import {
   ListProductsQueryParams,
   ListProductsResponse,
@@ -85,6 +86,19 @@ async function fetchVariantsByProductIds(ids: number[]): Promise<Map<number, Var
     map.set(v.productId, arr);
   }
   return map;
+}
+
+// Apply hamper reservations: standalone stock = base - reservedInActiveHampers.
+// Reservation only affects products WITHOUT variants (hampers reference
+// productIds, not variants); variant-backed products keep their variant stock.
+function applyReservation(
+  row: { stockQuantity: number; inStock: boolean },
+  reserved: number,
+  hasVariants: boolean,
+): { stockQuantity: number; inStock: boolean } {
+  if (hasVariants || reserved <= 0) return { stockQuantity: row.stockQuantity, inStock: row.inStock };
+  const effective = Math.max(0, row.stockQuantity - reserved);
+  return { stockQuantity: effective, inStock: row.inStock && effective > 0 };
 }
 
 function mapRow(
@@ -208,7 +222,16 @@ router.get("/products", async (req, res): Promise<void> => {
     .orderBy(productsTable.createdAt);
 
   const variantMap = await fetchVariantsByProductIds(rows.map((r) => r.id));
-  res.json(ListProductsResponse.parse(rows.map((r) => mapRow(r, variantMap.get(r.id) ?? []))));
+  const reservations = await getHamperReservations(rows.map((r) => r.id));
+  res.json(
+    ListProductsResponse.parse(
+      rows.map((r) => {
+        const variants = variantMap.get(r.id) ?? [];
+        const adjusted = applyReservation(r, reservations.get(r.id) ?? 0, variants.length > 0);
+        return mapRow({ ...r, ...adjusted }, variants);
+      }),
+    ),
+  );
 });
 
 router.get("/products/:id", async (req, res): Promise<void> => {
@@ -230,7 +253,10 @@ router.get("/products/:id", async (req, res): Promise<void> => {
   }
 
   const variantMap = await fetchVariantsByProductIds([row.id]);
-  res.json(GetProductResponse.parse(mapRow(row, variantMap.get(row.id) ?? [])));
+  const variants = variantMap.get(row.id) ?? [];
+  const reservations = await getHamperReservations([row.id]);
+  const adjusted = applyReservation(row, reservations.get(row.id) ?? 0, variants.length > 0);
+  res.json(GetProductResponse.parse(mapRow({ ...row, ...adjusted }, variants)));
 });
 
 router.get("/admin/products", async (req, res): Promise<void> => {

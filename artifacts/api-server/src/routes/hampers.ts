@@ -5,6 +5,27 @@ import type { HamperItem as DbHamperItem } from "@workspace/db";
 
 const router = Router();
 
+// Returns a map of productId -> total quantity reserved across every *active*
+// hamper. Standalone product availability is base stock minus this number, so
+// adding a one-of product to a hamper effectively reserves that unit and
+// removes it from solo sale.
+export async function getHamperReservations(productIds?: number[]): Promise<Map<number, number>> {
+  const rows = await db
+    .select({ items: hampersTable.items })
+    .from(hampersTable)
+    .where(eq(hampersTable.isActive, true));
+  const out = new Map<number, number>();
+  const filter = productIds ? new Set(productIds) : null;
+  for (const row of rows) {
+    const items = (row.items ?? []) as DbHamperItem[];
+    for (const it of items) {
+      if (filter && !filter.has(it.productId)) continue;
+      out.set(it.productId, (out.get(it.productId) ?? 0) + it.quantity);
+    }
+  }
+  return out;
+}
+
 interface HamperDto {
   id: number;
   name: string;
