@@ -28,6 +28,14 @@ interface CartContextType {
   openCart: () => void;
   closeCart: () => void;
   /**
+   * Global M-Pesa overlay state. Quick Buy and the cart page open this
+   * directly instead of routing through the cart drawer's customer-info step
+   * — the overlay only needs a phone number.
+   */
+  isMpesaOpen: boolean;
+  openMpesa: () => void;
+  closeMpesa: () => void;
+  /**
    * Quick-checkout intent set by Buy Now flows. When non-null, the CartDrawer
    * should skip the cart-review step and jump straight to the customer-info
    * step using this payment method. The drawer consumes and clears it.
@@ -72,6 +80,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isMpesaOpen, setIsMpesaOpen] = useState(false);
   const [quickCheckoutMethod, setQuickCheckoutMethod] = useState<CheckoutMethod | null>(null);
   const [pendingQuickBuyLine, setPendingQuickBuyLine] = useState<{ productId: number; variantId: number | null; addedQty: number } | null>(null);
 
@@ -131,6 +140,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = () => setItems([]);
   const openCart = () => setIsCartOpen(true);
   const closeCart = () => setIsCartOpen(false);
+  const openMpesa = useCallback(() => setIsMpesaOpen(true), []);
+  const closeMpesa = useCallback(() => setIsMpesaOpen(false), []);
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
   const subtotal = items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
@@ -141,6 +152,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         items, addItem, removeItem, updateQuantity, clearCart,
         itemCount, subtotal,
         isCartOpen, openCart, closeCart,
+        isMpesaOpen, openMpesa, closeMpesa,
         quickCheckoutMethod, startQuickCheckout, consumeQuickCheckout,
         pendingQuickBuyLine, setPendingQuickBuyLine,
       }}

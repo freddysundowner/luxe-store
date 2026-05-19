@@ -7,6 +7,8 @@ import { CartProvider } from "@/lib/cart-context";
 import { FavoritesProvider } from "@/lib/favorites-context";
 import { GiftFinder } from "@/components/GiftFinder";
 import { CartDrawer } from "@/components/CartDrawer";
+import { MpesaModal } from "@/components/MpesaModal";
+import { useCart } from "@/lib/cart-context";
 import NotFound from "@/pages/not-found";
 
 // Import pages
@@ -92,6 +94,7 @@ function App({ ssrUrl }: AppProps) {
               {mounted && <GiftFinder />}
               {/* CartDrawer has its own mounted guard */}
               <CartDrawer />
+              <GlobalMpesaModal />
             </WouterRouter>
           </FavoritesProvider>
         </CartProvider>
@@ -99,6 +102,14 @@ function App({ ssrUrl }: AppProps) {
       </TooltipProvider>
     </QueryClientProvider>
   );
+}
+
+// Bridges the cart-context M-Pesa state to the overlay. Lives inside the
+// providers so it can read context; rendered once at app root so the overlay
+// is reachable from anywhere (Quick Buy, cart drawer, cart page).
+function GlobalMpesaModal() {
+  const { isMpesaOpen, closeMpesa } = useCart();
+  return <MpesaModal open={isMpesaOpen} onClose={closeMpesa} />;
 }
 
 export default App;

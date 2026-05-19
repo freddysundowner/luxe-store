@@ -18,7 +18,7 @@ interface QuickBuyDialogProps {
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
 export function QuickBuyDialog({ open, onOpenChange, product, initialVariantId = null, initialQuantity = 1 }: QuickBuyDialogProps) {
-  const { addItem, startQuickCheckout, setPendingQuickBuyLine } = useCart();
+  const { addItem, startQuickCheckout, openMpesa, setPendingQuickBuyLine } = useCart();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const { toast } = useToast();
 
@@ -99,7 +99,15 @@ export function QuickBuyDialog({ open, onOpenChange, product, initialVariantId =
     clearHandoffTimer();
     handoffTimer.current = setTimeout(() => {
       handoffTimer.current = null;
-      startQuickCheckout(method);
+      // M-Pesa goes straight to the overlay — it only needs a phone number,
+      // so routing through the CartDrawer's customer-info step would feel
+      // like an unnecessary detour. WhatsApp still uses the drawer flow
+      // because it collects more details before handing off to chat.
+      if (method === "mpesa") {
+        openMpesa();
+      } else {
+        startQuickCheckout(method);
+      }
     }, 60);
   };
 
