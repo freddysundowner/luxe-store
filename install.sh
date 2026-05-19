@@ -373,7 +373,12 @@ if [[ "${NEW_DB:-false}" == "true" ]]; then
 fi
 echo
 echo " Next steps:"
-echo "   1. Edit ${ENV_FILE} and fill in M-Pesa / WhatsApp / Brevo / AI keys."
-echo "   2. sudo systemctl restart luxe-api luxe-shop"
-echo "   3. Visit https://${DOMAIN}"
+echo "   1. Visit https://${DOMAIN}/admin and sign in"
+echo "      (default ADMIN_PASSWORD is in ${ENV_FILE} — change it!)."
+echo "   2. In the admin Settings page, fill in:"
+echo "        • WhatsApp number (for chat checkout)"
+echo "        • SunPay / M-Pesa keys (for STK-push)"
+echo "        • Brevo API key + sender email (for order receipts)"
+echo "   3. (Optional) For the AI Concierge, add ANTHROPIC_API_KEY to"
+echo "      ${ENV_FILE} and run:  sudo systemctl restart luxe-api"
 echo "============================================================"
