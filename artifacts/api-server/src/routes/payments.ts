@@ -1,13 +1,44 @@
 import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
-import { db, storeSettingsTable, paymentsTable } from "@workspace/db";
+import { db, storeSettingsTable, paymentsTable, productsTable } from "@workspace/db";
 import https from "node:https";
 import { sendOrderConfirmationEmail } from "../lib/email";
 
 interface OrderSnapshot {
-  items?: Array<{ name: string; quantity: number; price: number | string; imageUrl?: string | null }>;
+  items?: Array<{ id?: number; productId?: number; name: string; quantity: number; price: number | string; imageUrl?: string | null }>;
   total?: number | string;
   customer?: { name?: string; email?: string; address?: string };
+}
+
+async function decrementStockForPayment(
+  payment: typeof paymentsTable.$inferSelect,
+  log: { info: (...a: unknown[]) => void; warn: (...a: unknown[]) => void; error: (...a: unknown[]) => void }
+): Promise<void> {
+  if (payment.stockApplied) return;
+  const snapshot = (payment.cartSnapshot ?? {}) as OrderSnapshot;
+  const items = snapshot.items ?? [];
+  for (const item of items) {
+    const productId = item.productId ?? item.id;
+    const qty = Number(item.quantity);
+    if (!productId || !Number.isFinite(qty) || qty <= 0) continue;
+    try {
+      const [prod] = await db.select().from(productsTable).where(eq(productsTable.id, productId)).limit(1);
+      if (!prod) continue;
+      if (prod.stockQuantity === null || prod.stockQuantity === undefined) continue; // untracked
+      const next = Math.max(0, prod.stockQuantity - qty);
+      await db
+        .update(productsTable)
+        .set({ stockQuantity: next, inStock: next > 0 ? prod.inStock : false })
+        .where(eq(productsTable.id, productId));
+    } catch (err) {
+      log.warn({ err, productId }, "Failed to decrement product stock");
+    }
+  }
+  await db
+    .update(paymentsTable)
+    .set({ stockApplied: true })
+    .where(eq(paymentsTable.id, payment.id))
+    .catch(() => {});
 }
 
 async function sendOrderEmailForPayment(
@@ -218,6 +249,9 @@ router.get("/payments/:transactionId/status", async (req, res): Promise<void> =>
             payment.status = newStatus;
             payment.mpesaRef = remote.mpesaRef ?? null;
             if (newStatus === "completed") {
+              await decrementStockForPayment(payment, req.log).catch((err) =>
+                req.log.error({ err }, "Stock decrement task failed")
+              );
               sendOrderEmailForPayment(payment, req.log).catch((err) =>
                 req.log.error({ err }, "Order email task failed")
               );
@@ -268,6 +302,9 @@ router.post("/webhooks/sunpay", async (req, res): Promise<void> => {
         .where(eq(paymentsTable.transactionId, tid))
         .limit(1);
       if (updated) {
+        await decrementStockForPayment(updated, req.log).catch((err) =>
+          req.log.error({ err }, "Stock decrement task failed")
+        );
         sendOrderEmailForPayment(updated, req.log).catch((err) =>
           req.log.error({ err }, "Order email task failed")
         );

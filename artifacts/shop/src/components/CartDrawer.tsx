@@ -160,6 +160,7 @@ function MpesaFlow({
   const [mpesaRef, setMpesaRef] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
   const [, navigate] = useLocation();
+  const { clearCart } = useCart();
 
   const initiateMutation = useInitiatePayment({
     mutation: {
@@ -187,11 +188,12 @@ function MpesaFlow({
     if (statusData.status === "completed") {
       setMpesaRef((statusData as { mpesaRef?: string | null }).mpesaRef ?? null);
       setState("success");
+      clearCart();
     } else if (statusData.status === "failed") {
       setApiError("Payment was declined or cancelled. Please try again.");
       setState("failed");
     }
-  }, [statusData]);
+  }, [statusData, clearCart]);
 
   const handleSubmit = () => {
     const local = phone.replace(/\D/g, "").replace(/^0+/, "");
@@ -392,7 +394,7 @@ export function CartDrawer() {
   }, [isCartOpen]);
 
   const cartSnapshot = {
-    items: items.map((i) => ({ name: i.product.name, quantity: i.quantity, price: i.product.price, imageUrl: i.product.imageUrl })),
+    items: items.map((i) => ({ productId: i.product.id, name: i.product.name, quantity: i.quantity, price: i.product.price, imageUrl: i.product.imageUrl })),
     total: subtotal,
   };
 

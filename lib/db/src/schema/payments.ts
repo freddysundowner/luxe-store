@@ -1,4 +1,4 @@
-import { pgTable, text, serial, timestamp, integer, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, integer, jsonb, boolean } from "drizzle-orm/pg-core";
 import { z } from "zod/v4";
 
 export const paymentsTable = pgTable("payments", {
@@ -11,6 +11,7 @@ export const paymentsTable = pgTable("payments", {
   externalRef: text("external_ref"),
   mpesaRef: text("mpesa_ref"),
   cartSnapshot: jsonb("cart_snapshot"),
+  stockApplied: boolean("stock_applied").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

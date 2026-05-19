@@ -626,6 +626,9 @@ components:
           type: ["string", "null"]
         inStock:
           type: boolean
+        stockQuantity:
+          type: ["integer", "null"]
+          description: "Remaining inventory. Null means unlimited / not tracked."
         isActive:
           type: boolean
         isDropship:
@@ -659,6 +662,9 @@ components:
           type: string
         inStock:
           type: boolean
+        stockQuantity:
+          type: ["integer", "null"]
+          description: "Remaining inventory. Leave empty for unlimited / untracked stock."
         isActive:
           type: boolean
         isDropship:

@@ -17,6 +17,11 @@ export interface ProductInput {
   categoryId: number;
   imageUrl?: string;
   inStock?: boolean;
+  /**
+     * Remaining inventory. Leave empty for unlimited / untracked stock.
+     * @nullable
+     */
+  stockQuantity?: number | null;
   isActive?: boolean;
   isDropship?: boolean;
   isFeatured?: boolean;

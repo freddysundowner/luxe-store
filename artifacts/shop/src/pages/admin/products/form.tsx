@@ -25,6 +25,10 @@ const productSchema = z.object({
   categoryId: z.coerce.number({ required_error: "Category is required" }).min(1, "Category is required"),
   imageUrl: z.string().optional().or(z.literal("")),
   inStock: z.boolean().default(true),
+  stockQuantity: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
+    z.number().int().min(0).nullable()
+  ),
   isActive: z.boolean().default(true),
   isDropship: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
@@ -63,6 +67,7 @@ export default function ProductForm() {
       categoryId: undefined,
       imageUrl: "",
       inStock: true,
+      stockQuantity: null,
       isActive: true,
       isDropship: false,
       isFeatured: false,
@@ -80,6 +85,7 @@ export default function ProductForm() {
         categoryId: product.categoryId ?? undefined,
         imageUrl: product.imageUrl || "",
         inStock: product.inStock,
+        stockQuantity: product.stockQuantity ?? null,
         isActive: product.isActive,
         isDropship: product.isDropship,
         isFeatured: product.isFeatured,
@@ -161,6 +167,28 @@ export default function ProductForm() {
                     <FormControl>
                       <Input type="number" step="1" {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="stockQuantity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Stock Quantity — Optional</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        min={0}
+                        step="1"
+                        placeholder="Unlimited"
+                        value={field.value ?? ""}
+                        onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormDescription>Leave empty for unlimited. Auto-decrements on each paid order.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

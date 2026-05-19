@@ -83,6 +83,7 @@ function MpesaModal({ open, onClose, subtotal, formatter, cartSnapshot }: MpesaM
     if (statusData.status === "completed") {
       setMpesaRef((statusData as { mpesaRef?: string | null }).mpesaRef ?? null);
       setModalState("success");
+      clearCart();
     } else if (statusData.status === "failed") {
       setApiError("Payment was declined or cancelled on the phone. Please try again.");
       setModalState("failed");
@@ -265,6 +266,7 @@ export default function Cart() {
 
   const cartSnapshot = {
     items: items.map((i) => ({
+      productId: i.product.id,
       name: i.product.name,
       quantity: i.quantity,
       price: i.product.price,

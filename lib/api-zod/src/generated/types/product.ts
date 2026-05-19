@@ -21,6 +21,11 @@ export interface Product {
   /** @nullable */
   imageUrl?: string | null;
   inStock: boolean;
+  /**
+     * Remaining inventory. Null means unlimited / not tracked.
+     * @nullable
+     */
+  stockQuantity?: number | null;
   isActive: boolean;
   isDropship?: boolean;
   isFeatured?: boolean;
