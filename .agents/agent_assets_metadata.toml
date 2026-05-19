@@ -90,3 +90,9 @@ id = "MFKkoZYWc-QGkGgkdPme0"
 uri = "file://artifacts/mockup-sandbox/public/images/watch.jpg"
 type = "image"
 title = "luxury mechanical watch gold and black dark background"
+
+[[outputs]]
+id = "Z35FSeNKmkV-9RF8wJ_lJ"
+uri = "file://FEATURES.md"
+type = "text"
+title = "Luxe Store — Feature Overview"
