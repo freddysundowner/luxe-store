@@ -82,6 +82,11 @@ export function BundleBoxCover({ alt, className = "" }: BundleBoxCoverProps) {
         {/* Warm halo */}
         <rect x="0" y="0" width="200" height="200" fill="url(#bbc-halo)" />
 
+        {/* Everything below is drawn at the original 200x200 scale, then
+            uniformly scaled up around the centre so the box reads larger
+            in every container without rewriting coordinates. */}
+        <g transform="translate(100 102) scale(1.28) translate(-100 -102)">
+
         {/* Ground shadow */}
         <ellipse cx="100" cy="173" rx="62" ry="6" fill="#000" opacity="0.7" />
 
@@ -195,6 +200,7 @@ export function BundleBoxCover({ alt, className = "" }: BundleBoxCoverProps) {
         />
         {/* Knot highlight */}
         <rect x="94.5" y="45.5" width="11" height="2" fill="#fff" opacity="0.25" />
+        </g>
       </svg>
     </div>
   );
