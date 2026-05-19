@@ -79,44 +79,15 @@ ${urls.join("\n")}
           : rawUrl;
       const cleanUrl = routerUrl.split("?")[0] || "/";
 
-      // Skip SSR for admin routes — serve plain SPA shell to avoid hydration mismatches
-      if (cleanUrl.startsWith("/admin")) {
-        let template = fs.readFileSync(
-          path.resolve(__dirname, isProd ? "dist/public/index.html" : "index.html"),
-          "utf-8"
-        );
-        if (!isProd) template = await vite.transformIndexHtml(rawUrl, template);
-        return res.status(200).set({ "Content-Type": "text/html" }).end(
-          template.replace("<!--ssr-head-->", "")
-        );
-      }
-
-      let template: string;
-      let render: (url: string) => Promise<{ html: string; head: string }>;
-
-      if (!isProd) {
-        template = fs.readFileSync(path.resolve(__dirname, "index.html"), "utf-8");
-        template = await vite.transformIndexHtml(rawUrl, template);
-        const mod = await vite.ssrLoadModule("/src/entry-server.tsx");
-        render = mod.render;
-      } else {
-        template = fs.readFileSync(
-          path.resolve(__dirname, "dist/public/index.html"),
-          "utf-8"
-        );
-        const serverEntry = await import(
-          path.resolve(__dirname, "dist/server/entry-server.js")
-        );
-        render = serverEntry.render;
-      }
-
-      const { html: appHtml, head } = await render(cleanUrl);
-
-      const finalHtml = template
-        .replace("<!--ssr-head-->", head)
-        .replace('<div id="root"></div>', `<div id="root">${appHtml}</div>`);
-
-      res.status(200).set({ "Content-Type": "text/html" }).end(finalHtml);
+      // Serve plain SPA shell for all routes — no SSR to avoid hydration mismatches
+      let template = fs.readFileSync(
+        path.resolve(__dirname, isProd ? "dist/public/index.html" : "index.html"),
+        "utf-8"
+      );
+      if (!isProd) template = await vite.transformIndexHtml(rawUrl, template);
+      return res.status(200).set({ "Content-Type": "text/html" }).end(
+        template.replace("<!--ssr-head-->", "")
+      );
     } catch (e) {
       if (!isProd && vite) {
         vite.ssrFixStacktrace(e as Error);
