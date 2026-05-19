@@ -87,8 +87,9 @@ module.exports = {
       name: "luxe-shop",
       cwd: path.join(REPO_DIR, "artifacts/shop"),
       // ssr-server.ts is not transpiled by the build, so we run it through
-      // tsx (which @workspace/shop has as a devDep).
-      script: path.join(REPO_DIR, "node_modules/.bin/tsx"),
+      // tsx (which @workspace/shop has as a devDep). pnpm places tsx in the
+      // package-local node_modules, not the workspace root.
+      script: path.join(REPO_DIR, "artifacts/shop/node_modules/.bin/tsx"),
       args: "./ssr-server.ts",
       instances: 1,
       exec_mode: "fork",

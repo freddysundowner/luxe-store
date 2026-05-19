@@ -1,0 +1,142 @@
+root@vmi3102280:/var/www/luxe-store# git pull
+sudo bash install.sh
+remote: Enumerating objects: 5, done.
+remote: Counting objects: 100% (5/5), done.
+remote: Compressing objects: 100% (1/1), done.
+remote: Total 3 (delta 2), reused 3 (delta 2), pack-reused 0 (from 0)
+Unpacking objects: 100% (3/3), 844 bytes | 105.00 KiB/s, done.
+From https://github.com/freddysundowner/luxe-store
+   fc195f4..e0d2aa4  main       -> origin/main
+Updating fc195f4..e0d2aa4
+Fast-forward
+ install.sh | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+[!] Port 8080 is already in use — searching for a free one…
+[+] Using API port 8081 and shop port 3000.
+[+] Updating apt and installing system prerequisites…
+Hit:1 http://security.ubuntu.com/ubuntu noble-security InRelease
+Hit:2 http://archive.ubuntu.com/ubuntu noble InRelease                              
+Hit:3 http://archive.ubuntu.com/ubuntu noble-updates InRelease                      
+Hit:4 http://archive.ubuntu.com/ubuntu noble-backports InRelease
+Hit:5 https://deb.nodesource.com/node_22.x nodistro InRelease
+Reading package lists... Done
+Reading package lists... Done
+Building dependency tree... Done
+Reading state information... Done
+curl is already the newest version (8.5.0-2ubuntu10.9).
+ca-certificates is already the newest version (20240203).
+gnupg is already the newest version (2.4.4-2ubuntu17.4).
+lsb-release is already the newest version (12.0-2).
+git is already the newest version (1:2.43.0-1ubuntu7.3).
+build-essential is already the newest version (12.10ubuntu1).
+nginx is already the newest version (1.24.0-2ubuntu7.8).
+ufw is already the newest version (0.36.2-6).
+openssl is already the newest version (3.0.13-0ubuntu3.9).
+jq is already the newest version (1.7.1-3ubuntu0.24.04.2).
+0 upgraded, 0 newly installed, 0 to remove and 44 not upgraded.
+[+] Node.js v22.22.2 already installed.
+[+] pnpm 10.33.0 already installed.
+[+] certbot already installed.
+[+] PostgreSQL already installed and running — skipping install.
+[+] Database 'luxestore' already exists — keeping current data.
+[+] /var/www/luxe-store/.env.production already present — leaving it untouched.
+[+] Installing workspace dependencies (this can take a few minutes)…
+Scope: all 9 workspace projects
+Lockfile is up to date, resolution step is skipped
+Already up to date
+. preinstall$ sh -c 'rm -f package-lock.json yarn.lock; case "$npm_config_user_agent" in pnpm/*) ;; *) echo "Use pnpm instead" >&2; exit 1 ;; esac'
+└─ Done in 36ms
+Done in 4.8s using pnpm v10.33.0
+[+] Building production artifacts (api-server + shop)…
+Scope: 2 of 9 workspace projects
+artifacts/api-server build$ node ./build.mjs
+[1 lines collapsed]
+│   dist/pino-worker.mjs               153.4kb
+│   dist/pino-file.mjs                 142.1kb
+│   dist/pino-pretty.mjs               114.6kb
+│   dist/thread-stream-worker.mjs        7.3kb
+│   dist/index.mjs.map                   5.6mb
+│   dist/pino-worker.mjs.map           256.9kb
+│   dist/pino-file.mjs.map             229.0kb
+│   dist/pino-pretty.mjs.map           204.0kb
+│   dist/thread-stream-worker.mjs.map   12.0kb
+│ ⚡ Done in 2060ms
+└─ Done in 2.3s
+artifacts/shop build$ vite build --config vite.config.ts && vite build --config vite.config.ts --ssr src/entry-server.tsx
+[21 lines collapsed]
+│ src/components/ui/tooltip.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+│ src/components/ui/label.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+│ src/components/ui/select.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+│ src/components/ui/sheet.tsx (2:0): Error when using sourcemap for reporting an error: Can't resolve original location of error.
+│ ✓ 67 modules transformed.
+│ [plugin vite:reporter] 
+│ (!) /var/www/luxe-store/artifacts/shop/src/lib/gift-finder-trigger.ts is dynamically imported by /var/www/luxe-store/artifacts/shop/src/components/TikTokFeed.tsx, /var/www/luxe-store/artifacts/…
+│ rendering chunks...
+│ dist/server/entry-server.js  536.86 kB
+│ ✓ built in 1.84s
+└─ Done in 16s
+[+] Applying database schema with drizzle push…
+
+> @workspace/db@0.0.0 push /var/www/luxe-store/lib/db
+> drizzle-kit push --config ./drizzle.config.ts
+
+Reading config file '/var/www/luxe-store/lib/db/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+[✓] Changes applied
+[+] Running seed (idempotent — won't overwrite existing products)…
+[seed] empty database detected, inserting sample data…
+[seed] inserted 7 products, 4 categories, settings row.
+[+] Seed complete, marker written to /var/www/luxe-store/.local/.seeded.
+[+] Writing systemd units for the API server and the shop SSR server…
+Created symlink /etc/systemd/system/multi-user.target.wants/luxe-api.service → /etc/systemd/system/luxe-api.service.
+Created symlink /etc/systemd/system/multi-user.target.wants/luxe-shop.service → /etc/systemd/system/luxe-shop.service.
+[+] Writing nginx vhost for luxestores.shop…
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+[+] Configuring ufw (22, 80, 443)…
+[+] Requesting Let's Encrypt certificate for luxestores.shop and www.luxestores.shop…
+Saving debug log to /var/log/letsencrypt/letsencrypt.log
+Requesting a certificate for luxestores.shop and www.luxestores.shop
+
+Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/luxestores.shop/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/luxestores.shop/privkey.pem
+This certificate expires on 2026-08-17.
+These files will be updated when the certificate renews.
+Certbot has set up a scheduled task to automatically renew this certificate in the background.
+
+Deploying certificate
+Successfully deployed certificate for luxestores.shop to /etc/nginx/sites-enabled/luxestores.shop
+Successfully deployed certificate for www.luxestores.shop to /etc/nginx/sites-enabled/luxestores.shop
+Congratulations! You have successfully enabled HTTPS on https://luxestores.shop and https://www.luxestores.shop
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+If you like Certbot, please consider supporting our work by:
+ * Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
+ * Donating to EFF:                    https://eff.org/donate-le
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+============================================================
+ Luxe Store install complete
+============================================================
+ Site            : https://luxestores.shop
+ API (internal)  : http://127.0.0.1:8081
+ Shop (internal) : http://127.0.0.1:3000
+ Database        : luxestore (user: luxestore)
+ Env file        : /var/www/luxe-store/.env.production
+ Seed marker     : /var/www/luxe-store/.local/.seeded
+
+ Services:
+   systemctl status luxe-api
+   systemctl status luxe-shop
+   journalctl -u luxe-api -f
+   journalctl -u luxe-shop -f
+
+
+ Next steps:
+   1. Edit /var/www/luxe-store/.env.production and fill in M-Pesa / WhatsApp / Brevo / AI keys.
+   2. sudo systemctl restart luxe-api luxe-shop
+   3. Visit https://luxestores.shop
+============================================================
+root@vmi3102280:/var/www/luxe-store# 

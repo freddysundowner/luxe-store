@@ -254,7 +254,8 @@ Environment=PORT=${SHOP_PORT}
 Environment=NODE_ENV=production
 # ssr-server is written in TypeScript and not transpiled by `pnpm build`,
 # so we run it directly via tsx (installed as a devDep of @workspace/shop).
-ExecStart=${REPO_DIR}/node_modules/.bin/tsx ./ssr-server.ts
+# pnpm places tsx in the package-local node_modules, not the workspace root.
+ExecStart=${REPO_DIR}/artifacts/shop/node_modules/.bin/tsx ./ssr-server.ts
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
