@@ -1,8 +1,8 @@
 import { Router } from "express";
 import Anthropic from "@anthropic-ai/sdk";
-import { eq } from "drizzle-orm";
-import { db, productsTable, categoriesTable, hampersTable } from "@workspace/db";
-import type { HamperItem } from "@workspace/db";
+import { and, eq } from "drizzle-orm";
+import { db, productsTable, categoriesTable } from "@workspace/db";
+import type { BundleItem } from "@workspace/db";
 
 const router = Router();
 
@@ -34,7 +34,7 @@ async function getActiveProducts() {
     })
     .from(productsTable)
     .leftJoin(categoriesTable, eq(categoriesTable.id, productsTable.categoryId))
-    .where(eq(productsTable.isActive, true));
+    .where(and(eq(productsTable.isActive, true), eq(productsTable.kind, "simple")));
 
   return rows.map((r) => ({
     id: r.id,
@@ -58,13 +58,25 @@ function buildCatalogText(products: Awaited<ReturnType<typeof getActiveProducts>
 }
 
 async function getActiveHampers() {
-  const rows = await db.select().from(hampersTable).where(eq(hampersTable.isActive, true));
+  // Sourced from unified products table (kind='bundle'). The emitted `id` is
+  // the product ID so GiftFinder's HAMPER:n marker resolves correctly via the
+  // /api/hampers alias (which now returns product IDs).
+  const rows = await db
+    .select({
+      id: productsTable.id,
+      name: productsTable.name,
+      description: productsTable.description,
+      price: productsTable.price,
+      bundleItems: productsTable.bundleItems,
+    })
+    .from(productsTable)
+    .where(and(eq(productsTable.isActive, true), eq(productsTable.kind, "bundle")));
   return rows.map((h) => ({
     id: h.id,
     name: h.name,
     description: h.description,
     price: parseFloat(h.price as unknown as string),
-    items: (h.items ?? []) as HamperItem[],
+    items: (h.bundleItems ?? []) as BundleItem[],
   }));
 }
 

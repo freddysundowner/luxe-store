@@ -67,7 +67,7 @@ function FeaturedSwiper({
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const { toggleFavorite, isFavorite } = useFavorites();
   const { openCart } = useCart();
-  const { add: addBundle } = useAddBundleToCart();
+  const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
 
   // TikTok-style drag/swipe state. `dragOffset` follows the pointer/touch in
   // real-time (px). `slideDir` says which neighbour to render off-screen so it
@@ -305,6 +305,10 @@ function FeaturedSwiper({
     // grouped hamper line via the shared bundle-add hook, matching ProductCard
     // / TikTokFeed / PDP behavior.
     if (product.kind === "bundle") {
+      if (!bundleReady) {
+        toast({ title: "Loading bundle… try again in a moment." });
+        return;
+      }
       // The hook handles toast + openCart on success.
       addBundle(product);
       return;
