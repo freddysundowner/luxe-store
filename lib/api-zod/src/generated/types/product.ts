@@ -5,7 +5,10 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { BundleProductSummary } from './bundleProductSummary';
+import type { HamperItem } from './hamperItem';
 import type { ProductImageSettings } from './productImageSettings';
+import type { ProductKind } from './productKind';
 import type { ProductVariant } from './productVariant';
 
 export interface Product {
@@ -31,7 +34,7 @@ export interface Product {
   imageSettings?: ProductImageSettings;
   inStock: boolean;
   /**
-     * Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.
+     * Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present or when kind=bundle (computed from items).
      * @minimum 0
      */
   stockQuantity: number;
@@ -44,6 +47,15 @@ export interface Product {
      */
   availabilityTag?: string | null;
   variants: ProductVariant[];
+  /** simple = regular product. bundle = curated gift set of other products. */
+  kind: ProductKind;
+  /** When kind=bundle, the configured items (productId + quantity). Empty for simple products. */
+  bundleItems: HamperItem[];
+  /**
+     * When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.
+     * @nullable
+     */
+  bundleProducts?: BundleProductSummary[] | null;
   /** @nullable */
   createdAt?: Date | null;
 }

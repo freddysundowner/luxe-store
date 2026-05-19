@@ -10,6 +10,7 @@ import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { isProductSoldOut } from "@/lib/stock";
+import { useAddBundleToCart } from "@/lib/bundle-add";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
@@ -296,8 +297,21 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
 
   // ── Cart / gift / share ──
   const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
+  const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
 
   const handleAddToCart = (product: Product) => {
+    // Bundles skip QuickBuy (which is variant/quantity-oriented) and go
+    // straight into the cart as a hamper group.
+    if (product.kind === "bundle") {
+      if (!bundleReady) {
+        toast({ title: "One moment — loading bundle contents…" });
+        return;
+      }
+      if (addBundle(product)) {
+        setCartAdded((prev) => new Set(prev).add(product.id));
+      }
+      return;
+    }
     // Open the QuickBuy modal: it asks for variant (if any) + quantity and
     // jumps straight to checkout. No more cart drawer review step.
     setQuickBuyProduct(product);
@@ -725,6 +739,7 @@ function BottomPanel({
       `}</style>
       {(() => {
         const isSoldOut = isProductSoldOut(product);
+        const isBundle = product.kind === "bundle";
         return (
         <div className="flex gap-2">
         <button
@@ -736,7 +751,7 @@ function BottomPanel({
               : "bg-[#D4AF37] text-black hover:bg-white"
           }`}
         >
-          {isSoldOut ? "Sold Out" : "Buy Now →"}
+          {isSoldOut ? "Sold Out" : isBundle ? "Add Gift Bundle →" : "Buy Now →"}
         </button>
         <button
           onClick={isActive ? onGift : undefined}

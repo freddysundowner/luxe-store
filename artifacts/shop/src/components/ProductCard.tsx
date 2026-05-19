@@ -4,6 +4,8 @@ import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { isProductSoldOut } from "@/lib/stock";
+import { useAddBundleToCart } from "@/lib/bundle-add";
+import { Gift } from "lucide-react";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
 
 const TAG_CONFIG: Record<string, { label: string; color: string; textColor: string }> = {
@@ -30,9 +32,11 @@ export function ProductCard({
 }) {
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
+  const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
 
+  const isBundle = product.kind === "bundle";
   const activeVariants = (product.variants ?? []).filter((v) => v.isActive);
-  const hasVariants = activeVariants.length > 0;
+  const hasVariants = !isBundle && activeVariants.length > 0;
 
   const isSoldOut = isProductSoldOut(product);
 
@@ -42,7 +46,16 @@ export function ProductCard({
     // the wrapper is a div with onClick that would otherwise re-select the
     // featured product when the user clicks Add to Bag.
     e.stopPropagation();
-    if (isSoldOut || hasVariants) return;
+    if (isSoldOut) return;
+    if (isBundle) {
+      if (!bundleReady) {
+        toast({ title: "One moment — loading bundle contents…" });
+        return;
+      }
+      addBundle(product);
+      return;
+    }
+    if (hasVariants) return;
     addItem(product, { quantity: 1 });
     openCart();
   };
@@ -114,9 +127,9 @@ export function ProductCard({
             <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
               <button
                 onClick={handleAddToCart}
-                className="w-full py-3 bg-[#D4AF37] text-black text-[11px] uppercase tracking-widest font-medium hover:bg-white transition-colors"
+                className="w-full py-3 bg-[#D4AF37] text-black text-[11px] uppercase tracking-widest font-medium hover:bg-white transition-colors flex items-center justify-center gap-1.5"
               >
-                {hasVariants ? "Choose Options" : "Add to Bag"}
+                {isBundle ? <><Gift className="w-3 h-3" />Add Gift</> : hasVariants ? "Choose Options" : "Add to Bag"}
               </button>
             </div>
           )}

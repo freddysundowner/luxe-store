@@ -11,6 +11,21 @@ export interface ImageDisplaySettings {
   focalY: number; // 0–100 (percentage)
 }
 
+// One entry per component product in a bundle (kind='bundle'). Embedded as
+// jsonb because items are always read/written together with the parent
+// product and never queried independently. Stock for a bundle is derived
+// from component product availability at read-time.
+export interface BundleItem {
+  productId: number;
+  quantity: number;
+}
+
+// `kind` distinguishes simple products (the historical default) from
+// bundles, which are curated multi-product gift sets (formerly "hampers").
+// Bundles ignore `stockQuantity`/`variants` — their availability is computed
+// from the items list.
+export type ProductKind = "simple" | "bundle";
+
 export const productsTable = pgTable("products", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -27,6 +42,8 @@ export const productsTable = pgTable("products", {
   isDropship: boolean("is_dropship").notNull().default(false),
   isFeatured: boolean("is_featured").notNull().default(false),
   availabilityTag: text("availability_tag"),
+  kind: text("kind").$type<ProductKind>().notNull().default("simple"),
+  bundleItems: jsonb("bundle_items").$type<BundleItem[]>().notNull().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

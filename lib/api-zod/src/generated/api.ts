@@ -97,7 +97,8 @@ export const DeleteCategoryParams = zod.object({
 export const ListProductsQueryParams = zod.object({
   "categoryId": zod.coerce.number().optional(),
   "search": zod.coerce.string().optional(),
-  "featured": zod.coerce.boolean().optional()
+  "featured": zod.coerce.boolean().optional(),
+  "kind": zod.enum(['simple', 'bundle']).optional().describe('Filter by product kind. \'simple\' = regular products. \'bundle\' = curated gift sets (formerly hampers). Omit for all kinds.')
 })
 
 export const listProductsResponseImageSettingsFocalXMin = 0;
@@ -109,6 +110,8 @@ export const listProductsResponseImageSettingsFocalYMax = 100;
 export const listProductsResponseStockQuantityMin = 0;
 
 export const listProductsResponseVariantsItemStockQuantityMin = 0;
+
+
 
 
 
@@ -128,7 +131,7 @@ export const ListProductsResponseItem = zod.object({
   "focalY": zod.number().min(listProductsResponseImageSettingsFocalYMin).max(listProductsResponseImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
 }).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Missing entries default to cover\/centre.'),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().min(listProductsResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
+  "stockQuantity": zod.number().min(listProductsResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present or when kind=bundle (computed from items).'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
@@ -141,6 +144,18 @@ export const ListProductsResponseItem = zod.object({
   "isActive": zod.boolean(),
   "sortOrder": zod.number().optional()
 })),
+  "kind": zod.enum(['simple', 'bundle']).describe('simple = regular product. bundle = curated gift set of other products.'),
+  "bundleItems": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})).describe('When kind=bundle, the configured items (productId + quantity). Empty for simple products.'),
+  "bundleProducts": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number().min(1)
+}).describe('Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.')).nullish().describe('When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.'),
   "createdAt": zod.coerce.date().nullish()
 })
 export const ListProductsResponse = zod.array(ListProductsResponseItem)
@@ -165,6 +180,8 @@ export const getProductResponseVariantsItemStockQuantityMin = 0;
 
 
 
+
+
 export const GetProductResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -181,7 +198,7 @@ export const GetProductResponse = zod.object({
   "focalY": zod.number().min(getProductResponseImageSettingsFocalYMin).max(getProductResponseImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
 }).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Missing entries default to cover\/centre.'),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().min(getProductResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
+  "stockQuantity": zod.number().min(getProductResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present or when kind=bundle (computed from items).'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
@@ -194,6 +211,18 @@ export const GetProductResponse = zod.object({
   "isActive": zod.boolean(),
   "sortOrder": zod.number().optional()
 })),
+  "kind": zod.enum(['simple', 'bundle']).describe('simple = regular product. bundle = curated gift set of other products.'),
+  "bundleItems": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})).describe('When kind=bundle, the configured items (productId + quantity). Empty for simple products.'),
+  "bundleProducts": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number().min(1)
+}).describe('Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.')).nullish().describe('When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.'),
   "createdAt": zod.coerce.date().nullish()
 })
 
@@ -213,6 +242,8 @@ export const listAdminProductsResponseVariantsItemStockQuantityMin = 0;
 
 
 
+
+
 export const ListAdminProductsResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
@@ -229,7 +260,7 @@ export const ListAdminProductsResponseItem = zod.object({
   "focalY": zod.number().min(listAdminProductsResponseImageSettingsFocalYMin).max(listAdminProductsResponseImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
 }).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Missing entries default to cover\/centre.'),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().min(listAdminProductsResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
+  "stockQuantity": zod.number().min(listAdminProductsResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present or when kind=bundle (computed from items).'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
@@ -242,6 +273,18 @@ export const ListAdminProductsResponseItem = zod.object({
   "isActive": zod.boolean(),
   "sortOrder": zod.number().optional()
 })),
+  "kind": zod.enum(['simple', 'bundle']).describe('simple = regular product. bundle = curated gift set of other products.'),
+  "bundleItems": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})).describe('When kind=bundle, the configured items (productId + quantity). Empty for simple products.'),
+  "bundleProducts": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number().min(1)
+}).describe('Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.')).nullish().describe('When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.'),
   "createdAt": zod.coerce.date().nullish()
 })
 export const ListAdminProductsResponse = zod.array(ListAdminProductsResponseItem)
@@ -265,6 +308,7 @@ export const createProductBodyStockQuantityMin = 0;
 export const createProductBodyVariantsItemPriceMin = 0;
 
 export const createProductBodyVariantsItemStockQuantityMin = 0;
+
 
 
 
@@ -294,7 +338,12 @@ export const CreateProductBody = zod.object({
   "stockQuantity": zod.number().min(createProductBodyVariantsItemStockQuantityMin),
   "isActive": zod.boolean().optional(),
   "sortOrder": zod.number().optional()
-})).optional().describe('Optional variants. When provided, replaces the full set of variants for the product.')
+})).optional().describe('Optional variants. When provided, replaces the full set of variants for the product. Ignored when kind=bundle.'),
+  "kind": zod.enum(['simple', 'bundle']).optional().describe('Defaults to \'simple\' when omitted.'),
+  "bundleItems": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})).optional().describe('Required when kind=bundle. Each entry references an existing simple product by id with a quantity ≥ 1.')
 })
 
 
@@ -320,6 +369,7 @@ export const updateProductBodyStockQuantityMin = 0;
 export const updateProductBodyVariantsItemPriceMin = 0;
 
 export const updateProductBodyVariantsItemStockQuantityMin = 0;
+
 
 
 
@@ -349,7 +399,12 @@ export const UpdateProductBody = zod.object({
   "stockQuantity": zod.number().min(updateProductBodyVariantsItemStockQuantityMin),
   "isActive": zod.boolean().optional(),
   "sortOrder": zod.number().optional()
-})).optional().describe('Optional variants. When provided, replaces the full set of variants for the product.')
+})).optional().describe('Optional variants. When provided, replaces the full set of variants for the product. Ignored when kind=bundle.'),
+  "kind": zod.enum(['simple', 'bundle']).optional().describe('Defaults to \'simple\' when omitted.'),
+  "bundleItems": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})).optional().describe('Required when kind=bundle. Each entry references an existing simple product by id with a quantity ≥ 1.')
 })
 
 export const updateProductResponseImageSettingsFocalXMin = 0;
@@ -361,6 +416,8 @@ export const updateProductResponseImageSettingsFocalYMax = 100;
 export const updateProductResponseStockQuantityMin = 0;
 
 export const updateProductResponseVariantsItemStockQuantityMin = 0;
+
+
 
 
 
@@ -380,7 +437,7 @@ export const UpdateProductResponse = zod.object({
   "focalY": zod.number().min(updateProductResponseImageSettingsFocalYMin).max(updateProductResponseImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
 }).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Missing entries default to cover\/centre.'),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().min(updateProductResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
+  "stockQuantity": zod.number().min(updateProductResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present or when kind=bundle (computed from items).'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
@@ -393,6 +450,18 @@ export const UpdateProductResponse = zod.object({
   "isActive": zod.boolean(),
   "sortOrder": zod.number().optional()
 })),
+  "kind": zod.enum(['simple', 'bundle']).describe('simple = regular product. bundle = curated gift set of other products.'),
+  "bundleItems": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})).describe('When kind=bundle, the configured items (productId + quantity). Empty for simple products.'),
+  "bundleProducts": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "price": zod.number(),
+  "imageUrl": zod.string().nullish(),
+  "quantity": zod.number().min(1)
+}).describe('Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.')).nullish().describe('When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.'),
   "createdAt": zod.coerce.date().nullish()
 })
 

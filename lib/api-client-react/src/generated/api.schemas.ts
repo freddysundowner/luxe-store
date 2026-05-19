@@ -89,9 +89,39 @@ export interface ProductVariantInput {
 }
 
 /**
+ * Resolved component product inside a bundle. Read-only — server-built from bundleItems for client convenience.
+ */
+export interface BundleProductSummary {
+  id: number;
+  name: string;
+  price: number;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @minimum 1 */
+  quantity: number;
+}
+
+/**
  * Per-image display settings keyed by image URL. Missing entries default to cover/centre.
  */
 export type ProductImageSettings = {[key: string]: ImageDisplaySettings};
+
+/**
+ * simple = regular product. bundle = curated gift set of other products.
+ */
+export type ProductKind = typeof ProductKind[keyof typeof ProductKind];
+
+
+export const ProductKind = {
+  simple: 'simple',
+  bundle: 'bundle',
+} as const;
+
+export interface HamperItem {
+  productId: number;
+  /** @minimum 1 */
+  quantity: number;
+}
 
 export interface Product {
   id: number;
@@ -116,7 +146,7 @@ export interface Product {
   imageSettings?: ProductImageSettings;
   inStock: boolean;
   /**
-     * Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.
+     * Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present or when kind=bundle (computed from items).
      * @minimum 0
      */
   stockQuantity: number;
@@ -129,6 +159,15 @@ export interface Product {
      */
   availabilityTag?: string | null;
   variants: ProductVariant[];
+  /** simple = regular product. bundle = curated gift set of other products. */
+  kind: ProductKind;
+  /** When kind=bundle, the configured items (productId + quantity). Empty for simple products. */
+  bundleItems: HamperItem[];
+  /**
+     * When kind=bundle, server-resolved summaries for each component product (in item order). Null for simple products.
+     * @nullable
+     */
+  bundleProducts?: BundleProductSummary[] | null;
   /** @nullable */
   createdAt?: string | null;
 }
@@ -137,6 +176,17 @@ export interface Product {
  * Per-image display settings keyed by image URL. Optional — missing entries default to cover/centre.
  */
 export type ProductInputImageSettings = {[key: string]: ImageDisplaySettings};
+
+/**
+ * Defaults to 'simple' when omitted.
+ */
+export type ProductInputKind = typeof ProductInputKind[keyof typeof ProductInputKind];
+
+
+export const ProductInputKind = {
+  simple: 'simple',
+  bundle: 'bundle',
+} as const;
 
 export interface ProductInput {
   /** @minLength 1 */
@@ -167,14 +217,12 @@ export interface ProductInput {
      * @nullable
      */
   availabilityTag?: string | null;
-  /** Optional variants. When provided, replaces the full set of variants for the product. */
+  /** Optional variants. When provided, replaces the full set of variants for the product. Ignored when kind=bundle. */
   variants?: ProductVariantInput[];
-}
-
-export interface HamperItem {
-  productId: number;
-  /** @minimum 1 */
-  quantity: number;
+  /** Defaults to 'simple' when omitted. */
+  kind?: ProductInputKind;
+  /** Required when kind=bundle. Each entry references an existing simple product by id with a quantity ≥ 1. */
+  bundleItems?: HamperItem[];
 }
 
 export interface Hamper {
@@ -436,5 +484,17 @@ export type ListProductsParams = {
 categoryId?: number;
 search?: string;
 featured?: boolean;
+/**
+ * Filter by product kind. 'simple' = regular products. 'bundle' = curated gift sets (formerly hampers). Omit for all kinds.
+ */
+kind?: ListProductsKind;
 };
+
+export type ListProductsKind = typeof ListProductsKind[keyof typeof ListProductsKind];
+
+
+export const ListProductsKind = {
+  simple: 'simple',
+  bundle: 'bundle',
+} as const;
 

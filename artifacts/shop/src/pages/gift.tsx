@@ -127,6 +127,8 @@ export default function GiftPage() {
       availabilityTag: null,
       stockQuantity: 1,
       variants: [],
+      kind: "simple",
+      bundleItems: [],
       createdAt: null,
     }, { quantity: 1 });
     setAddedToCart(true);

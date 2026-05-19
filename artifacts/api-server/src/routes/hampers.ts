@@ -1,23 +1,30 @@
+/**
+ * /api/hampers — legacy alias over kind='bundle' products. The hampers table
+ * is no longer the source of truth; everything reads/writes products. We keep
+ * this route for backward compatibility with the GiftFinder, the admin
+ * hampers pages, and the AI suggest endpoint until those flows are migrated
+ * to /api/products?kind=bundle.
+ */
 import { Router } from "express";
-import { eq, inArray, desc } from "drizzle-orm";
-import { db, hampersTable, productsTable, productVariantsTable } from "@workspace/db";
-import type { HamperItem as DbHamperItem } from "@workspace/db";
+import { eq, and, inArray, desc } from "drizzle-orm";
+import { db, productsTable, productVariantsTable } from "@workspace/db";
+import type { BundleItem } from "@workspace/db";
+import { validateBundleItems } from "./products.js";
 
 const router = Router();
 
-// Returns a map of productId -> total quantity reserved across every *active*
-// hamper. Standalone product availability is base stock minus this number, so
-// adding a one-of product to a hamper effectively reserves that unit and
-// removes it from solo sale.
+// Returns a map of productId → total quantity reserved across every *active*
+// bundle product. Standalone product availability is base stock minus this
+// number, so adding a one-of product to a bundle effectively reserves it.
 export async function getHamperReservations(productIds?: number[]): Promise<Map<number, number>> {
   const rows = await db
-    .select({ items: hampersTable.items })
-    .from(hampersTable)
-    .where(eq(hampersTable.isActive, true));
+    .select({ bundleItems: productsTable.bundleItems })
+    .from(productsTable)
+    .where(and(eq(productsTable.isActive, true), eq(productsTable.kind, "bundle")));
   const out = new Map<number, number>();
   const filter = productIds ? new Set(productIds) : null;
   for (const row of rows) {
-    const items = (row.items ?? []) as DbHamperItem[];
+    const items = (row.bundleItems ?? []) as BundleItem[];
     for (const it of items) {
       if (filter && !filter.has(it.productId)) continue;
       out.set(it.productId, (out.get(it.productId) ?? 0) + it.quantity);
@@ -32,22 +39,15 @@ interface HamperDto {
   description: string | null;
   imageUrl: string | null;
   price: number;
-  items: { productId: number; quantity: number }[];
+  items: BundleItem[];
   isActive: boolean;
   isFeatured: boolean;
   inStock: boolean;
   createdAt: string | null;
 }
 
-// A hamper is in stock when every component product has enough inventory for
-// the configured quantity. Products without variants use stockQuantity; for
-// products with variants, we sum variant stock as the total available.
-// Returns a map of productId -> available stock units, plus product activity.
-// `inStock` for a hamper is computed downstream by summing the *required*
-// quantity per product (across duplicate item entries) and comparing against
-// available stock — so a hamper needing 3× of a product with stock 1 is OoS.
 interface ProductAvailability { stock: number; isActive: boolean }
-async function computeAvailabilityMap(items: DbHamperItem[]): Promise<Record<number, ProductAvailability>> {
+async function computeAvailabilityMap(items: BundleItem[]): Promise<Record<number, ProductAvailability>> {
   const productIds = Array.from(new Set(items.map((i) => i.productId)));
   if (productIds.length === 0) return {};
   const [products, variants] = await Promise.all([
@@ -69,9 +69,8 @@ async function computeAvailabilityMap(items: DbHamperItem[]): Promise<Record<num
   return result;
 }
 
-function isHamperInStock(items: DbHamperItem[], avail: Record<number, ProductAvailability>): boolean {
+function isHamperInStock(items: BundleItem[], avail: Record<number, ProductAvailability>): boolean {
   if (items.length === 0) return false;
-  // Aggregate required quantity across duplicate productId entries.
   const required: Record<number, number> = {};
   for (const it of items) required[it.productId] = (required[it.productId] ?? 0) + it.quantity;
   for (const [pidStr, qty] of Object.entries(required)) {
@@ -82,13 +81,20 @@ function isHamperInStock(items: DbHamperItem[], avail: Record<number, ProductAva
   return true;
 }
 
-function toDto(row: typeof hampersTable.$inferSelect, avail: Record<number, ProductAvailability>): HamperDto {
-  const items = (row.items ?? []) as DbHamperItem[];
+// Strip the legacy `[bundle:<hamperId>]` marker so legacy clients reading
+// /hampers see the same description they did before the unification.
+function stripBundleMarker(desc: string | null): string | null {
+  if (!desc) return desc;
+  return desc.replace(/^\[bundle:\d+\]\n?/, "") || null;
+}
+
+function toDto(row: typeof productsTable.$inferSelect, avail: Record<number, ProductAvailability>): HamperDto {
+  const items = (row.bundleItems ?? []) as BundleItem[];
   const inStock = isHamperInStock(items, avail);
   return {
     id: row.id,
     name: row.name,
-    description: row.description,
+    description: stripBundleMarker(row.description),
     imageUrl: row.imageUrl,
     price: Number(row.price),
     items,
@@ -99,35 +105,37 @@ function toDto(row: typeof hampersTable.$inferSelect, avail: Record<number, Prod
   };
 }
 
-// Public: list active hampers.
+// Public: list active bundles.
 router.get("/hampers", async (_req, res) => {
   const rows = await db
     .select()
-    .from(hampersTable)
-    .where(eq(hampersTable.isActive, true))
-    .orderBy(desc(hampersTable.isFeatured), desc(hampersTable.createdAt));
-  const allItems = rows.flatMap((r) => (r.items ?? []) as DbHamperItem[]);
+    .from(productsTable)
+    .where(and(eq(productsTable.kind, "bundle"), eq(productsTable.isActive, true)))
+    .orderBy(desc(productsTable.isFeatured), desc(productsTable.createdAt));
+  const allItems = rows.flatMap((r) => (r.bundleItems ?? []) as BundleItem[]);
   const availability = await computeAvailabilityMap(allItems);
   res.json(rows.map((r) => toDto(r, availability)));
 });
 
-// Public: single hamper by id (still requires isActive=true for safety).
 router.get("/hampers/:id", async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const [row] = await db.select().from(hampersTable).where(eq(hampersTable.id, id));
+  const [row] = await db
+    .select()
+    .from(productsTable)
+    .where(and(eq(productsTable.id, id), eq(productsTable.kind, "bundle")));
   if (!row || !row.isActive) { res.status(404).json({ error: "Not found" }); return; }
-  const availability = await computeAvailabilityMap((row.items ?? []) as DbHamperItem[]);
+  const availability = await computeAvailabilityMap((row.bundleItems ?? []) as BundleItem[]);
   res.json(toDto(row, availability));
 });
 
-// Admin: list everything (including inactive).
 router.get("/admin/hampers", async (_req, res) => {
   const rows = await db
     .select()
-    .from(hampersTable)
-    .orderBy(desc(hampersTable.createdAt));
-  const allItems = rows.flatMap((r) => (r.items ?? []) as DbHamperItem[]);
+    .from(productsTable)
+    .where(eq(productsTable.kind, "bundle"))
+    .orderBy(desc(productsTable.createdAt));
+  const allItems = rows.flatMap((r) => (r.bundleItems ?? []) as BundleItem[]);
   const availability = await computeAvailabilityMap(allItems);
   res.json(rows.map((r) => toDto(r, availability)));
 });
@@ -142,73 +150,85 @@ interface HamperInputBody {
   isFeatured?: unknown;
 }
 
-function parseInput(body: HamperInputBody): {
+async function parseInput(body: HamperInputBody): Promise<{
   name: string;
   description: string | null;
   imageUrl: string | null;
   price: string;
-  items: DbHamperItem[];
+  items: BundleItem[];
   isActive: boolean;
   isFeatured: boolean;
-} | { error: string } {
-  if (typeof body.name !== "string" || body.name.trim().length === 0) {
-    return { error: "name is required" };
-  }
+} | { error: string }> {
+  if (typeof body.name !== "string" || body.name.trim().length === 0) return { error: "name is required" };
   const priceNum = typeof body.price === "number" ? body.price : Number(body.price);
-  if (!Number.isFinite(priceNum) || priceNum < 0) {
-    return { error: "price must be a non-negative number" };
-  }
-  if (!Array.isArray(body.items) || body.items.length === 0) {
-    return { error: "items must be a non-empty array" };
-  }
-  const items: DbHamperItem[] = [];
-  for (const raw of body.items) {
-    if (!raw || typeof raw !== "object") return { error: "invalid item" };
-    const r = raw as { productId?: unknown; quantity?: unknown };
-    const productId = typeof r.productId === "number" ? r.productId : Number(r.productId);
-    const quantity = typeof r.quantity === "number" ? r.quantity : Number(r.quantity);
-    if (!Number.isInteger(productId) || productId <= 0) return { error: "invalid productId" };
-    if (!Number.isInteger(quantity) || quantity <= 0) return { error: "invalid quantity" };
-    items.push({ productId, quantity });
-  }
+  if (!Number.isFinite(priceNum) || priceNum < 0) return { error: "price must be a non-negative number" };
+  // Delegate item validation to the shared bundle validator used by the
+  // products admin endpoints — this enforces existence + no-nested-bundles
+  // so the legacy /admin/hampers alias cannot create invalid data.
+  const validated = await validateBundleItems(body.items);
+  if ("error" in validated) return { error: validated.error };
   return {
     name: body.name.trim(),
     description: typeof body.description === "string" ? body.description : null,
     imageUrl: typeof body.imageUrl === "string" ? body.imageUrl : null,
     price: priceNum.toFixed(2),
-    items,
+    items: validated.items,
     isActive: typeof body.isActive === "boolean" ? body.isActive : true,
     isFeatured: typeof body.isFeatured === "boolean" ? body.isFeatured : false,
   };
 }
 
 router.post("/admin/hampers", async (req, res): Promise<void> => {
-  const parsed = parseInput(req.body ?? {});
+  const parsed = await parseInput(req.body ?? {});
   if ("error" in parsed) { res.status(400).json({ error: parsed.error }); return; }
-  const [row] = await db.insert(hampersTable).values(parsed).returning();
-  const availability = await computeAvailabilityMap(row.items as DbHamperItem[]);
+  const [row] = await db.insert(productsTable).values({
+    name: parsed.name,
+    description: parsed.description,
+    imageUrl: parsed.imageUrl,
+    images: parsed.imageUrl ? [parsed.imageUrl] : [],
+    price: parsed.price,
+    isActive: parsed.isActive,
+    isFeatured: parsed.isFeatured,
+    kind: "bundle",
+    bundleItems: parsed.items,
+    stockQuantity: 0,
+    inStock: true,
+  }).returning();
+  const availability = await computeAvailabilityMap(parsed.items);
   res.status(201).json(toDto(row, availability));
 });
 
 router.put("/admin/hampers/:id", async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const parsed = parseInput(req.body ?? {});
+  const parsed = await parseInput(req.body ?? {});
   if ("error" in parsed) { res.status(400).json({ error: parsed.error }); return; }
   const [row] = await db
-    .update(hampersTable)
-    .set(parsed)
-    .where(eq(hampersTable.id, id))
+    .update(productsTable)
+    .set({
+      name: parsed.name,
+      description: parsed.description,
+      imageUrl: parsed.imageUrl,
+      images: parsed.imageUrl ? [parsed.imageUrl] : [],
+      price: parsed.price,
+      isActive: parsed.isActive,
+      isFeatured: parsed.isFeatured,
+      bundleItems: parsed.items,
+    })
+    .where(and(eq(productsTable.id, id), eq(productsTable.kind, "bundle")))
     .returning();
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
-  const availability = await computeAvailabilityMap(row.items as DbHamperItem[]);
+  const availability = await computeAvailabilityMap(parsed.items);
   res.json(toDto(row, availability));
 });
 
 router.delete("/admin/hampers/:id", async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const [row] = await db.delete(hampersTable).where(eq(hampersTable.id, id)).returning();
+  const [row] = await db
+    .delete(productsTable)
+    .where(and(eq(productsTable.id, id), eq(productsTable.kind, "bundle")))
+    .returning();
   if (!row) { res.status(404).json({ error: "Not found" }); return; }
   res.status(204).end();
 });

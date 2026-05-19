@@ -5,9 +5,14 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { ListProductsKind } from './listProductsKind';
 
 export type ListProductsParams = {
 categoryId?: number;
 search?: string;
 featured?: boolean;
+/**
+ * Filter by product kind. 'simple' = regular products. 'bundle' = curated gift sets (formerly hampers). Omit for all kinds.
+ */
+kind?: ListProductsKind;
 };

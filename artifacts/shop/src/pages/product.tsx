@@ -1,13 +1,15 @@
 import { useParams, Link } from "wouter";
 import { RootLayout } from "@/components/layout/RootLayout";
 import { useGetProduct, getGetProductQueryKey, ProductVariant } from "@workspace/api-client-react";
-import { ShoppingBag, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { ShoppingBag, Minus, Plus, ChevronLeft, ChevronRight, Gift } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Helmet } from "react-helmet-async";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
+import { useAddBundleToCart } from "@/lib/bundle-add";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -25,26 +27,42 @@ export default function ProductDetail() {
     query: { queryKey: getGetProductQueryKey(productId), enabled: !!productId }
   });
 
+  const isBundle = product?.kind === "bundle";
   const activeVariants = useMemo<ProductVariant[]>(
-    () => (product?.variants ?? []).filter((v) => v.isActive),
-    [product]
+    () => (isBundle ? [] : (product?.variants ?? []).filter((v) => v.isActive)),
+    [product, isBundle]
   );
   const hasVariants = activeVariants.length > 0;
   const selectedVariant = activeVariants.find((v) => v.id === selectedVariantId) ?? null;
 
   // Effective price/stock: variant overrides product when one is selected.
+  // Bundles ignore stockQuantity (server inStock flag is authoritative).
   const effectivePrice = selectedVariant?.price ?? product?.price ?? 0;
-  const effectiveStock = selectedVariant
-    ? selectedVariant.stockQuantity
-    : (product?.stockQuantity ?? 0);
+  const effectiveStock = isBundle
+    ? (product?.inStock ? 1 : 0)
+    : selectedVariant
+      ? selectedVariant.stockQuantity
+      : (product?.stockQuantity ?? 0);
   const canPurchase = product?.inStock && (hasVariants ? !!selectedVariant && effectiveStock > 0 : true);
+
+  const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
+  const { toast } = useToast();
 
   // Buy-now opens the QuickBuy dialog. If the product has variants and the
   // customer hasn't picked one yet, the dialog still opens and asks them to
   // choose — no toast nag required. When they *have* picked one on the page,
-  // we forward it so they don't repeat themselves.
+  // we forward it so they don't repeat themselves. Bundles skip QuickBuy
+  // entirely and add the resolved components straight to the cart.
   const handleBuyNow = () => {
     if (!product || !product.inStock) return;
+    if (isBundle) {
+      if (!bundleReady) {
+        toast({ title: "One moment — loading bundle contents…" });
+        return;
+      }
+      addBundle(product);
+      return;
+    }
     setQuickBuyOpen(true);
   };
 
@@ -101,11 +119,13 @@ export default function ProductDetail() {
 
   const buyNowLabel = !product.inStock
     ? "Out of Stock"
-    : hasVariants && !selectedVariant
-      ? `Buy Now — From ${formatter.format(Math.min(...variantPrices))}`
-      : effectiveStock <= 0
-        ? "Sold Out"
-        : `Buy Now — ${formatter.format(effectivePrice * quantity)}`;
+    : isBundle
+      ? `Add Gift Bundle — ${formatter.format(product.price)}`
+      : hasVariants && !selectedVariant
+        ? `Buy Now — From ${formatter.format(Math.min(...variantPrices))}`
+        : effectiveStock <= 0
+          ? "Sold Out"
+          : `Buy Now — ${formatter.format(effectivePrice * quantity)}`;
 
   // Disable Buy Now whenever the customer's current selection can't actually
   // be purchased: product flagged out of stock, no-variant product with no
@@ -223,18 +243,52 @@ export default function ProductDetail() {
                 {product.description || "No description provided."}
               </p>
             </div>
-            <div className="flex items-center justify-between p-4 bg-zinc-900/40 border border-zinc-900 mb-8">
-              <span className="text-xs uppercase tracking-widest text-zinc-500">Quantity</span>
-              <div className="flex items-center gap-5 border border-zinc-800 px-4 py-2">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30" disabled={quantity <= 1 || !canPurchase}>
-                  <Minus className="w-4 h-4" />
-                </button>
-                <span className="font-light text-zinc-200 w-6 text-center">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30" disabled={!canPurchase}>
-                  <Plus className="w-4 h-4" />
-                </button>
+
+            {/* Bundle contents — kind=bundle only. */}
+            {isBundle && (
+              <div className="bg-zinc-900/60 border border-[#D4AF37]/30 p-5 mb-8">
+                <h3 className="text-[10px] uppercase tracking-widest text-[#D4AF37] mb-4 flex items-center gap-1.5">
+                  <Gift className="w-3 h-3" />What's in this bundle
+                </h3>
+                {(product.bundleProducts ?? []).length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic">Bundle contents unavailable.</p>
+                ) : (
+                  <ul className="divide-y divide-zinc-800">
+                    {(product.bundleProducts ?? []).map((bp) => (
+                      <li key={bp.id} className="flex items-center gap-3 py-2.5">
+                        <div className="w-10 h-10 rounded bg-zinc-800 overflow-hidden shrink-0">
+                          {bp.imageUrl ? (
+                            <img src={bp.imageUrl} alt={bp.name} className="w-full h-full object-cover" />
+                          ) : null}
+                        </div>
+                        <Link href={`/product/${bp.id}`} className="flex-1 min-w-0 text-zinc-300 hover:text-[#D4AF37] transition-colors">
+                          <p className="text-sm font-light truncate">{bp.name}</p>
+                          <p className="text-[10px] uppercase tracking-widest text-zinc-600">{formatter.format(bp.price)} each</p>
+                        </Link>
+                        <span className="text-xs text-[#D4AF37] font-medium shrink-0">× {bp.quantity}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            </div>
+            )}
+
+            {/* Quantity selector — simple products only. A bundle is a fixed
+                set, so per-unit quantity adjustment doesn't apply. */}
+            {!isBundle && (
+              <div className="flex items-center justify-between p-4 bg-zinc-900/40 border border-zinc-900 mb-8">
+                <span className="text-xs uppercase tracking-widest text-zinc-500">Quantity</span>
+                <div className="flex items-center gap-5 border border-zinc-800 px-4 py-2">
+                  <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30" disabled={quantity <= 1 || !canPurchase}>
+                    <Minus className="w-4 h-4" />
+                  </button>
+                  <span className="font-light text-zinc-200 w-6 text-center">{quantity}</span>
+                  <button onClick={() => setQuantity(quantity + 1)} className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30" disabled={!canPurchase}>
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
             <div className="hidden lg:block">
               <button onClick={handleBuyNow} disabled={buyNowDisabled} data-testid="pdp-buy-now-desktop" className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
                 {buyNowLabel}

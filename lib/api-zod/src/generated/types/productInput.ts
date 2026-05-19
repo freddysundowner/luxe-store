@@ -5,7 +5,9 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { HamperItem } from './hamperItem';
 import type { ProductInputImageSettings } from './productInputImageSettings';
+import type { ProductInputKind } from './productInputKind';
 import type { ProductVariantInput } from './productVariantInput';
 
 export interface ProductInput {
@@ -37,6 +39,10 @@ export interface ProductInput {
      * @nullable
      */
   availabilityTag?: string | null;
-  /** Optional variants. When provided, replaces the full set of variants for the product. */
+  /** Optional variants. When provided, replaces the full set of variants for the product. Ignored when kind=bundle. */
   variants?: ProductVariantInput[];
+  /** Defaults to 'simple' when omitted. */
+  kind?: ProductInputKind;
+  /** Required when kind=bundle. Each entry references an existing simple product by id with a quantity ≥ 1. */
+  bundleItems?: HamperItem[];
 }

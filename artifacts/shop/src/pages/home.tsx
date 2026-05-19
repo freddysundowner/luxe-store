@@ -5,6 +5,7 @@ import {
   MessageCircle, Share2, Droplets, Send
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
+import { useAddBundleToCart } from "@/lib/bundle-add";
 import { ProductCard } from "@/components/ProductCard";
 import { StoreLogo } from "@/components/StoreLogo";
 import { TikTokFeed } from "@/components/TikTokFeed";
@@ -65,6 +66,8 @@ function FeaturedSwiper({
   const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const { toggleFavorite, isFavorite } = useFavorites();
+  const { openCart } = useCart();
+  const { add: addBundle } = useAddBundleToCart();
 
   // TikTok-style drag/swipe state. `dragOffset` follows the pointer/touch in
   // real-time (px). `slideDir` says which neighbour to render off-screen so it
@@ -298,6 +301,14 @@ function FeaturedSwiper({
   };
 
   const handleCart = (product: Product) => {
+    // Bundles bypass QuickBuy (no variants/qty) — add component products as a
+    // grouped hamper line via the shared bundle-add hook, matching ProductCard
+    // / TikTokFeed / PDP behavior.
+    if (product.kind === "bundle") {
+      // The hook handles toast + openCart on success.
+      addBundle(product);
+      return;
+    }
     // Skip the cart drawer entirely — open the QuickBuy modal which collects
     // variant + quantity (if needed) and goes straight to the customer-info
     // checkout step on confirm. The dialog itself handles adding to cart, so
@@ -761,6 +772,8 @@ export default function Home() {
     }
 
     if (availability.has("instock")) list = list.filter(p => p.inStock);
+    // "Gifts only" narrows the unified feed to bundle products (kind=bundle).
+    if (availability.has("gifts")) list = list.filter(p => p.kind === "bundle");
     const tagFilters = ["new", "sale", "hot", "bestseller", "limited", "coming_soon"].filter(t => availability.has(t));
     if (tagFilters.length > 0) {
       list = list.filter(p => p.availabilityTag != null && tagFilters.includes(p.availabilityTag));
@@ -775,6 +788,7 @@ export default function Home() {
   if (isMobile) {
     const availabilityOptions: { key: string; label: string }[] = [
       { key: "instock",    label: "In Stock" },
+      { key: "gifts",      label: "Gifts (Bundles)" },
       { key: "new",        label: "New Arrival" },
       { key: "sale",       label: "Sale" },
       { key: "hot",        label: "Hot / Trending" },
@@ -1117,6 +1131,7 @@ export default function Home() {
               <div className="flex flex-col gap-2">
                 {([
                   { key: "instock",    label: "In Stock" },
+                  { key: "gifts",      label: "Gifts (Bundles)" },
                   { key: "new",        label: "New Arrival" },
                   { key: "sale",       label: "Sale" },
                   { key: "hot",        label: "Hot / Trending" },
