@@ -192,13 +192,15 @@ export function GiftSheet({ open, product, onClose }: GiftSheetProps) {
   const shareMessage = () => {
     if (!product) return "";
     const storeName = settings?.storeName || "Luxe Store";
-    const price = fmt.format(Number(product.price));
     const to = recipient.trim() || "you";
+    const from = sender.trim() ? ` from ${sender.trim()}` : "";
     const notePreview = note.trim() ? `\n\n"${note.trim()}"` : "";
+    // Keep the contents a surprise — never include the product name or price
+    // in the share message. The recipient discovers what's inside when they
+    // open the gift link.
     return (
-      `🎁 Hey ${to}! I've sent you a gift!\n\n` +
-      `*${product.name}*\n${price} — from ${storeName}${notePreview}\n\n` +
-      `Unwrap your gift here: ${giftLinkRef.current}`
+      `🎁 Hey ${to}! You've got a surprise gift${from} via ${storeName}.${notePreview}\n\n` +
+      `Tap to unwrap: ${giftLinkRef.current}`
     );
   };
 
@@ -215,7 +217,7 @@ export function GiftSheet({ open, product, onClose }: GiftSheetProps) {
     if (!product) return;
     if (navigator.share) {
       navigator
-        .share({ title: `A gift for ${recipient.trim() || "you"}`, text: shareMessage(), url: giftLinkRef.current })
+        .share({ title: `A surprise gift for ${recipient.trim() || "you"}`, text: shareMessage(), url: giftLinkRef.current })
         .catch(() => {});
     } else {
       copyLink();
