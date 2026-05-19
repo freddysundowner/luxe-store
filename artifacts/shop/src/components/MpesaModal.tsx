@@ -173,8 +173,13 @@ export function MpesaModal({ open, onClose }: MpesaModalProps) {
 
   return (
     <div className="fixed inset-0 z-[300] flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full sm:max-w-md bg-[#111] border border-zinc-800 sm:rounded-none animate-in slide-in-from-bottom-4 duration-300">
+      {/* Solid scrim instead of backdrop-blur — a live blur over the whole
+          viewport is extremely expensive on the compositor and gets re-run
+          every frame while the pending-state spinner animates, pegging CPU
+          on low-end devices. The slightly higher opacity reads nearly the
+          same visually. */}
+      <div className="absolute inset-0 bg-black/90" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md bg-[#111] border border-zinc-800 sm:rounded-none animate-in slide-in-from-bottom-4 duration-300 transform-gpu">
 
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-800">
