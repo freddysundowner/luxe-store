@@ -16,7 +16,7 @@ requestAnimationFrame(() => {
   requestAnimationFrame(() => {
     const splash = document.getElementById("splash");
     if (splash) {
-      splash.classList.add("hidden");
+      splash.classList.add("splash-out");
       splash.addEventListener("transitionend", () => splash.remove(), { once: true });
     }
   });

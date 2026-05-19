@@ -107,7 +107,7 @@ export default function AdminOrderDetail() {
   if (isLoading) {
     return (
       <AdminLayout title="Order Details">
-        <div className="max-w-4xl space-y-4">
+        <div className="space-y-4">
           <Skeleton className="h-10 w-40" />
           <Skeleton className="h-48 w-full rounded-xl" />
           <Skeleton className="h-32 w-full rounded-xl" />

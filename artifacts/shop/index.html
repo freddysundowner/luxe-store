@@ -19,15 +19,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!--ssr-head-->
     <style>
-      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-      html, body { height: 100%; }
-      body {
-        background-color: #0a0a0a;
-        color: #ffffff;
-        font-family: 'Inter', system-ui, sans-serif;
-        -webkit-font-smoothing: antialiased;
-      }
-      #root { min-height: 100vh; }
+      /* Only pre-React paint — no resets that fight Tailwind's @layer utilities */
+      body { background-color: #0a0a0a; }
 
       /* Branded splash screen shown before React mounts */
       #splash {
@@ -42,7 +35,7 @@
         z-index: 9999;
         transition: opacity 0.3s ease;
       }
-      #splash.hidden { opacity: 0; pointer-events: none; }
+      #splash.splash-out { opacity: 0; pointer-events: none; }
 
       .splash-wordmark {
         display: flex;
