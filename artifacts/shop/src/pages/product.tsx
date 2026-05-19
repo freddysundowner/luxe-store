@@ -3,8 +3,7 @@ import { RootLayout } from "@/components/layout/RootLayout";
 import { useGetProduct, getGetProductQueryKey, ProductVariant } from "@workspace/api-client-react";
 import { ShoppingBag, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useCart } from "@/lib/cart-context";
-import { useToast } from "@/hooks/use-toast";
+import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Helmet } from "react-helmet-async";
@@ -19,8 +18,7 @@ export default function ProductDetail() {
   // Reset the gallery when navigating between products so the previous
   // product's image index doesn't carry over.
   useEffect(() => { setActiveImageIdx(0); }, [productId]);
-  const { addItem, openCart } = useCart();
-  const { toast } = useToast();
+  const [quickBuyOpen, setQuickBuyOpen] = useState(false);
 
   const { data: product, isLoading, isError } = useGetProduct(productId, {
     query: { queryKey: getGetProductQueryKey(productId), enabled: !!productId }
@@ -40,14 +38,13 @@ export default function ProductDetail() {
     : (product?.stockQuantity ?? 0);
   const canPurchase = product?.inStock && (hasVariants ? !!selectedVariant && effectiveStock > 0 : true);
 
-  const handleAddToCart = () => {
-    if (!product || !canPurchase) return;
-    if (hasVariants && !selectedVariant) {
-      toast({ title: "Choose an option", description: "Please select a variant before adding to bag." });
-      return;
-    }
-    addItem(product, { variant: selectedVariant ?? null, quantity });
-    openCart();
+  // Buy-now opens the QuickBuy dialog. If the product has variants and the
+  // customer hasn't picked one yet, the dialog still opens and asks them to
+  // choose — no toast nag required. When they *have* picked one on the page,
+  // we forward it so they don't repeat themselves.
+  const handleBuyNow = () => {
+    if (!product || !product.inStock) return;
+    setQuickBuyOpen(true);
   };
 
   const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });
@@ -101,13 +98,22 @@ export default function ProductDetail() {
 
   const priceFormatted = formatter.format(headerPrice);
 
-  const addToBagLabel = !product.inStock
+  const buyNowLabel = !product.inStock
     ? "Out of Stock"
     : hasVariants && !selectedVariant
-      ? "Select an Option"
+      ? `Buy Now — From ${formatter.format(Math.min(...variantPrices))}`
       : effectiveStock <= 0
         ? "Sold Out"
-        : `Add to Bag — ${formatter.format(effectivePrice * quantity)}`;
+        : `Buy Now — ${formatter.format(effectivePrice * quantity)}`;
+
+  // Disable Buy Now whenever the customer's current selection can't actually
+  // be purchased: product flagged out of stock, no-variant product with no
+  // stock, or a sold-out variant they've picked. (We keep it enabled when
+  // they haven't picked a variant yet so the dialog can guide them.)
+  const buyNowDisabled =
+    !product.inStock ||
+    (!hasVariants && effectiveStock <= 0) ||
+    (hasVariants && !!selectedVariant && effectiveStock <= 0);
 
   return (
     <RootLayout showBack noMarquee title={product.name}>
@@ -228,8 +234,8 @@ export default function ProductDetail() {
               </div>
             </div>
             <div className="hidden lg:block">
-              <button onClick={handleAddToCart} disabled={!canPurchase} className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
-                {addToBagLabel}
+              <button onClick={handleBuyNow} disabled={buyNowDisabled} data-testid="pdp-buy-now-desktop" className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
+                {buyNowLabel}
               </button>
             </div>
           </div>
@@ -241,10 +247,18 @@ export default function ProductDetail() {
       </div>
 
       <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0a]/95 backdrop-blur border-t border-zinc-900 z-50">
-        <button onClick={handleAddToCart} disabled={!canPurchase} className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-          {addToBagLabel}
+        <button onClick={handleBuyNow} disabled={buyNowDisabled} data-testid="pdp-buy-now-mobile" className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          {buyNowLabel}
         </button>
       </div>
+
+      <QuickBuyDialog
+        open={quickBuyOpen}
+        onOpenChange={setQuickBuyOpen}
+        product={product}
+        initialVariantId={selectedVariantId}
+        initialQuantity={quantity}
+      />
     </RootLayout>
   );
 }

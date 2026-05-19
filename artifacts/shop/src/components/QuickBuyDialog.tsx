@@ -9,11 +9,15 @@ interface QuickBuyDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   product: Product | null;
+  /** Pre-select a variant when the dialog opens (e.g. coming from PDP). */
+  initialVariantId?: number | null;
+  /** Initial quantity when the dialog opens. Defaults to 1. */
+  initialQuantity?: number;
 }
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
-export function QuickBuyDialog({ open, onOpenChange, product }: QuickBuyDialogProps) {
+export function QuickBuyDialog({ open, onOpenChange, product, initialVariantId = null, initialQuantity = 1 }: QuickBuyDialogProps) {
   const { addItem, startQuickCheckout, setPendingQuickBuyLine } = useCart();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const { toast } = useToast();
@@ -36,14 +40,16 @@ export function QuickBuyDialog({ open, onOpenChange, product }: QuickBuyDialogPr
     }
   };
 
-  // Reset when the dialog opens for a new product.
+  // Reset when the dialog opens for a new product. Honour any pre-selected
+  // variant / quantity passed by the caller (e.g. the product detail page
+  // forwards what the customer already chose so they don't re-pick).
   useEffect(() => {
     if (open) {
-      setSelectedVariantId(null);
-      setQuantity(1);
+      setSelectedVariantId(initialVariantId);
+      setQuantity(initialQuantity > 0 ? initialQuantity : 1);
       setIsSubmitting(false);
     }
-  }, [open, product?.id]);
+  }, [open, product?.id, initialVariantId, initialQuantity]);
 
   // Cancel any pending handoff timer if this dialog unmounts.
   useEffect(() => () => clearHandoffTimer(), []);
@@ -58,9 +64,14 @@ export function QuickBuyDialog({ open, onOpenChange, product }: QuickBuyDialogPr
   const showFromPrice = hasVariants && priceDiffers && !selectedVariant;
   const headerPrice = selectedVariant ? effectivePrice : (showFromPrice ? Math.min(...variantPrices) : product.price);
 
+  // Require positive stock on both code paths. Previously the no-variant
+  // branch only checked `inStock` (a boolean flag), which let products with
+  // `inStock=true` but `stockQuantity=0` slip through quick checkout.
   const canPurchase =
     product.inStock &&
-    (hasVariants ? !!selectedVariant && effectiveStock > 0 : true);
+    (hasVariants
+      ? !!selectedVariant && effectiveStock > 0
+      : effectiveStock > 0);
 
   const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayApiKey;
   const whatsappEnabled = !!settings?.whatsappNumber;
@@ -97,9 +108,16 @@ export function QuickBuyDialog({ open, onOpenChange, product }: QuickBuyDialogPr
       <DialogContent className="bg-zinc-950 border-zinc-800 text-white sm:max-w-md p-0 overflow-hidden">
         <div className="flex gap-4 p-5 border-b border-zinc-800">
           <div className="w-20 h-20 bg-zinc-900 border border-zinc-800 shrink-0 overflow-hidden">
-            {product.imageUrl
-              ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover opacity-90" />
-              : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-6 h-6 text-zinc-700" /></div>}
+            {(() => {
+              // Prefer the gallery's first image, fall back to the legacy
+              // single `imageUrl` for rows that pre-date multi-image support.
+              const cover = (product.images && product.images.length > 0)
+                ? product.images[0]
+                : product.imageUrl;
+              return cover
+                ? <img src={cover} alt={product.name} className="w-full h-full object-cover opacity-90" />
+                : <div className="w-full h-full flex items-center justify-center"><ShoppingBag className="w-6 h-6 text-zinc-700" /></div>;
+            })()}
           </div>
           <div className="flex-1 min-w-0">
             <DialogHeader className="space-y-1 text-left">
