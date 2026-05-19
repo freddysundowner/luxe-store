@@ -28,8 +28,32 @@ const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES",
 
 // ── Desktop featured TikTok swiper (center column) ─────────────────────────
 
-function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: () => void }) {
+function FeaturedSwiper({
+  products,
+  onClear,
+  selection,
+}: {
+  products: Product[];
+  onClear?: () => void;
+  /**
+   * Optional external selection — when the parent (desktop home grid) clicks
+   * a card we jump the swiper to that product. We use `{ id, nonce }` so
+   * clicking the same card after swiping still re-snaps (object identity
+   * changes even when id is unchanged). Snap is instant (no slide animation)
+   * since the user is making a deliberate selection from another column.
+   */
+  selection?: { id: number; nonce: number } | null;
+}) {
   const [index, setIndex] = useState(0);
+
+  // Jump to externally-selected product (e.g. from the right-column grid).
+  useEffect(() => {
+    if (!selection) return;
+    const idx = products.findIndex((p) => p.id === selection.id);
+    if (idx >= 0) setIndex(idx);
+    // Intentionally re-runs whenever the parent issues a new selection
+    // (different nonce), even if the product id is the same.
+  }, [selection, products]);
   const [giftProduct, setGiftProduct] = useState<Product | null>(null);
   const [giftRecipient, setGiftRecipient] = useState("");
   const [giftNote, setGiftNote] = useState("");
@@ -649,6 +673,10 @@ export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
   const [priceRanges, setPriceRanges] = useState<Set<string>>(new Set());
   const [availability, setAvailability] = useState<Set<string>>(new Set());
+  // Drives the desktop centre swiper. Clicking a card in the right-column
+  // grid sets this so the feed snaps to that product instead of navigating.
+  // `nonce` bumps each click so re-selecting the same product still re-snaps.
+  const [featuredSelection, setFeaturedSelection] = useState<{ id: number; nonce: number } | null>(null);
 
   const toggleSet = (setter: React.Dispatch<React.SetStateAction<Set<string>>>, key: string) => {
     setter(prev => {
@@ -1106,6 +1134,7 @@ export default function Home() {
           {allProducts ? (
             <FeaturedSwiper
               products={displayProducts}
+              selection={featuredSelection}
               onClear={() => { clearSearch(); setSelectedCategory(undefined); setPriceRanges(new Set()); setAvailability(new Set()); }}
             />
           ) : (
@@ -1156,7 +1185,11 @@ export default function Home() {
             ) : (
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {displayProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <ProductCard
+                    key={product.id}
+                    product={product}
+                    onSelect={(p) => setFeaturedSelection((prev) => ({ id: p.id, nonce: (prev?.nonce ?? 0) + 1 }))}
+                  />
                 ))}
               </div>
             )}

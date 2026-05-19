@@ -14,7 +14,19 @@ const TAG_CONFIG: Record<string, { label: string; color: string; textColor: stri
   coming_soon: { label: "Coming Soon",  color: "#71717a", textColor: "#fff" },
 };
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  onSelect,
+}: {
+  product: Product;
+  /**
+   * When provided, clicking the card calls `onSelect(product)` instead of
+   * navigating to the product details page. Used on desktop home so the right
+   * column "feeds" the centre TikTok-style swiper. The inner Add-to-Bag
+   * button still works because it calls `e.stopPropagation()`.
+   */
+  onSelect?: (product: Product) => void;
+}) {
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
 
@@ -25,6 +37,10 @@ export function ProductCard({ product }: { product: Product }) {
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    // Prevent the click from bubbling to the card wrapper. In onSelect mode
+    // the wrapper is a div with onClick that would otherwise re-select the
+    // featured product when the user clicks Add to Bag.
+    e.stopPropagation();
     if (isSoldOut || hasVariants) return;
     addItem(product, { quantity: 1 });
     openCart();
@@ -41,9 +57,8 @@ export function ProductCard({ product }: { product: Product }) {
 
   const tag = product.availabilityTag ? TAG_CONFIG[product.availabilityTag] : null;
 
-  return (
-    <Link href={`/product/${product.id}`}>
-      <div className="group cursor-pointer">
+  const inner = (
+    <div className="group cursor-pointer">
         <div className="relative aspect-[4/5] overflow-hidden bg-zinc-900 border border-zinc-900 group-hover:border-[#D4AF37]/40 transition-colors duration-500 mb-3">
           {product.imageUrl ? (
             <img
@@ -123,6 +138,25 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         </div>
       </div>
-    </Link>
   );
+
+  if (onSelect) {
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => onSelect(product)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSelect(product);
+          }
+        }}
+      >
+        {inner}
+      </div>
+    );
+  }
+
+  return <Link href={`/product/${product.id}`}>{inner}</Link>;
 }
