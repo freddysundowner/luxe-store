@@ -6,8 +6,16 @@ import { db, productsTable, categoriesTable } from "@workspace/db";
 const router = Router();
 
 function getClient() {
+  // Prefer Replit's managed Anthropic integration (no user-provided key
+  // needed; usage is billed to Replit credits). Fall back to a plain
+  // ANTHROPIC_API_KEY for self-hosted setups.
+  const integrationKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
+  const integrationBase = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
+  if (integrationKey && integrationBase) {
+    return new Anthropic({ apiKey: integrationKey, baseURL: integrationBase });
+  }
   const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("ANTHROPIC_API_KEY is not set");
+  if (!key) throw new Error("Anthropic credentials are not configured");
   return new Anthropic({ apiKey: key });
 }
 
@@ -64,8 +72,8 @@ router.post("/ai/suggest", async (req, res): Promise<void> => {
     const client = getClient();
 
     const response = await client.messages.create({
-      model: "claude-3-5-haiku-20241022",
-      max_tokens: 512,
+      model: "claude-haiku-4-5",
+      max_tokens: 1024,
       system: `You are a helpful gift advisor for a luxury dark-themed online store. 
 You help customers find the perfect product from the store's catalog.
 Reply in 2-4 short sentences. Recommend 1-3 specific products by name (exact match from catalog). 
@@ -100,8 +108,8 @@ router.post("/ai/search", async (req, res): Promise<void> => {
     const client = getClient();
 
     const response = await client.messages.create({
-      model: "claude-3-5-haiku-20241022",
-      max_tokens: 256,
+      model: "claude-haiku-4-5",
+      max_tokens: 512,
       system: `You are a product search engine. Given a natural language search query, return a JSON array of product IDs from the catalog that best match the query intent.
 Consider price ranges, categories, use cases, recipient types, and product descriptions.
 Return ONLY a valid JSON array of integers (product IDs), nothing else. Example: [1, 4, 7]
