@@ -96,3 +96,9 @@ id = "Z35FSeNKmkV-9RF8wJ_lJ"
 uri = "file://FEATURES.md"
 type = "text"
 title = "Luxe Store — Feature Overview"
+
+[[outputs]]
+id = "rOy7vcLuaU0Oyk8kk5Q9D"
+uri = "file://Luxe-Store-Features.pdf"
+type = "pdf"
+title = "Luxe Store — What our website does"
