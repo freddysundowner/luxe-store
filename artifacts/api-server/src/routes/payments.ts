@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and, isNotNull, sql } from "drizzle-orm";
 import { db, storeSettingsTable, paymentsTable, productsTable } from "@workspace/db";
 import https from "node:https";
 import { sendOrderConfirmationEmail } from "../lib/email";
@@ -15,30 +15,45 @@ async function decrementStockForPayment(
   log: { info: (...a: unknown[]) => void; warn: (...a: unknown[]) => void; error: (...a: unknown[]) => void }
 ): Promise<void> {
   if (payment.stockApplied) return;
+
+  // Atomically claim the right to decrement stock for this payment. If another
+  // concurrent caller (e.g. webhook racing with status-poll) already claimed
+  // it, we exit without touching stock.
+  const claimed = await db
+    .update(paymentsTable)
+    .set({ stockApplied: true })
+    .where(and(eq(paymentsTable.id, payment.id), eq(paymentsTable.stockApplied, false)))
+    .returning({ id: paymentsTable.id });
+  if (claimed.length === 0) return;
+
   const snapshot = (payment.cartSnapshot ?? {}) as OrderSnapshot;
   const items = snapshot.items ?? [];
+
+  // Aggregate quantities per product in case the cart has duplicate lines.
+  const perProduct = new Map<number, number>();
   for (const item of items) {
     const productId = item.productId ?? item.id;
     const qty = Number(item.quantity);
     if (!productId || !Number.isFinite(qty) || qty <= 0) continue;
+    perProduct.set(productId, (perProduct.get(productId) ?? 0) + qty);
+  }
+
+  for (const [productId, qty] of perProduct) {
     try {
-      const [prod] = await db.select().from(productsTable).where(eq(productsTable.id, productId)).limit(1);
-      if (!prod) continue;
-      if (prod.stockQuantity === null || prod.stockQuantity === undefined) continue; // untracked
-      const next = Math.max(0, prod.stockQuantity - qty);
+      // Atomic decrement in a single SQL statement. Skips untracked products
+      // (NULL stockQuantity) and prevents lost updates from concurrent payments
+      // for the same SKU.
       await db
         .update(productsTable)
-        .set({ stockQuantity: next, inStock: next > 0 ? prod.inStock : false })
-        .where(eq(productsTable.id, productId));
+        .set({
+          stockQuantity: sql`GREATEST(0, ${productsTable.stockQuantity} - ${qty})`,
+          inStock: sql`CASE WHEN GREATEST(0, ${productsTable.stockQuantity} - ${qty}) = 0 THEN false ELSE ${productsTable.inStock} END`,
+        })
+        .where(and(eq(productsTable.id, productId), isNotNull(productsTable.stockQuantity)));
     } catch (err) {
       log.warn({ err, productId }, "Failed to decrement product stock");
     }
   }
-  await db
-    .update(paymentsTable)
-    .set({ stockApplied: true })
-    .where(eq(paymentsTable.id, payment.id))
-    .catch(() => {});
 }
 
 async function sendOrderEmailForPayment(

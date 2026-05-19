@@ -28,6 +28,7 @@ const productSelect = {
   isActive: productsTable.isActive,
   isDropship: productsTable.isDropship,
   isFeatured: productsTable.isFeatured,
+  stockQuantity: productsTable.stockQuantity,
   createdAt: productsTable.createdAt,
   categoryName: categoriesTable.name,
 } as const;
@@ -44,6 +45,7 @@ function mapRow(row: {
   isActive: boolean;
   isDropship: boolean;
   isFeatured: boolean;
+  stockQuantity: number | null;
   createdAt: Date;
   categoryName: string | null;
 }) {
@@ -60,6 +62,7 @@ function mapRow(row: {
     isActive: row.isActive,
     isDropship: row.isDropship,
     isFeatured: row.isFeatured,
+    stockQuantity: row.stockQuantity,
     createdAt: row.createdAt.toISOString(),
   };
 }

@@ -1,8 +1,8 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListAdminProducts, getListAdminProductsQueryKey, useDeleteProduct, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
+import { useListAdminProducts, getListAdminProductsQueryKey, useDeleteProduct, useUpdateProduct, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Plus, Edit, Trash2, Search, Package } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Package, Check, X } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -44,6 +44,63 @@ export default function AdminProducts() {
       }
     }
   });
+
+  const [editingStockId, setEditingStockId] = useState<number | null>(null);
+  const [stockDraft, setStockDraft] = useState<string>("");
+
+  const updateMutation = useUpdateProduct({
+    mutation: {
+      onSuccess: () => {
+        toast({ title: "Stock updated" });
+        queryClient.invalidateQueries({ queryKey: getListAdminProductsQueryKey() });
+        setEditingStockId(null);
+      },
+      onError: () => {
+        toast({ variant: "destructive", title: "Failed to update stock" });
+      },
+    },
+  });
+
+  const startEditStock = (id: number, current: number | null | undefined) => {
+    setEditingStockId(id);
+    setStockDraft(current == null ? "" : String(current));
+  };
+
+  const saveStock = (product: { id: number; name: string; description?: string | null; price: number; originalPrice?: number | null; categoryId?: number | null; imageUrl?: string | null; inStock: boolean; isActive: boolean; isDropship: boolean; isFeatured: boolean; availabilityTag?: string | null; }) => {
+    const trimmed = stockDraft.trim();
+    let stockQuantity: number | null;
+    if (trimmed === "") {
+      stockQuantity = null;
+    } else {
+      const n = Number(trimmed);
+      if (!Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {
+        toast({ variant: "destructive", title: "Enter a whole number ≥ 0, or leave blank for unlimited" });
+        return;
+      }
+      stockQuantity = n;
+    }
+    if (product.categoryId == null) {
+      toast({ variant: "destructive", title: "Set a category on this product first (open the product to edit)." });
+      return;
+    }
+    // Build a ProductInput-shaped payload. Optional string fields must be
+    // omitted (not null); categoryId is required and non-null.
+    const data: Record<string, unknown> = {
+      name: product.name,
+      price: product.price,
+      categoryId: product.categoryId,
+      inStock: stockQuantity === 0 ? false : (stockQuantity == null ? product.inStock : true),
+      isActive: product.isActive,
+      isDropship: product.isDropship,
+      isFeatured: product.isFeatured,
+      stockQuantity,
+      originalPrice: product.originalPrice ?? null,
+      availabilityTag: product.availabilityTag ?? null,
+    };
+    if (product.description) data.description = product.description;
+    if (product.imageUrl) data.imageUrl = product.imageUrl;
+    updateMutation.mutate({ id: product.id, data: data as never });
+  };
 
   const handleDelete = (id: number) => setDeleteId(id);
 
@@ -95,6 +152,7 @@ export default function AdminProducts() {
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Price</TableHead>
+                  <TableHead>Stock</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -114,6 +172,60 @@ export default function AdminProducts() {
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.categoryName || "Uncategorized"}</TableCell>
                     <TableCell>{currencySymbol} {Number(product.price).toFixed(2)}</TableCell>
+                    <TableCell>
+                      {editingStockId === product.id ? (
+                        <div className="flex items-center gap-1">
+                          <Input
+                            type="number"
+                            min={0}
+                            step={1}
+                            value={stockDraft}
+                            onChange={(e) => setStockDraft(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") saveStock(product);
+                              if (e.key === "Escape") setEditingStockId(null);
+                            }}
+                            placeholder="∞"
+                            className="h-8 w-20"
+                            autoFocus
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => saveStock(product)}
+                            disabled={updateMutation.isPending}
+                          >
+                            <Check className="w-4 h-4 text-emerald-600" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setEditingStockId(null)}
+                          >
+                            <X className="w-4 h-4 text-muted-foreground" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => startEditStock(product.id, product.stockQuantity)}
+                          className="text-left hover:underline text-sm"
+                          title="Click to edit stock"
+                        >
+                          {product.stockQuantity == null ? (
+                            <span className="text-muted-foreground">Unlimited</span>
+                          ) : product.stockQuantity === 0 ? (
+                            <span className="text-destructive font-medium">0</span>
+                          ) : product.stockQuantity <= 5 ? (
+                            <span className="text-amber-600 font-medium">{product.stockQuantity}</span>
+                          ) : (
+                            <span>{product.stockQuantity}</span>
+                          )}
+                        </button>
+                      )}
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {product.isActive ? (
