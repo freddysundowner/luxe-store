@@ -1,10 +1,56 @@
 import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, storeSettingsTable, paymentsTable } from "@workspace/db";
+import https from "node:https";
 
 const router = Router();
 
 const SUNPAY_BASE = "https://api.sunpay.co.ke";
+
+// SunPay's TLS cert doesn't match their hostname — bypass cert validation for their domain only
+const sunpayAgent = new https.Agent({ rejectUnauthorized: false });
+
+interface SunpayResponse {
+  ok: boolean;
+  status: number;
+  json(): Promise<unknown>;
+  text(): Promise<string>;
+}
+
+function sunpayFetch(
+  url: string,
+  options: { method?: string; headers?: Record<string, string>; body?: string } = {}
+): Promise<SunpayResponse> {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+    const req = https.request(
+      {
+        hostname: u.hostname,
+        port: u.port || 443,
+        path: u.pathname + u.search,
+        method: options.method ?? "GET",
+        headers: options.headers ?? {},
+        agent: sunpayAgent,
+      },
+      (res) => {
+        let raw = "";
+        res.on("data", (chunk: string) => { raw += chunk; });
+        res.on("end", () => {
+          const status = res.statusCode ?? 0;
+          resolve({
+            ok: status >= 200 && status < 300,
+            status,
+            json: () => Promise.resolve(JSON.parse(raw)),
+            text: () => Promise.resolve(raw),
+          });
+        });
+      }
+    );
+    req.on("error", reject);
+    if (options.body) req.write(options.body);
+    req.end();
+  });
+}
 
 async function getSettings() {
   const rows = await db.select().from(storeSettingsTable).limit(1);
@@ -41,7 +87,7 @@ router.post("/payments/initiate", async (req, res): Promise<void> => {
 
   let sunpayRes: { success: boolean; message: string; transactionId: string; checkoutRequestId: string };
   try {
-    const r = await fetch(`${SUNPAY_BASE}/api/v1/payments/stk-push`, {
+    const r = await sunpayFetch(`${SUNPAY_BASE}/api/v1/payments/stk-push`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${settings.sunpayApiKey}`,
@@ -113,7 +159,7 @@ router.get("/payments/:transactionId/status", async (req, res): Promise<void> =>
     const settings = await getSettings();
     if (settings?.sunpayApiKey) {
       try {
-        const r = await fetch(`${SUNPAY_BASE}/api/v1/payments/${transactionId}`, {
+        const r = await sunpayFetch(`${SUNPAY_BASE}/api/v1/payments/${transactionId}`, {
           headers: { Authorization: `Bearer ${settings.sunpayApiKey}` },
         });
         if (r.ok) {
