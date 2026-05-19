@@ -39,6 +39,39 @@ have() { command -v "$1" >/dev/null 2>&1; }
 
 mkdir -p "${REPO_DIR}/.local"
 
+# ── Pick a free TCP port ─────────────────────────────────────────────────────
+# Tries the preferred port first; if taken, walks upward until it finds a free
+# one (or our own systemd unit already on it, which we treat as free so re-runs
+# don't keep hopping ports). Uses `ss` (always available on modern Ubuntu).
+port_in_use() {
+  ss -H -ltn "sport = :$1" 2>/dev/null | grep -q .
+}
+pick_port() {
+  local preferred="$1" service_unit="$2" port="$1"
+  if port_in_use "$port"; then
+    # If our own service is the one holding the port, keep it.
+    if systemctl is-active --quiet "$service_unit" 2>/dev/null \
+       && ss -H -ltnp "sport = :$port" 2>/dev/null | grep -q "${service_unit%.service}\|node"; then
+      echo "$port"; return 0
+    fi
+    warn "Port ${preferred} is already in use — searching for a free one…" >&2
+    port=$((preferred + 1))
+    while (( port < preferred + 200 )); do
+      port_in_use "$port" || { echo "$port"; return 0; }
+      port=$((port + 1))
+    done
+    die "Could not find a free port in range ${preferred}–$((preferred+199))."
+  fi
+  echo "$port"
+}
+
+# Make sure `ss` exists before we use it
+have ss || apt-get install -y iproute2 >/dev/null
+
+API_PORT="$(pick_port "$API_PORT"  "luxe-api.service")"
+SHOP_PORT="$(pick_port "$SHOP_PORT" "luxe-shop.service")"
+log "Using API port ${API_PORT} and shop port ${SHOP_PORT}."
+
 # ── 1. System packages ──────────────────────────────────────────────────────
 log "Updating apt and installing system prerequisites…"
 export DEBIAN_FRONTEND=noninteractive
