@@ -134,9 +134,9 @@ export default function AdminOrderDetail() {
 
   return (
     <AdminLayout title="Order Details">
-      <div className="space-y-3">
+      <div className="space-y-3 pb-6">
 
-        {/* Back + header */}
+        {/* Header — full width */}
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <button
@@ -152,105 +152,114 @@ export default function AdminOrderDetail() {
           {statusBadge(order.status)}
         </div>
 
-        {/* Cart items */}
-        {items.length > 0 && (
-          <section className="space-y-1.5">
-            <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <Package className="w-3.5 h-3.5" />Items Ordered
-            </h2>
-            <div className="rounded-lg border border-border overflow-hidden divide-y divide-border">
-              {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-3 px-4 py-2.5">
-                  {item.imageUrl
-                    ? <img src={item.imageUrl} alt={item.name} className="w-9 h-9 rounded object-cover flex-shrink-0" />
-                    : <div className="w-9 h-9 rounded bg-muted flex items-center justify-center flex-shrink-0"><ShoppingBag className="w-4 h-4 text-muted-foreground" /></div>
-                  }
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{item.name}</p>
-                    <p className="text-[11px] text-muted-foreground">Qty: {item.quantity} × KSh {item.price.toLocaleString()}</p>
+        {/* Two-column body */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+
+          {/* ── LEFT COLUMN ── */}
+          <div className="space-y-3">
+
+            {/* Items */}
+            {items.length > 0 ? (
+              <section className="space-y-1.5">
+                <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                  <Package className="w-3.5 h-3.5" />Items Ordered
+                </h2>
+                <div className="rounded-lg border border-border overflow-hidden divide-y divide-border">
+                  {items.map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 px-4 py-2.5">
+                      {item.imageUrl
+                        ? <img src={item.imageUrl} alt={item.name} className="w-9 h-9 rounded object-cover flex-shrink-0" />
+                        : <div className="w-9 h-9 rounded bg-muted flex items-center justify-center flex-shrink-0"><ShoppingBag className="w-4 h-4 text-muted-foreground" /></div>
+                      }
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{item.name}</p>
+                        <p className="text-[11px] text-muted-foreground">Qty: {item.quantity} × KSh {item.price.toLocaleString()}</p>
+                      </div>
+                      <p className="text-xs font-semibold flex-shrink-0">KSh {(item.price * item.quantity).toLocaleString()}</p>
+                    </div>
+                  ))}
+                  <div className="flex justify-between items-center px-4 py-2 bg-muted/30">
+                    <span className="font-semibold text-xs">Total</span>
+                    <span className="font-bold text-sm">KSh {order.amount.toLocaleString()}</span>
                   </div>
-                  <p className="text-xs font-semibold flex-shrink-0">KSh {(item.price * item.quantity).toLocaleString()}</p>
                 </div>
-              ))}
-              <div className="flex justify-between items-center px-4 py-2 bg-muted/30">
-                <span className="font-semibold text-xs">Total</span>
-                <span className="font-bold text-sm">KSh {order.amount.toLocaleString()}</span>
+              </section>
+            ) : cart ? (
+              <section className="space-y-1.5">
+                <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Cart Data</h2>
+                <pre className="text-[10px] bg-muted/50 rounded-lg p-3 overflow-x-auto text-muted-foreground">
+                  {JSON.stringify(cart, null, 2)}
+                </pre>
+              </section>
+            ) : null}
+
+            {/* Customer */}
+            <section className="space-y-1.5">
+              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Phone className="w-3.5 h-3.5" />Customer
+              </h2>
+              <div className="rounded-lg border border-border divide-y divide-border">
+                <Row label="Phone" value={formatPhone(order.phoneNumber)} mono icon={<Phone className="w-3 h-3" />} />
+                {customer?.name && <Row label="Name" value={customer.name} icon={<User className="w-3 h-3" />} />}
+                {customer?.email && <Row label="Email" value={customer.email} icon={<Mail className="w-3 h-3" />} />}
+                {customer?.address && <Row label="Delivery Address" value={customer.address} icon={<MapPin className="w-3 h-3" />} />}
               </div>
-            </div>
-          </section>
-        )}
-
-        {/* Customer info */}
-        <section className="space-y-1.5">
-          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <Phone className="w-3.5 h-3.5" />Customer
-          </h2>
-          <div className="rounded-lg border border-border divide-y divide-border">
-            <Row label="Phone" value={formatPhone(order.phoneNumber)} mono icon={<Phone className="w-3 h-3" />} />
-            {customer?.name && <Row label="Name" value={customer.name} icon={<User className="w-3 h-3" />} />}
-            {customer?.email && <Row label="Email" value={customer.email} icon={<Mail className="w-3 h-3" />} />}
-            {customer?.address && <Row label="Delivery Address" value={customer.address} icon={<MapPin className="w-3 h-3" />} />}
+            </section>
           </div>
-        </section>
 
-        {/* Payment info */}
-        <section className="space-y-1.5">
-          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <CreditCard className="w-3.5 h-3.5" />Payment
-          </h2>
-          <div className="rounded-lg border border-border divide-y divide-border">
-            <Row label="Amount" value={`KSh ${order.amount.toLocaleString()}`} bold />
-            <Row label="Status" value={<span className="capitalize">{order.status}</span>} />
-            {order.mpesaRef && <Row label="M-Pesa Ref" value={order.mpesaRef} mono icon={<Hash className="w-3 h-3" />} />}
-            {order.externalRef && <Row label="Order Ref" value={order.externalRef} mono />}
-            <Row label="Transaction ID" value={order.transactionId} mono small />
-            {order.checkoutRequestId && <Row label="Checkout ID" value={order.checkoutRequestId} mono small />}
+          {/* ── RIGHT COLUMN ── */}
+          <div className="space-y-3">
+
+            {/* Payment */}
+            <section className="space-y-1.5">
+              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <CreditCard className="w-3.5 h-3.5" />Payment
+              </h2>
+              <div className="rounded-lg border border-border divide-y divide-border">
+                <Row label="Amount" value={`KSh ${order.amount.toLocaleString()}`} bold />
+                <Row label="Status" value={<span className="capitalize">{order.status}</span>} />
+                {order.mpesaRef && <Row label="M-Pesa Ref" value={order.mpesaRef} mono icon={<Hash className="w-3 h-3" />} />}
+                {order.externalRef && <Row label="Order Ref" value={order.externalRef} mono />}
+                <Row label="Transaction ID" value={order.transactionId} mono small />
+                {order.checkoutRequestId && <Row label="Checkout ID" value={order.checkoutRequestId} mono small />}
+              </div>
+            </section>
+
+            {/* Timeline */}
+            <section className="space-y-1.5">
+              <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5" />Timeline
+              </h2>
+              <div className="rounded-lg border border-border divide-y divide-border">
+                <Row label="Created" value={formatDate(order.createdAt)} />
+                {order.updatedAt && order.updatedAt !== order.createdAt && (
+                  <Row label="Last updated" value={formatDate(order.updatedAt)} icon={<RefreshCw className="w-3 h-3" />} />
+                )}
+              </div>
+            </section>
+
+            {/* Actions */}
+            <section className="flex gap-2">
+              <Button
+                className="flex-1 gap-1.5 bg-[#25D366] hover:bg-[#1fba59] text-white border-0 h-9 text-xs"
+                onClick={shareReceiptToWhatsApp}
+                disabled={!settings?.whatsappNumber}
+                title={!settings?.whatsappNumber ? "Set a WhatsApp number in Settings first" : undefined}
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                Share Receipt
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 gap-1.5 h-9 text-xs"
+                onClick={() => window.open(receiptUrl, "_blank")}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+                Open Receipt
+              </Button>
+            </section>
           </div>
-        </section>
-
-        {/* Timestamps */}
-        <section className="space-y-1.5">
-          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5" />Timeline
-          </h2>
-          <div className="rounded-lg border border-border divide-y divide-border">
-            <Row label="Created" value={formatDate(order.createdAt)} />
-            {order.updatedAt && order.updatedAt !== order.createdAt && (
-              <Row label="Last updated" value={formatDate(order.updatedAt)} icon={<RefreshCw className="w-3 h-3" />} />
-            )}
-          </div>
-        </section>
-
-        {/* Raw cart data (fallback when no parsed items) */}
-        {cart && items.length === 0 && (
-          <section className="space-y-1.5">
-            <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Cart Data</h2>
-            <pre className="text-[10px] bg-muted/50 rounded-lg p-3 overflow-x-auto text-muted-foreground">
-              {JSON.stringify(cart, null, 2)}
-            </pre>
-          </section>
-        )}
-
-        {/* Actions */}
-        <section className="flex gap-2 pb-4">
-          <Button
-            className="flex-1 gap-2 bg-[#25D366] hover:bg-[#1fba59] text-white border-0 h-9 text-xs"
-            onClick={shareReceiptToWhatsApp}
-            disabled={!settings?.whatsappNumber}
-            title={!settings?.whatsappNumber ? "Set a WhatsApp number in Settings first" : undefined}
-          >
-            <MessageCircle className="w-3.5 h-3.5" />
-            Share Receipt via WhatsApp
-          </Button>
-          <Button
-            variant="outline"
-            className="flex-1 gap-2 h-9 text-xs"
-            onClick={() => window.open(receiptUrl, "_blank")}
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Open Receipt
-          </Button>
-        </section>
+        </div>
       </div>
     </AdminLayout>
   );
