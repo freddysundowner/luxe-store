@@ -549,7 +549,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
             style={
               isFavorite(current.id)
                 ? { color: "#D4AF37", fill: "#D4AF37", filter: "drop-shadow(0 0 6px rgba(212,175,55,0.7))" }
-                : { animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }
+                : { color: "#D4AF37", filter: "drop-shadow(0 0 4px rgba(212,175,55,0.5))" }
             }
           />
         </button>
@@ -559,10 +559,6 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
             from { transform: scaleX(0); }
             to { transform: scaleX(1); }
           }
-          @keyframes goldShimmer {
-            0%, 100% { color: #D4AF37; filter: drop-shadow(0 0 3px rgba(212,175,55,0.4)); opacity: 0.85; }
-            50% { color: #f5e27a; filter: drop-shadow(0 0 8px rgba(245,226,122,0.9)); opacity: 1; }
-          }
         `}</style>
 
         {/* Right-side actions */}
@@ -571,21 +567,21 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
           style={{ bottom: "170px", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.55))" }}
         >
           <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/70 ring-1 ring-black/30 flex items-center justify-center shadow-xl transition-all duration-200 hover:bg-[#D4AF37]/25">
+            <div className="w-12 h-12 rounded-full bg-black/80 border border-[#D4AF37]/70 ring-1 ring-black/30 flex items-center justify-center shadow-xl transition-colors duration-200 hover:bg-[#D4AF37]/25">
               <Gift className="w-5 h-5 text-[#D4AF37]" />
             </div>
             <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Gift</span>
           </button>
 
           <Link href={`/product/${current.id}`} className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/60 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-black/80 border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/60 transition-colors">
               <MessageCircle className="w-5 h-5 text-white" />
             </div>
             <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>View</span>
           </Link>
 
           <button onClick={() => handleShare(current)} className="flex flex-col items-center gap-1">
-            <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/60 transition-colors">
+            <div className="w-12 h-12 rounded-full bg-black/80 border border-white/30 ring-1 ring-black/30 flex items-center justify-center shadow-xl hover:border-[#D4AF37]/60 transition-colors">
               <Share2 className="w-5 h-5 text-white" />
             </div>
             <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Share</span>
@@ -593,7 +589,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
 
           {onOpenGiftFinder && (
             <button onClick={onOpenGiftFinder} className="flex flex-col items-center gap-1">
-              <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/60 ring-1 ring-black/30 flex items-center justify-center shadow-xl">
+              <div className="w-12 h-12 rounded-full bg-black/80 border border-[#D4AF37]/60 ring-1 ring-black/30 flex items-center justify-center shadow-xl">
                 <Sparkles className="w-5 h-5 text-[#D4AF37]" />
               </div>
               <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>AI</span>
@@ -747,11 +743,7 @@ function BottomPanel({
         )}
       </div>
       <style>{`
-        @keyframes gift-glow {
-          0%, 100% { box-shadow: 0 0 6px rgba(212,175,55,0.3), inset 0 0 6px rgba(212,175,55,0.05); }
-          50%       { box-shadow: 0 0 18px rgba(212,175,55,0.65), inset 0 0 10px rgba(212,175,55,0.1); }
-        }
-        .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
+        .gift-glow-btn { box-shadow: 0 0 12px rgba(212,175,55,0.45), inset 0 0 8px rgba(212,175,55,0.08); }
       `}</style>
       {(() => {
         const isSoldOut = isProductSoldOut(product);
