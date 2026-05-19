@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { randomBytes } from "crypto";
-import { db, giftsTable } from "@workspace/db";
+import { db, giftsTable, paymentsTable } from "@workspace/db";
 const router = Router();
 
 function makeToken() {
@@ -88,7 +88,7 @@ router.post("/gifts", async (req, res): Promise<void> => {
 
 // ── GET /gifts/:token ────────────────────────────────────────────────────────
 router.get("/gifts/:token", async (req, res): Promise<void> => {
-  const [gift] = await db
+  let [gift] = await db
     .select()
     .from(giftsTable)
     .where(eq(giftsTable.claimToken, req.params.token))
@@ -97,6 +97,39 @@ router.get("/gifts/:token", async (req, res): Promise<void> => {
   if (!gift) {
     res.status(404).json({ error: "Gift not found" });
     return;
+  }
+
+  // Self-heal: if the gift is still pending but a completed payment exists
+  // for its GIFT-<token> external ref, flip it now. Covers the rare case
+  // where the webhook/poll-completion path didn't run (e.g. server restart
+  // between SunPay completion and notification, or transient error in the
+  // post-payment side-effects). Without this, a paid gift can be stuck
+  // "pending" forever from the recipient's view.
+  if (gift.status === "pending") {
+    const [pmt] = await db
+      .select()
+      .from(paymentsTable)
+      .where(
+        and(
+          eq(paymentsTable.externalRef, `GIFT-${req.params.token}`),
+          eq(paymentsTable.status, "completed"),
+        ),
+      )
+      .limit(1);
+    if (pmt) {
+      await markGiftPaidForExternalRef({
+        externalRef: pmt.externalRef,
+        amount: Number(pmt.amount),
+        status: pmt.status,
+        transactionId: pmt.transactionId,
+        mpesaRef: pmt.mpesaRef ?? null,
+      });
+      [gift] = await db
+        .select()
+        .from(giftsTable)
+        .where(eq(giftsTable.claimToken, req.params.token))
+        .limit(1);
+    }
   }
 
   res.json(serializeGift(gift));
