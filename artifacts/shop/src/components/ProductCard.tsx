@@ -4,6 +4,7 @@ import { ShoppingBag } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { isProductSoldOut } from "@/lib/stock";
+import { ProductImage, getImageSettings } from "@/components/ProductImage";
 
 const TAG_CONFIG: Record<string, { label: string; color: string; textColor: string }> = {
   new:         { label: "New",          color: "#D4AF37", textColor: "#000" },
@@ -61,10 +62,13 @@ export function ProductCard({
     <div className="group cursor-pointer">
         <div className="relative aspect-[4/5] overflow-hidden bg-zinc-900 border border-zinc-900 group-hover:border-[#D4AF37]/40 transition-colors duration-500 mb-3">
           {product.imageUrl ? (
-            <img
+            <ProductImage
               src={product.imageUrl}
               alt={product.name}
-              className="w-full h-full object-cover transition-transform duration-700 ease-out opacity-85 group-hover:opacity-100 group-hover:scale-105"
+              settings={getImageSettings(product.imageUrl, product.imageSettings)}
+              className="absolute inset-0"
+              imgClassName="transition-transform duration-700 ease-out opacity-85 group-hover:opacity-100 group-hover:scale-105"
+              showFallback={false}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-zinc-900">

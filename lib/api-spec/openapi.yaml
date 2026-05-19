@@ -604,6 +604,26 @@ components:
         imageUrl:
           type: string
 
+    ImageDisplaySettings:
+      type: object
+      required: [fit, focalX, focalY]
+      description: "How a single product image should render in feeds, cards and the gallery."
+      properties:
+        fit:
+          type: string
+          enum: [cover, contain]
+          description: "cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space."
+        focalX:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "Horizontal focal point as a percentage (0=left, 100=right). Used as object-position when fit=cover."
+        focalY:
+          type: number
+          minimum: 0
+          maximum: 100
+          description: "Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover."
+
     ProductVariant:
       type: object
       required: [id, name, stockQuantity, isActive]
@@ -671,6 +691,11 @@ components:
           description: "Ordered gallery of image URLs. First entry is the cover."
           items:
             type: string
+        imageSettings:
+          type: object
+          description: "Per-image display settings keyed by image URL. Missing entries default to cover/centre."
+          additionalProperties:
+            $ref: "#/components/schemas/ImageDisplaySettings"
         inStock:
           type: boolean
         stockQuantity:
@@ -718,6 +743,11 @@ components:
           description: "Ordered gallery of image URLs. First entry is treated as the cover."
           items:
             type: string
+        imageSettings:
+          type: object
+          description: "Per-image display settings keyed by image URL. Optional — missing entries default to cover/centre."
+          additionalProperties:
+            $ref: "#/components/schemas/ImageDisplaySettings"
         inStock:
           type: boolean
         stockQuantity:

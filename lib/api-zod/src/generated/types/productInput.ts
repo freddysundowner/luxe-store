@@ -5,6 +5,7 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductInputImageSettings } from './productInputImageSettings';
 import type { ProductVariantInput } from './productVariantInput';
 
 export interface ProductInput {
@@ -20,6 +21,8 @@ export interface ProductInput {
   imageUrl?: string;
   /** Ordered gallery of image URLs. First entry is treated as the cover. */
   images?: string[];
+  /** Per-image display settings keyed by image URL. Optional — missing entries default to cover/centre. */
+  imageSettings?: ProductInputImageSettings;
   inStock?: boolean;
   /**
      * Remaining inventory. 0 means out of stock.

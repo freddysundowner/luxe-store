@@ -100,6 +100,12 @@ export const ListProductsQueryParams = zod.object({
   "featured": zod.coerce.boolean().optional()
 })
 
+export const listProductsResponseImageSettingsFocalXMin = 0;
+export const listProductsResponseImageSettingsFocalXMax = 100;
+
+export const listProductsResponseImageSettingsFocalYMin = 0;
+export const listProductsResponseImageSettingsFocalYMax = 100;
+
 export const listProductsResponseStockQuantityMin = 0;
 
 export const listProductsResponseVariantsItemStockQuantityMin = 0;
@@ -116,6 +122,11 @@ export const ListProductsResponseItem = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish().describe('Cover image URL. Convenience field — always equals images[0] when images is non-empty.'),
   "images": zod.array(zod.string()).optional().describe('Ordered gallery of image URLs. First entry is the cover.'),
+  "imageSettings": zod.record(zod.string(), zod.object({
+  "fit": zod.enum(['cover', 'contain']).describe('cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space.'),
+  "focalX": zod.number().min(listProductsResponseImageSettingsFocalXMin).max(listProductsResponseImageSettingsFocalXMax).describe('Horizontal focal point as a percentage (0=left, 100=right). Used as object-position when fit=cover.'),
+  "focalY": zod.number().min(listProductsResponseImageSettingsFocalYMin).max(listProductsResponseImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
+}).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Missing entries default to cover\/centre.'),
   "inStock": zod.boolean(),
   "stockQuantity": zod.number().min(listProductsResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
   "isActive": zod.boolean(),
@@ -142,6 +153,12 @@ export const GetProductParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const getProductResponseImageSettingsFocalXMin = 0;
+export const getProductResponseImageSettingsFocalXMax = 100;
+
+export const getProductResponseImageSettingsFocalYMin = 0;
+export const getProductResponseImageSettingsFocalYMax = 100;
+
 export const getProductResponseStockQuantityMin = 0;
 
 export const getProductResponseVariantsItemStockQuantityMin = 0;
@@ -158,6 +175,11 @@ export const GetProductResponse = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish().describe('Cover image URL. Convenience field — always equals images[0] when images is non-empty.'),
   "images": zod.array(zod.string()).optional().describe('Ordered gallery of image URLs. First entry is the cover.'),
+  "imageSettings": zod.record(zod.string(), zod.object({
+  "fit": zod.enum(['cover', 'contain']).describe('cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space.'),
+  "focalX": zod.number().min(getProductResponseImageSettingsFocalXMin).max(getProductResponseImageSettingsFocalXMax).describe('Horizontal focal point as a percentage (0=left, 100=right). Used as object-position when fit=cover.'),
+  "focalY": zod.number().min(getProductResponseImageSettingsFocalYMin).max(getProductResponseImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
+}).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Missing entries default to cover\/centre.'),
   "inStock": zod.boolean(),
   "stockQuantity": zod.number().min(getProductResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
   "isActive": zod.boolean(),
@@ -179,6 +201,12 @@ export const GetProductResponse = zod.object({
 /**
  * @summary List all products (admin)
  */
+export const listAdminProductsResponseImageSettingsFocalXMin = 0;
+export const listAdminProductsResponseImageSettingsFocalXMax = 100;
+
+export const listAdminProductsResponseImageSettingsFocalYMin = 0;
+export const listAdminProductsResponseImageSettingsFocalYMax = 100;
+
 export const listAdminProductsResponseStockQuantityMin = 0;
 
 export const listAdminProductsResponseVariantsItemStockQuantityMin = 0;
@@ -195,6 +223,11 @@ export const ListAdminProductsResponseItem = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish().describe('Cover image URL. Convenience field — always equals images[0] when images is non-empty.'),
   "images": zod.array(zod.string()).optional().describe('Ordered gallery of image URLs. First entry is the cover.'),
+  "imageSettings": zod.record(zod.string(), zod.object({
+  "fit": zod.enum(['cover', 'contain']).describe('cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space.'),
+  "focalX": zod.number().min(listAdminProductsResponseImageSettingsFocalXMin).max(listAdminProductsResponseImageSettingsFocalXMax).describe('Horizontal focal point as a percentage (0=left, 100=right). Used as object-position when fit=cover.'),
+  "focalY": zod.number().min(listAdminProductsResponseImageSettingsFocalYMin).max(listAdminProductsResponseImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
+}).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Missing entries default to cover\/centre.'),
   "inStock": zod.boolean(),
   "stockQuantity": zod.number().min(listAdminProductsResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
   "isActive": zod.boolean(),
@@ -220,6 +253,12 @@ export const ListAdminProductsResponse = zod.array(ListAdminProductsResponseItem
 
 export const createProductBodyPriceMin = 0;
 
+export const createProductBodyImageSettingsFocalXMin = 0;
+export const createProductBodyImageSettingsFocalXMax = 100;
+
+export const createProductBodyImageSettingsFocalYMin = 0;
+export const createProductBodyImageSettingsFocalYMax = 100;
+
 export const createProductBodyStockQuantityMin = 0;
 
 
@@ -237,6 +276,11 @@ export const CreateProductBody = zod.object({
   "categoryId": zod.number(),
   "imageUrl": zod.string().optional().describe('Optional cover image URL. Ignored when \'images\' is provided — images[0] becomes the cover.'),
   "images": zod.array(zod.string()).optional().describe('Ordered gallery of image URLs. First entry is treated as the cover.'),
+  "imageSettings": zod.record(zod.string(), zod.object({
+  "fit": zod.enum(['cover', 'contain']).describe('cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space.'),
+  "focalX": zod.number().min(createProductBodyImageSettingsFocalXMin).max(createProductBodyImageSettingsFocalXMax).describe('Horizontal focal point as a percentage (0=left, 100=right). Used as object-position when fit=cover.'),
+  "focalY": zod.number().min(createProductBodyImageSettingsFocalYMin).max(createProductBodyImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
+}).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Optional — missing entries default to cover\/centre.'),
   "inStock": zod.boolean().optional(),
   "stockQuantity": zod.number().min(createProductBodyStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
   "isActive": zod.boolean().optional(),
@@ -264,6 +308,12 @@ export const UpdateProductParams = zod.object({
 
 export const updateProductBodyPriceMin = 0;
 
+export const updateProductBodyImageSettingsFocalXMin = 0;
+export const updateProductBodyImageSettingsFocalXMax = 100;
+
+export const updateProductBodyImageSettingsFocalYMin = 0;
+export const updateProductBodyImageSettingsFocalYMax = 100;
+
 export const updateProductBodyStockQuantityMin = 0;
 
 
@@ -281,6 +331,11 @@ export const UpdateProductBody = zod.object({
   "categoryId": zod.number(),
   "imageUrl": zod.string().optional().describe('Optional cover image URL. Ignored when \'images\' is provided — images[0] becomes the cover.'),
   "images": zod.array(zod.string()).optional().describe('Ordered gallery of image URLs. First entry is treated as the cover.'),
+  "imageSettings": zod.record(zod.string(), zod.object({
+  "fit": zod.enum(['cover', 'contain']).describe('cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space.'),
+  "focalX": zod.number().min(updateProductBodyImageSettingsFocalXMin).max(updateProductBodyImageSettingsFocalXMax).describe('Horizontal focal point as a percentage (0=left, 100=right). Used as object-position when fit=cover.'),
+  "focalY": zod.number().min(updateProductBodyImageSettingsFocalYMin).max(updateProductBodyImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
+}).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Optional — missing entries default to cover\/centre.'),
   "inStock": zod.boolean().optional(),
   "stockQuantity": zod.number().min(updateProductBodyStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
   "isActive": zod.boolean().optional(),
@@ -296,6 +351,12 @@ export const UpdateProductBody = zod.object({
   "sortOrder": zod.number().optional()
 })).optional().describe('Optional variants. When provided, replaces the full set of variants for the product.')
 })
+
+export const updateProductResponseImageSettingsFocalXMin = 0;
+export const updateProductResponseImageSettingsFocalXMax = 100;
+
+export const updateProductResponseImageSettingsFocalYMin = 0;
+export const updateProductResponseImageSettingsFocalYMax = 100;
 
 export const updateProductResponseStockQuantityMin = 0;
 
@@ -313,6 +374,11 @@ export const UpdateProductResponse = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish().describe('Cover image URL. Convenience field — always equals images[0] when images is non-empty.'),
   "images": zod.array(zod.string()).optional().describe('Ordered gallery of image URLs. First entry is the cover.'),
+  "imageSettings": zod.record(zod.string(), zod.object({
+  "fit": zod.enum(['cover', 'contain']).describe('cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space.'),
+  "focalX": zod.number().min(updateProductResponseImageSettingsFocalXMin).max(updateProductResponseImageSettingsFocalXMax).describe('Horizontal focal point as a percentage (0=left, 100=right). Used as object-position when fit=cover.'),
+  "focalY": zod.number().min(updateProductResponseImageSettingsFocalYMin).max(updateProductResponseImageSettingsFocalYMax).describe('Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.')
+}).describe('How a single product image should render in feeds, cards and the gallery.')).optional().describe('Per-image display settings keyed by image URL. Missing entries default to cover\/centre.'),
   "inStock": zod.boolean(),
   "stockQuantity": zod.number().min(updateProductResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
   "isActive": zod.boolean(),

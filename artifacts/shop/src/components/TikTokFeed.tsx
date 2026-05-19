@@ -10,6 +10,7 @@ import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { isProductSoldOut } from "@/lib/stock";
+import { ProductImage, getImageSettings } from "@/components/ProductImage";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
@@ -39,22 +40,25 @@ function getImages(product: Product): string[] {
 function CardBg({ product, imageIndex = 0 }: { product: Product; imageIndex?: number }) {
   const images = getImages(product);
   const src = images[Math.min(imageIndex, images.length - 1)] ?? null;
+  const cfg = getImageSettings(src, product.imageSettings);
   return (
     <>
       {src ? (
-        <img
+        <ProductImage
           key={src}
           src={src}
           alt={product.name}
-          className="absolute inset-0 w-full h-full object-cover animate-in fade-in duration-300"
+          settings={cfg}
           draggable={false}
+          className="absolute inset-0 animate-in fade-in duration-300"
+          showFallback={false}
         />
       ) : (
         <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
           <ShoppingBag className="w-16 h-16 text-zinc-700" />
         </div>
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[#0a0a0a]/40 pointer-events-none" />
     </>
   );
 }

@@ -1,6 +1,15 @@
-import { pgTable, text, serial, timestamp, numeric, integer, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, timestamp, numeric, integer, boolean, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+
+// Per-image display settings, keyed by image URL. Keys not present default to
+// `{ fit: "cover", focalX: 50, focalY: 50 }` everywhere, so old products keep
+// rendering exactly as before.
+export interface ImageDisplaySettings {
+  fit: "cover" | "contain";
+  focalX: number; // 0–100 (percentage)
+  focalY: number; // 0–100 (percentage)
+}
 
 export const productsTable = pgTable("products", {
   id: serial("id").primaryKey(),
@@ -11,6 +20,7 @@ export const productsTable = pgTable("products", {
   categoryId: integer("category_id"),
   imageUrl: text("image_url"),
   images: text("images").array().notNull().default([]),
+  imageSettings: jsonb("image_settings").$type<Record<string, ImageDisplaySettings>>().notNull().default({}),
   inStock: boolean("in_stock").notNull().default(true),
   stockQuantity: integer("stock_quantity").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),

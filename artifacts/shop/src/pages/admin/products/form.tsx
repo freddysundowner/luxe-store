@@ -31,6 +31,12 @@ const variantSchema = z.object({
   isActive: z.boolean().default(true),
 });
 
+const imageDisplaySettingsSchema = z.object({
+  fit: z.enum(["cover", "contain"]),
+  focalX: z.number().min(0).max(100),
+  focalY: z.number().min(0).max(100),
+});
+
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
@@ -38,6 +44,7 @@ const productSchema = z.object({
   originalPrice: z.coerce.number().optional().nullable(),
   categoryId: z.coerce.number({ required_error: "Category is required" }).min(1, "Category is required"),
   images: z.array(z.string()).default([]),
+  imageSettings: z.record(z.string(), imageDisplaySettingsSchema).default({}),
   inStock: z.boolean().default(true),
   stockQuantity: z.preprocess(
     (v) => (v === "" || v === null || v === undefined ? undefined : Number(v)),
@@ -81,6 +88,7 @@ export default function ProductForm() {
       originalPrice: null,
       categoryId: undefined,
       images: [],
+      imageSettings: {},
       inStock: true,
       stockQuantity: 0,
       isActive: true,
@@ -105,6 +113,7 @@ export default function ProductForm() {
         originalPrice: product.originalPrice,
         categoryId: product.categoryId ?? undefined,
         images: product.images ?? (product.imageUrl ? [product.imageUrl] : []),
+        imageSettings: product.imageSettings ?? {},
         inStock: product.inStock,
         stockQuantity: product.stockQuantity,
         isActive: product.isActive,
@@ -162,6 +171,7 @@ export default function ProductForm() {
       originalPrice: data.originalPrice || null,
       categoryId: data.categoryId,
       images: data.images,
+      imageSettings: data.imageSettings,
       availabilityTag: data.availabilityTag === "none" ? null : (data.availabilityTag || null),
       variants: data.variants.map((v, i) => ({
         id: v.id,
@@ -326,6 +336,8 @@ export default function ProductForm() {
                         label="Product Images"
                         value={field.value ?? []}
                         onChange={field.onChange}
+                        settings={form.watch("imageSettings") ?? {}}
+                        onSettingsChange={(next) => form.setValue("imageSettings", next, { shouldDirty: true })}
                       />
                     </FormControl>
                     <FormMessage />

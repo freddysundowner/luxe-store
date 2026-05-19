@@ -7,6 +7,7 @@ import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Helmet } from "react-helmet-async";
+import { ProductImage, getImageSettings } from "@/components/ProductImage";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -145,6 +146,7 @@ export default function ProductDetail() {
         <div className="lg:grid lg:grid-cols-2 lg:gap-16 xl:gap-20">
           <ProductGallery
             images={gallery}
+            imageSettings={product.imageSettings}
             activeIdx={Math.min(activeImageIdx, Math.max(0, gallery.length - 1))}
             onChange={setActiveImageIdx}
             name={product.name}
@@ -265,6 +267,7 @@ export default function ProductDetail() {
 
 interface ProductGalleryProps {
   images: string[];
+  imageSettings?: Record<string, import("@/components/ProductImage").ImageDisplaySettings> | null;
   activeIdx: number;
   onChange: (idx: number) => void;
   name: string;
@@ -273,7 +276,7 @@ interface ProductGalleryProps {
   discount: number | null;
 }
 
-function ProductGallery({ images, activeIdx, onChange, name, soldOut, featured, discount }: ProductGalleryProps) {
+function ProductGallery({ images, imageSettings, activeIdx, onChange, name, soldOut, featured, discount }: ProductGalleryProps) {
   // Track touch start so we can support horizontal swipe-to-paginate on mobile.
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const hasMultiple = images.length > 1;
@@ -305,7 +308,17 @@ function ProductGallery({ images, activeIdx, onChange, name, soldOut, featured, 
         }}
       >
         {current
-          ? <img key={current} src={current} alt={name} className="w-full h-full object-cover animate-in fade-in duration-500 opacity-90" />
+          ? (
+            <ProductImage
+              key={current}
+              src={current}
+              alt={name}
+              settings={getImageSettings(current, imageSettings)}
+              className="absolute inset-0 animate-in fade-in duration-500"
+              imgClassName="opacity-90"
+              showFallback={false}
+            />
+          )
           : <div className="w-full h-full flex items-center justify-center bg-zinc-900"><ShoppingBag className="w-16 h-16 text-zinc-700" /></div>
         }
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-40 pointer-events-none" />

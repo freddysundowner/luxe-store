@@ -26,6 +26,37 @@ export interface CategoryInput {
   imageUrl?: string;
 }
 
+/**
+ * cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space.
+ */
+export type ImageDisplaySettingsFit = typeof ImageDisplaySettingsFit[keyof typeof ImageDisplaySettingsFit];
+
+
+export const ImageDisplaySettingsFit = {
+  cover: 'cover',
+  contain: 'contain',
+} as const;
+
+/**
+ * How a single product image should render in feeds, cards and the gallery.
+ */
+export interface ImageDisplaySettings {
+  /** cover = crop to fill (default). contain = show the whole image with a blurred background filling the empty space. */
+  fit: ImageDisplaySettingsFit;
+  /**
+     * Horizontal focal point as a percentage (0=left, 100=right). Used as object-position when fit=cover.
+     * @minimum 0
+     * @maximum 100
+     */
+  focalX: number;
+  /**
+     * Vertical focal point as a percentage (0=top, 100=bottom). Used as object-position when fit=cover.
+     * @minimum 0
+     * @maximum 100
+     */
+  focalY: number;
+}
+
 export interface ProductVariant {
   id: number;
   /** Free-form variant label, e.g. 'Red — L' or 'XXL'. */
@@ -57,6 +88,11 @@ export interface ProductVariantInput {
   sortOrder?: number;
 }
 
+/**
+ * Per-image display settings keyed by image URL. Missing entries default to cover/centre.
+ */
+export type ProductImageSettings = {[key: string]: ImageDisplaySettings};
+
 export interface Product {
   id: number;
   name: string;
@@ -76,6 +112,8 @@ export interface Product {
   imageUrl?: string | null;
   /** Ordered gallery of image URLs. First entry is the cover. */
   images?: string[];
+  /** Per-image display settings keyed by image URL. Missing entries default to cover/centre. */
+  imageSettings?: ProductImageSettings;
   inStock: boolean;
   /**
      * Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.
@@ -95,6 +133,11 @@ export interface Product {
   createdAt?: string | null;
 }
 
+/**
+ * Per-image display settings keyed by image URL. Optional — missing entries default to cover/centre.
+ */
+export type ProductInputImageSettings = {[key: string]: ImageDisplaySettings};
+
 export interface ProductInput {
   /** @minLength 1 */
   name: string;
@@ -108,6 +151,8 @@ export interface ProductInput {
   imageUrl?: string;
   /** Ordered gallery of image URLs. First entry is treated as the cover. */
   images?: string[];
+  /** Per-image display settings keyed by image URL. Optional — missing entries default to cover/centre. */
+  imageSettings?: ProductInputImageSettings;
   inStock?: boolean;
   /**
      * Remaining inventory. 0 means out of stock.

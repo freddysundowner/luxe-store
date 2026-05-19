@@ -16,6 +16,25 @@ import {
 
 const router = Router();
 
+type ImageSettingsBlob = Record<string, { fit: "cover" | "contain"; focalX: number; focalY: number }>;
+
+// Keep only entries whose URL is still in the gallery. When `images` is
+// undefined (caller didn't touch the gallery), we keep every entry — pruning
+// would lose settings on routine field updates.
+function pruneImageSettings(
+  settings: ImageSettingsBlob | undefined,
+  images: string[] | undefined,
+): ImageSettingsBlob {
+  if (!settings) return {};
+  if (!images) return settings;
+  const allowed = new Set(images);
+  const out: ImageSettingsBlob = {};
+  for (const [url, cfg] of Object.entries(settings)) {
+    if (allowed.has(url)) out[url] = cfg;
+  }
+  return out;
+}
+
 const productSelect = {
   id: productsTable.id,
   name: productsTable.name,
@@ -25,6 +44,7 @@ const productSelect = {
   categoryId: productsTable.categoryId,
   imageUrl: productsTable.imageUrl,
   images: productsTable.images,
+  imageSettings: productsTable.imageSettings,
   inStock: productsTable.inStock,
   isActive: productsTable.isActive,
   isDropship: productsTable.isDropship,
@@ -77,6 +97,7 @@ function mapRow(
     categoryId: number | null;
     imageUrl: string | null;
     images: string[];
+    imageSettings: Record<string, { fit: "cover" | "contain"; focalX: number; focalY: number }>;
     inStock: boolean;
     isActive: boolean;
     isDropship: boolean;
@@ -101,6 +122,7 @@ function mapRow(
     // consumers (cards, OG tags, JSON-LD) keep working.
     imageUrl: row.images.length > 0 ? row.images[0] : row.imageUrl,
     images: row.images.length > 0 ? row.images : (row.imageUrl ? [row.imageUrl] : []),
+    imageSettings: row.imageSettings ?? {},
     inStock: row.inStock,
     isActive: row.isActive,
     isDropship: row.isDropship,
@@ -229,12 +251,19 @@ router.post("/admin/products", async (req, res): Promise<void> => {
     return;
   }
 
-  const { price, originalPrice, variants, images, imageUrl, ...rest } = parsed.data;
+  const { price, originalPrice, variants, images, imageUrl, imageSettings, ...rest } = parsed.data;
   // Normalise the gallery: drop blanks/dupes, and keep `imageUrl` in sync with
   // the cover so single-image consumers keep working.
   const normalisedImages = (images ?? []).map((s) => s.trim()).filter(Boolean);
   const dedupedImages = Array.from(new Set(normalisedImages));
   const coverUrl = dedupedImages[0] ?? (imageUrl?.trim() || null);
+  // Effective gallery for settings pruning: when the caller used the legacy
+  // single-image path (no `images`, just `imageUrl`), the cover is still the
+  // one valid URL and its settings must be preserved.
+  const effectiveGallery = dedupedImages.length > 0
+    ? dedupedImages
+    : (coverUrl ? [coverUrl] : []);
+  const prunedSettings = pruneImageSettings(imageSettings, effectiveGallery);
   const [product] = await db
     .insert(productsTable)
     .values({
@@ -243,6 +272,7 @@ router.post("/admin/products", async (req, res): Promise<void> => {
       originalPrice: originalPrice != null ? String(originalPrice) : null,
       images: dedupedImages,
       imageUrl: coverUrl,
+      imageSettings: prunedSettings,
     })
     .returning();
 
@@ -273,20 +303,39 @@ router.put("/admin/products/:id", async (req, res): Promise<void> => {
     return;
   }
 
-  const { price, originalPrice, variants, images, imageUrl, ...rest } = parsed.data;
+  const { price, originalPrice, variants, images, imageUrl, imageSettings, ...rest } = parsed.data;
   const updateData: Record<string, unknown> = { ...rest };
   if (price !== undefined) updateData.price = String(price);
   if (originalPrice !== undefined) updateData.originalPrice = originalPrice != null ? String(originalPrice) : null;
   // When the client supplies a gallery, normalise it and keep `imageUrl` in
   // sync with the cover. When only `imageUrl` is supplied, leave `images`
   // untouched — the legacy single-image flow still works.
+  let finalImages: string[] | undefined;
   if (images !== undefined) {
     const normalised = images.map((s) => s.trim()).filter(Boolean);
     const deduped = Array.from(new Set(normalised));
     updateData.images = deduped;
     updateData.imageUrl = deduped[0] ?? (imageUrl?.trim() || null);
+    finalImages = deduped;
   } else if (imageUrl !== undefined) {
     updateData.imageUrl = imageUrl?.trim() || null;
+  }
+  // Image settings handling — two cases:
+  //  1. Client sent `imageSettings`: trust it, but prune to the final gallery
+  //     so removed URLs don't leave orphaned focal points.
+  //  2. Client didn't send `imageSettings` but DID change `images`: load the
+  //     existing settings and prune them too, otherwise stale entries linger
+  //     in the jsonb blob forever.
+  if (imageSettings !== undefined) {
+    updateData.imageSettings = pruneImageSettings(imageSettings, finalImages);
+  } else if (finalImages !== undefined) {
+    const [existing] = await db
+      .select({ imageSettings: productsTable.imageSettings })
+      .from(productsTable)
+      .where(eq(productsTable.id, params.data.id));
+    if (existing) {
+      updateData.imageSettings = pruneImageSettings(existing.imageSettings ?? {}, finalImages);
+    }
   }
 
   const [product] = await db
