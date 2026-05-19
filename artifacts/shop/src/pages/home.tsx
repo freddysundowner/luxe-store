@@ -5,7 +5,6 @@ import {
   MessageCircle, Share2, Droplets
 } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
-import { useAddBundleToCart } from "@/lib/bundle-add";
 import { ProductCard } from "@/components/ProductCard";
 import { StoreLogo } from "@/components/StoreLogo";
 import { TikTokFeed } from "@/components/TikTokFeed";
@@ -88,8 +87,6 @@ function FeaturedSwiper({
   const [shareTarget, setShareTarget] = useState<ShareTarget | null>(null);
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const { toggleFavorite, isFavorite } = useFavorites();
-  const { openCart } = useCart();
-  const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
 
   // TikTok-style drag/swipe state. `dragOffset` follows the pointer/touch in
   // real-time (px). `slideDir` says which neighbour to render off-screen so it
@@ -265,16 +262,11 @@ function FeaturedSwiper({
   const closeGiftSheet = () => setGiftProduct(null);
 
   const handleCart = (product: Product) => {
-    // Bundles bypass QuickBuy (no variants/qty) — add component products as a
-    // grouped hamper line via the shared bundle-add hook, matching ProductCard
-    // / TikTokFeed / PDP behavior.
+    // Bundles are always purchased as gifts — open the gift sheet
+    // (preview → form → pay → share) instead of cart-add. Matches the
+    // ProductCard / TikTokFeed / PDP behavior.
     if (product.kind === "bundle") {
-      if (!bundleReady) {
-        toast({ title: "Loading bundle… try again in a moment." });
-        return;
-      }
-      // The hook handles toast + openCart on success.
-      addBundle(product);
+      openGiftSheet(product);
       return;
     }
     // Skip the cart drawer entirely — open the QuickBuy modal which collects
@@ -405,7 +397,7 @@ function FeaturedSwiper({
                   : "bg-[#D4AF37] text-black hover:bg-white"
               }`}
             >
-              {isSoldOut ? "Sold Out" : "Buy Now →"}
+              {isSoldOut ? "Sold Out" : p.kind === "bundle" ? "Buy this gift →" : "Buy Now →"}
             </button>
             <button
               onClick={isActive ? handleGift : undefined}

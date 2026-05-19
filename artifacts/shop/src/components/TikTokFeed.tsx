@@ -11,7 +11,6 @@ import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/Sha
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { GiftSheet } from "@/components/GiftSheet";
 import { isProductSoldOut } from "@/lib/stock";
-import { useAddBundleToCart } from "@/lib/bundle-add";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
 import { BundleBoxCover } from "@/components/BundleBoxCover";
 
@@ -326,19 +325,13 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
 
   // ── Cart / gift / share ──
   const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
-  const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
 
   const handleAddToCart = (product: Product) => {
-    // Bundles skip QuickBuy (which is variant/quantity-oriented) and go
-    // straight into the cart as a hamper group.
+    // Bundles are always purchased as gifts — open the gift sheet
+    // (preview → form → pay → share) instead of cart-add.
     if (product.kind === "bundle") {
-      if (!bundleReady) {
-        toast({ title: "One moment — loading bundle contents…" });
-        return;
-      }
-      if (addBundle(product)) {
-        setCartAdded((prev) => new Set(prev).add(product.id));
-      }
+      openGiftSheet(product);
+      setCartAdded((prev) => new Set(prev).add(product.id));
       return;
     }
     // Open the QuickBuy modal: it asks for variant (if any) + quantity and
@@ -711,7 +704,7 @@ function BottomPanel({
               : "bg-[#D4AF37] text-black hover:bg-white"
           }`}
         >
-          {isSoldOut ? "Sold Out" : isBundle ? "Add Gift Bundle →" : "Buy Now →"}
+          {isSoldOut ? "Sold Out" : isBundle ? "Buy this gift →" : "Buy Now →"}
         </button>
         <button
           onClick={isActive ? onGift : undefined}

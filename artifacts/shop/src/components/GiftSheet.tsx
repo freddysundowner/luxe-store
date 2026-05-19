@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Gift, X, Smartphone, Loader2, CheckCircle2, XCircle, MessageCircle, Copy, Share2 } from "lucide-react";
+import { Gift, X, Smartphone, Loader2, CheckCircle2, XCircle, MessageCircle, Copy, Share2, ChevronDown } from "lucide-react";
 import {
   Product,
   useCreateGift,
@@ -12,7 +12,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { BundleBoxCover } from "@/components/BundleBoxCover";
 
-type Step = "form" | "phone" | "pending" | "success" | "failed";
+type Step = "preview" | "form" | "phone" | "pending" | "success" | "failed";
 
 interface GiftSheetProps {
   open: boolean;
@@ -39,7 +39,12 @@ export function GiftSheet({ open, product, onClose }: GiftSheetProps) {
   const { toast } = useToast();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
-  const [step, setStep] = useState<Step>("form");
+  // Bundles open on a "what's inside" preview so the sender sees exactly
+  // what they're sending. Simple products skip straight to the form.
+  const [step, setStep] = useState<Step>(
+    product?.kind === "bundle" ? "preview" : "form",
+  );
+  const [itemsExpanded, setItemsExpanded] = useState(false);
   const [recipient, setRecipient] = useState("");
   const [sender, setSender] = useState("");
   const [note, setNote] = useState("");
@@ -57,7 +62,8 @@ export function GiftSheet({ open, product, onClose }: GiftSheetProps) {
   // Reset on open so reopening for a new product starts fresh.
   useEffect(() => {
     if (!open) return;
-    setStep("form");
+    setStep(product?.kind === "bundle" ? "preview" : "form");
+    setItemsExpanded(false);
     setRecipient("");
     setSender("");
     setNote("");
@@ -68,7 +74,7 @@ export function GiftSheet({ open, product, onClose }: GiftSheetProps) {
     setMpesaRef(null);
     setGiftLink("");
     createdGiftTokenRef.current = null;
-  }, [open]);
+  }, [open, product?.kind]);
 
   const createGiftMutation = useCreateGift({
     mutation: {
@@ -253,6 +259,69 @@ export function GiftSheet({ open, product, onClose }: GiftSheetProps) {
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Step: preview — bundle "what's inside" view */}
+        {step === "preview" && (
+          <div className="px-5 pt-4 pb-5 space-y-4">
+            {/* Big gift-box cover so the sender sees the wrapped present. */}
+            <div className="relative aspect-square w-full max-w-[280px] mx-auto bg-zinc-900 border border-zinc-800 overflow-hidden">
+              {product.imageUrl ? (
+                <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+              ) : (
+                <BundleBoxCover
+                  itemImages={(product.bundleProducts ?? []).map((bp) => bp.imageUrl)}
+                  alt={product.name}
+                  className="w-full h-full"
+                />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+              <div className="absolute bottom-2 left-2 right-2 flex items-center gap-1.5">
+                <Gift className="w-3 h-3 text-[#D4AF37]" />
+                <p className="text-[9px] uppercase tracking-[0.2em] text-[#D4AF37]">Gift bundle</p>
+              </div>
+            </div>
+
+            {/* Expandable "what's inside" list */}
+            <button
+              type="button"
+              onClick={() => setItemsExpanded((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-3 bg-zinc-900/60 border border-zinc-800 hover:border-[#D4AF37]/40 transition-colors"
+              aria-expanded={itemsExpanded}
+            >
+              <span className="text-[10px] uppercase tracking-widest text-zinc-300">
+                What's inside · {(product.bundleProducts ?? []).length} item{(product.bundleProducts ?? []).length === 1 ? "" : "s"}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${itemsExpanded ? "rotate-180" : ""}`} />
+            </button>
+
+            {itemsExpanded && (
+              <ul className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                {(product.bundleProducts ?? []).length === 0 ? (
+                  <li className="text-[11px] text-zinc-600 text-center py-2">Surprise contents</li>
+                ) : (
+                  (product.bundleProducts ?? []).map((bp) => (
+                    <li key={bp.id} className="flex items-center gap-3 bg-zinc-900/40 border border-zinc-800 px-2.5 py-2">
+                      <div className="w-10 h-10 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
+                        {bp.imageUrl
+                          ? <img src={bp.imageUrl} alt={bp.name} className="w-full h-full object-cover" />
+                          : <Gift className="w-4 h-4 text-zinc-700 m-auto mt-3" />}
+                      </div>
+                      <p className="flex-1 text-xs text-zinc-300 truncate">{bp.name}</p>
+                    </li>
+                  ))
+                )}
+              </ul>
+            )}
+
+            <button
+              onClick={() => setStep("form")}
+              className="w-full py-3.5 bg-[#D4AF37] text-black text-xs uppercase tracking-widest font-semibold hover:bg-white transition-colors flex items-center justify-center gap-2"
+            >
+              <Gift className="w-3.5 h-3.5" />Buy this gift · {fmt.format(Number(product.price))}
+            </button>
+            <p className="text-[9px] text-zinc-700 text-center tracking-widest uppercase">Pay with M-Pesa, then share the link</p>
+          </div>
+        )}
 
         {/* Step: form */}
         {step === "form" && (

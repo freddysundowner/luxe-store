@@ -9,8 +9,7 @@ import { RelatedProducts } from "@/components/RelatedProducts";
 import { Helmet } from "react-helmet-async";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
 import { BundleBoxCover } from "@/components/BundleBoxCover";
-import { useAddBundleToCart } from "@/lib/bundle-add";
-import { useToast } from "@/hooks/use-toast";
+import { GiftSheet } from "@/components/GiftSheet";
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -23,6 +22,7 @@ export default function ProductDetail() {
   // product's image index doesn't carry over.
   useEffect(() => { setActiveImageIdx(0); }, [productId]);
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
+  const [giftOpen, setGiftOpen] = useState(false);
 
   const { data: product, isLoading, isError } = useGetProduct(productId, {
     query: { queryKey: getGetProductQueryKey(productId), enabled: !!productId }
@@ -46,22 +46,14 @@ export default function ProductDetail() {
       : (product?.stockQuantity ?? 0);
   const canPurchase = product?.inStock && (hasVariants ? !!selectedVariant && effectiveStock > 0 : true);
 
-  const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
-  const { toast } = useToast();
-
   // Buy-now opens the QuickBuy dialog. If the product has variants and the
   // customer hasn't picked one yet, the dialog still opens and asks them to
-  // choose — no toast nag required. When they *have* picked one on the page,
-  // we forward it so they don't repeat themselves. Bundles skip QuickBuy
-  // entirely and add the resolved components straight to the cart.
+  // choose. Bundles are always purchased as gifts — open the gift sheet
+  // (preview → form → pay → share) instead of adding to cart.
   const handleBuyNow = () => {
     if (!product || !product.inStock) return;
     if (isBundle) {
-      if (!bundleReady) {
-        toast({ title: "One moment — loading bundle contents…" });
-        return;
-      }
-      addBundle(product);
+      setGiftOpen(true);
       return;
     }
     setQuickBuyOpen(true);
@@ -121,7 +113,7 @@ export default function ProductDetail() {
   const buyNowLabel = !product.inStock
     ? "Out of Stock"
     : isBundle
-      ? `Add Gift Bundle — ${formatter.format(product.price)}`
+      ? `Buy this gift — ${formatter.format(product.price)}`
       : hasVariants && !selectedVariant
         ? `Buy Now — From ${formatter.format(Math.min(...variantPrices))}`
         : effectiveStock <= 0
@@ -321,6 +313,7 @@ export default function ProductDetail() {
         initialVariantId={selectedVariantId}
         initialQuantity={quantity}
       />
+      <GiftSheet open={giftOpen} product={giftOpen ? product : null} onClose={() => setGiftOpen(false)} />
     </RootLayout>
   );
 }

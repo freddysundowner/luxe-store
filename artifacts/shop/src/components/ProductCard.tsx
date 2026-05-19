@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { Product } from "@workspace/api-client-react";
 import { ShoppingBag } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 import { isProductSoldOut } from "@/lib/stock";
-import { useAddBundleToCart } from "@/lib/bundle-add";
 import { Gift } from "lucide-react";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
 import { BundleBoxCover } from "@/components/BundleBoxCover";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
+import { GiftSheet } from "@/components/GiftSheet";
 
 // Hoist the formatter so we allocate it once per app, not once per card per
 // render — the grid can have 30+ cards and rerenders during scroll.
@@ -36,9 +35,8 @@ export function ProductCard({
    */
   onSelect?: (product: Product) => void;
 }) {
-  const { toast } = useToast();
-  const { add: addBundle, ready: bundleReady } = useAddBundleToCart();
   const [quickBuyOpen, setQuickBuyOpen] = useState(false);
+  const [giftOpen, setGiftOpen] = useState(false);
 
   const isBundle = product.kind === "bundle";
   const activeVariants = (product.variants ?? []).filter((v) => v.isActive);
@@ -54,13 +52,9 @@ export function ProductCard({
     e.stopPropagation();
     if (isSoldOut) return;
     if (isBundle) {
-      // Bundles skip QuickBuy (no variants/qty) — add component products
-      // straight to the cart, same as the featured swiper / PDP.
-      if (!bundleReady) {
-        toast({ title: "One moment — loading bundle contents…" });
-        return;
-      }
-      addBundle(product);
+      // Bundles are always purchased as gifts — open the gift sheet
+      // (preview → form → pay → share).
+      setGiftOpen(true);
       return;
     }
     setQuickBuyOpen(true);
@@ -144,7 +138,7 @@ export function ProductCard({
                 className="w-full py-3 bg-[#D4AF37] text-black text-[11px] uppercase tracking-widest font-medium hover:bg-white transition-colors flex items-center justify-center gap-1.5"
               >
                 {isBundle
-                  ? <><Gift className="w-3 h-3" />Add Gift Bundle →</>
+                  ? <><Gift className="w-3 h-3" />Buy this gift →</>
                   : hasVariants ? "Choose Options →" : "Buy Now →"}
               </button>
             </div>
@@ -177,11 +171,14 @@ export function ProductCard({
   // card is rendered (home grid, category page, related products) without
   // requiring each parent to wire up its own dialog instance.
   const quickBuy = (
-    <QuickBuyDialog
-      open={quickBuyOpen}
-      onOpenChange={(o) => { if (!o) setQuickBuyOpen(false); }}
-      product={product}
-    />
+    <>
+      <QuickBuyDialog
+        open={quickBuyOpen}
+        onOpenChange={(o) => { if (!o) setQuickBuyOpen(false); }}
+        product={product}
+      />
+      <GiftSheet open={giftOpen} product={giftOpen ? product : null} onClose={() => setGiftOpen(false)} />
+    </>
   );
 
   if (onSelect) {
