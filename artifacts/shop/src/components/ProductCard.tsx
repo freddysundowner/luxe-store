@@ -17,14 +17,24 @@ export function ProductCard({ product }: { product: Product }) {
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
 
+  const activeVariants = (product.variants ?? []).filter((v) => v.isActive);
+  const hasVariants = activeVariants.length > 0;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!product.inStock) return;
-    addItem(product, 1);
+    if (!product.inStock || hasVariants) return;
+    addItem(product, { quantity: 1 });
     openCart();
   };
 
   const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });
+
+  // "From KSh X" pricing: collect every active variant's effective price and
+  // show the minimum with a "from" prefix when the variants disagree on price.
+  const variantPrices = activeVariants.map((v) => (v.price ?? product.price));
+  const distinctPrices = new Set(variantPrices);
+  const showFromPrice = hasVariants && distinctPrices.size > 1;
+  const displayPrice = showFromPrice ? Math.min(...variantPrices) : product.price;
 
   const tag = product.availabilityTag ? TAG_CONFIG[product.availabilityTag] : null;
 
@@ -84,7 +94,7 @@ export function ProductCard({ product }: { product: Product }) {
                 onClick={handleAddToCart}
                 className="w-full py-3 bg-[#D4AF37] text-black text-[11px] uppercase tracking-widest font-medium hover:bg-white transition-colors"
               >
-                Add to Bag
+                {hasVariants ? "Choose Options" : "Add to Bag"}
               </button>
             </div>
           )}
@@ -99,8 +109,11 @@ export function ProductCard({ product }: { product: Product }) {
               {product.name}
             </h3>
             <div className="text-right shrink-0">
-              <div className="text-sm text-[#D4AF37] font-medium">{formatter.format(product.price)}</div>
-              {product.originalPrice && product.originalPrice > product.price && (
+              <div className="text-sm text-[#D4AF37] font-medium">
+                {showFromPrice && <span className="text-[10px] uppercase tracking-widest text-zinc-500 mr-1">From</span>}
+                {formatter.format(displayPrice)}
+              </div>
+              {!showFromPrice && product.originalPrice && product.originalPrice > product.price && (
                 <div className="text-xs text-zinc-600 line-through">{formatter.format(product.originalPrice)}</div>
               )}
             </div>

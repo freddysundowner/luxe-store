@@ -1,6 +1,6 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { useLocation, useParams } from "wouter";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,23 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { useCreateProduct, useUpdateProduct, useGetProduct, getGetProductQueryKey, useListCategories, getListCategoriesQueryKey, useListAvailabilityTagsPublic, getListAvailabilityTagsPublicQueryKey } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
+
+const variantSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().min(1, "Variant name is required"),
+  price: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? null : Number(v)),
+    z.number().min(0, "Price must be 0 or more").nullable()
+  ),
+  stockQuantity: z.preprocess(
+    (v) => (v === "" || v === null || v === undefined ? 0 : Number(v)),
+    z.number().int().min(0, "Stock must be 0 or more")
+  ),
+  isActive: z.boolean().default(true),
+});
 
 const productSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -33,6 +47,7 @@ const productSchema = z.object({
   isDropship: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
   availabilityTag: z.string().optional().nullable(),
+  variants: z.array(variantSchema).default([]),
 });
 
 type ProductFormValues = z.infer<typeof productSchema>;
@@ -72,7 +87,13 @@ export default function ProductForm() {
       isDropship: false,
       isFeatured: false,
       availabilityTag: null,
+      variants: [],
     },
+  });
+
+  const { fields: variantFields, append: appendVariant, remove: removeVariant } = useFieldArray({
+    control: form.control,
+    name: "variants",
   });
 
   useEffect(() => {
@@ -90,6 +111,13 @@ export default function ProductForm() {
         isDropship: product.isDropship,
         isFeatured: product.isFeatured,
         availabilityTag: product.availabilityTag || null,
+        variants: (product.variants ?? []).map((v) => ({
+          id: v.id,
+          name: v.name,
+          price: v.price,
+          stockQuantity: v.stockQuantity,
+          isActive: v.isActive,
+        })),
       });
     }
   }, [product, isEditing, form]);
@@ -123,6 +151,14 @@ export default function ProductForm() {
       categoryId: data.categoryId,
       imageUrl: data.imageUrl || undefined,
       availabilityTag: data.availabilityTag === "none" ? null : (data.availabilityTag || null),
+      variants: data.variants.map((v, i) => ({
+        id: v.id,
+        name: v.name.trim(),
+        price: v.price,
+        stockQuantity: v.stockQuantity,
+        isActive: v.isActive,
+        sortOrder: i,
+      })),
     };
 
     if (isEditing) {
@@ -298,6 +334,122 @@ export default function ProductForm() {
                   </FormItem>
                 )}
               />
+            </div>
+
+            {/* Variants editor */}
+            <div className="border-t border-border pt-6 space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-base font-semibold">Variants <span className="text-xs font-normal text-muted-foreground">(optional)</span></h3>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add options like "Red — L" or "32GB Black". Leave empty if the product has only one version.
+                    Variant price is optional — if blank, the product price is used. Stock is tracked per variant.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => appendVariant({ name: "", price: null, stockQuantity: 0, isActive: true })}
+                  className="gap-1.5 shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" />Add Variant
+                </Button>
+              </div>
+
+              {variantFields.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic border border-dashed border-border rounded-lg p-4 text-center">
+                  No variants. The product will be sold as a single SKU.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  {variantFields.map((v, idx) => (
+                    <div key={v.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end border border-border rounded-lg p-3 bg-muted/20">
+                      <FormField
+                        control={form.control}
+                        name={`variants.${idx}.name`}
+                        render={({ field }) => (
+                          <FormItem className="sm:col-span-4">
+                            <FormLabel className="text-xs">Variant Name</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g. Red — L" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`variants.${idx}.price`}
+                        render={({ field }) => (
+                          <FormItem className="sm:col-span-3">
+                            <FormLabel className="text-xs">Price Override (KSh)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={0}
+                                step="1"
+                                placeholder="Use product price"
+                                value={field.value ?? ""}
+                                onChange={(e) => field.onChange(e.target.value === "" ? null : Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`variants.${idx}.stockQuantity`}
+                        render={({ field }) => (
+                          <FormItem className="sm:col-span-2">
+                            <FormLabel className="text-xs">Stock</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={0}
+                                step="1"
+                                placeholder="0"
+                                value={field.value ?? 0}
+                                onChange={(e) => field.onChange(e.target.value === "" ? 0 : Number(e.target.value))}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name={`variants.${idx}.isActive`}
+                        render={({ field }) => (
+                          <FormItem className="sm:col-span-2 flex flex-row items-center justify-between rounded-md border border-border px-3 py-2">
+                            <FormLabel className="text-xs mb-0">Active</FormLabel>
+                            <FormControl>
+                              <Switch checked={field.value} onCheckedChange={field.onChange} />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="sm:col-span-1 flex justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeVariant(idx)}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label="Remove variant"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t border-border pt-6">

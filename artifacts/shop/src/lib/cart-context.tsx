@@ -1,16 +1,24 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Product } from "@workspace/api-client-react";
+import { Product, ProductVariant } from "@workspace/api-client-react";
 
 export interface CartItem {
   product: Product;
+  variantId: number | null;
+  variantName: string | null;
+  unitPrice: number;
   quantity: number;
+}
+
+export interface AddItemOptions {
+  variant?: ProductVariant | null;
+  quantity?: number;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addItem: (product: Product, quantity?: number) => void;
-  removeItem: (productId: number) => void;
-  updateQuantity: (productId: number, quantity: number) => void;
+  addItem: (product: Product, options?: AddItemOptions) => void;
+  removeItem: (productId: number, variantId?: number | null) => void;
+  updateQuantity: (productId: number, variantId: number | null, quantity: number) => void;
   clearCart: () => void;
   itemCount: number;
   subtotal: number;
@@ -21,12 +29,26 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+function sameLine(a: CartItem, productId: number, variantId: number | null): boolean {
+  return a.product.id === productId && (a.variantId ?? null) === (variantId ?? null);
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>(() => {
     if (typeof window === "undefined") return [];
     try {
       const saved = localStorage.getItem("cart");
-      if (saved) return JSON.parse(saved);
+      if (saved) {
+        const parsed = JSON.parse(saved) as Array<Partial<CartItem> & { product: Product; quantity: number }>;
+        // Backwards compatibility: older carts didn't carry variant fields.
+        return parsed.map((i) => ({
+          product: i.product,
+          variantId: i.variantId ?? null,
+          variantName: i.variantName ?? null,
+          unitPrice: typeof i.unitPrice === "number" ? i.unitPrice : i.product.price,
+          quantity: i.quantity,
+        }));
+      }
     } catch {}
     return [];
   });
@@ -37,7 +59,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("cart", JSON.stringify(items));
   }, [items]);
 
-  // Lock body scroll when cart is open
   useEffect(() => {
     if (isCartOpen) {
       document.body.style.overflow = "hidden";
@@ -47,29 +68,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => { document.body.style.overflow = ""; };
   }, [isCartOpen]);
 
-  const addItem = (product: Product, quantity = 1) => {
+  const addItem = (product: Product, options: AddItemOptions = {}) => {
+    const { variant = null, quantity = 1 } = options;
+    const variantId = variant?.id ?? null;
+    const variantName = variant?.name ?? null;
+    const unitPrice = variant?.price ?? product.price;
     setItems((current) => {
-      const existing = current.find((item) => item.product.id === product.id);
+      const existing = current.find((item) => sameLine(item, product.id, variantId));
       if (existing) {
         return current.map((item) =>
-          item.product.id === product.id
+          sameLine(item, product.id, variantId)
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...current, { product, quantity }];
+      return [...current, { product, variantId, variantName, unitPrice, quantity }];
     });
   };
 
-  const removeItem = (productId: number) => {
-    setItems((current) => current.filter((item) => item.product.id !== productId));
+  const removeItem = (productId: number, variantId: number | null = null) => {
+    setItems((current) => current.filter((item) => !sameLine(item, productId, variantId)));
   };
 
-  const updateQuantity = (productId: number, quantity: number) => {
-    if (quantity <= 0) { removeItem(productId); return; }
+  const updateQuantity = (productId: number, variantId: number | null, quantity: number) => {
+    if (quantity <= 0) { removeItem(productId, variantId); return; }
     setItems((current) =>
       current.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        sameLine(item, productId, variantId) ? { ...item, quantity } : item
       )
     );
   };
@@ -79,7 +104,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const closeCart = () => setIsCartOpen(false);
 
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
-  const subtotal = items.reduce((total, item) => total + item.product.price * item.quantity, 0);
+  const subtotal = items.reduce((total, item) => total + item.unitPrice * item.quantity, 0);
 
   return (
     <CartContext.Provider

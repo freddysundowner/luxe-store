@@ -258,7 +258,8 @@ export default function Cart() {
     if (!settings?.whatsappNumber) return;
     let message = `Hello! I would like to place an order from ${settings.storeName || "your store"}:\n\n`;
     items.forEach((item) => {
-      message += `• ${item.quantity}x ${item.product.name} - ${formatter.format(item.product.price * item.quantity)}\n`;
+      const name = item.variantName ? `${item.product.name} (${item.variantName})` : item.product.name;
+      message += `• ${item.quantity}x ${name} - ${formatter.format(item.unitPrice * item.quantity)}\n`;
     });
     message += `\n*Total: ${formatter.format(subtotal)}*`;
     window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(message)}`, "_blank");
@@ -267,9 +268,12 @@ export default function Cart() {
   const cartSnapshot = {
     items: items.map((i) => ({
       productId: i.product.id,
+      variantId: i.variantId,
+      variantName: i.variantName,
       name: i.product.name,
       quantity: i.quantity,
-      price: i.product.price,
+      price: i.unitPrice,
+      imageUrl: i.product.imageUrl,
     })),
     total: subtotal,
   };
@@ -310,7 +314,7 @@ export default function Cart() {
               {items.length} {items.length === 1 ? "item" : "items"}
             </h2>
             {items.map((item) => (
-              <div key={item.product.id} className="flex gap-4 p-4 bg-zinc-900/60 border border-zinc-800 animate-in slide-in-from-right-4">
+              <div key={`${item.product.id}:${item.variantId ?? 'base'}`} className="flex gap-4 p-4 bg-zinc-900/60 border border-zinc-800 animate-in slide-in-from-right-4">
                 <div className="w-20 h-20 bg-zinc-900 overflow-hidden shrink-0 border border-zinc-800">
                   {item.product.imageUrl
                     ? <img src={item.product.imageUrl} alt={item.product.name} className="w-full h-full object-cover opacity-90" />
@@ -320,21 +324,24 @@ export default function Cart() {
                 <div className="flex-1 flex flex-col justify-between">
                   <div>
                     <h3 className="text-xs uppercase tracking-wide font-light text-zinc-200 leading-snug line-clamp-2">{item.product.name}</h3>
-                    <div className="text-[#D4AF37] text-sm font-medium mt-1">{formatter.format(item.product.price)}</div>
+                    {item.variantName && (
+                      <p className="text-[10px] uppercase tracking-widest text-zinc-500 mt-1">{item.variantName}</p>
+                    )}
+                    <div className="text-[#D4AF37] text-sm font-medium mt-1">{formatter.format(item.unitPrice)}</div>
                   </div>
                   <div className="flex items-center justify-between mt-3">
                     <div className="flex items-center gap-4 border border-zinc-800 px-3 py-1.5">
-                      <button onClick={() => updateQuantity(item.product.id, item.quantity - 1)} className="text-zinc-600 hover:text-[#D4AF37] transition-colors">
+                      <button onClick={() => updateQuantity(item.product.id, item.variantId, item.quantity - 1)} className="text-zinc-600 hover:text-[#D4AF37] transition-colors">
                         <Minus className="w-3 h-3" />
                       </button>
                       <span className="text-zinc-300 text-sm w-4 text-center font-light">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.product.id, item.quantity + 1)} className="text-zinc-600 hover:text-[#D4AF37] transition-colors">
+                      <button onClick={() => updateQuantity(item.product.id, item.variantId, item.quantity + 1)} className="text-zinc-600 hover:text-[#D4AF37] transition-colors">
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
                     <div className="flex items-center gap-4">
-                      <span className="text-sm font-light text-zinc-300">{formatter.format(item.product.price * item.quantity)}</span>
-                      <button onClick={() => removeItem(item.product.id)} className="text-zinc-700 hover:text-red-400 transition-colors">
+                      <span className="text-sm font-light text-zinc-300">{formatter.format(item.unitPrice * item.quantity)}</span>
+                      <button onClick={() => removeItem(item.product.id, item.variantId)} className="text-zinc-700 hover:text-red-400 transition-colors">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -353,9 +360,11 @@ export default function Cart() {
               <h3 className="text-[10px] uppercase tracking-widest text-zinc-600 mb-6">Order Summary</h3>
               <div className="space-y-3 mb-6">
                 {items.map((item) => (
-                  <div key={item.product.id} className="flex justify-between text-xs">
-                    <span className="text-zinc-600 truncate mr-3 uppercase tracking-wide">{item.product.name} ×{item.quantity}</span>
-                    <span className="text-zinc-400 shrink-0">{formatter.format(item.product.price * item.quantity)}</span>
+                  <div key={`${item.product.id}:${item.variantId ?? 'base'}`} className="flex justify-between text-xs">
+                    <span className="text-zinc-600 truncate mr-3 uppercase tracking-wide">
+                      {item.product.name}{item.variantName ? ` — ${item.variantName}` : ''} ×{item.quantity}
+                    </span>
+                    <span className="text-zinc-400 shrink-0">{formatter.format(item.unitPrice * item.quantity)}</span>
                   </div>
                 ))}
               </div>

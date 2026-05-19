@@ -102,6 +102,8 @@ export const ListProductsQueryParams = zod.object({
 
 export const listProductsResponseStockQuantityMin = 0;
 
+export const listProductsResponseVariantsItemStockQuantityMin = 0;
+
 
 
 export const ListProductsResponseItem = zod.object({
@@ -114,11 +116,19 @@ export const ListProductsResponseItem = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().min(listProductsResponseStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
+  "stockQuantity": zod.number().min(listProductsResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
   "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
+  "variants": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Free-form variant label, e.g. \'Red — L\' or \'XXL\'.'),
+  "price": zod.number().nullish().describe('Optional price override. When null, the parent product\'s price is used.'),
+  "stockQuantity": zod.number().min(listProductsResponseVariantsItemStockQuantityMin),
+  "isActive": zod.boolean(),
+  "sortOrder": zod.number().optional()
+})),
   "createdAt": zod.coerce.date().nullish()
 })
 export const ListProductsResponse = zod.array(ListProductsResponseItem)
@@ -133,6 +143,8 @@ export const GetProductParams = zod.object({
 
 export const getProductResponseStockQuantityMin = 0;
 
+export const getProductResponseVariantsItemStockQuantityMin = 0;
+
 
 
 export const GetProductResponse = zod.object({
@@ -145,11 +157,19 @@ export const GetProductResponse = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().min(getProductResponseStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
+  "stockQuantity": zod.number().min(getProductResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
   "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
+  "variants": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Free-form variant label, e.g. \'Red — L\' or \'XXL\'.'),
+  "price": zod.number().nullish().describe('Optional price override. When null, the parent product\'s price is used.'),
+  "stockQuantity": zod.number().min(getProductResponseVariantsItemStockQuantityMin),
+  "isActive": zod.boolean(),
+  "sortOrder": zod.number().optional()
+})),
   "createdAt": zod.coerce.date().nullish()
 })
 
@@ -158,6 +178,8 @@ export const GetProductResponse = zod.object({
  * @summary List all products (admin)
  */
 export const listAdminProductsResponseStockQuantityMin = 0;
+
+export const listAdminProductsResponseVariantsItemStockQuantityMin = 0;
 
 
 
@@ -171,11 +193,19 @@ export const ListAdminProductsResponseItem = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().min(listAdminProductsResponseStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
+  "stockQuantity": zod.number().min(listAdminProductsResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
   "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
+  "variants": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Free-form variant label, e.g. \'Red — L\' or \'XXL\'.'),
+  "price": zod.number().nullish().describe('Optional price override. When null, the parent product\'s price is used.'),
+  "stockQuantity": zod.number().min(listAdminProductsResponseVariantsItemStockQuantityMin),
+  "isActive": zod.boolean(),
+  "sortOrder": zod.number().optional()
+})),
   "createdAt": zod.coerce.date().nullish()
 })
 export const ListAdminProductsResponse = zod.array(ListAdminProductsResponseItem)
@@ -188,6 +218,11 @@ export const ListAdminProductsResponse = zod.array(ListAdminProductsResponseItem
 export const createProductBodyPriceMin = 0;
 
 export const createProductBodyStockQuantityMin = 0;
+
+
+export const createProductBodyVariantsItemPriceMin = 0;
+
+export const createProductBodyVariantsItemStockQuantityMin = 0;
 
 
 
@@ -203,7 +238,15 @@ export const CreateProductBody = zod.object({
   "isActive": zod.boolean().optional(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
-  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon')
+  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
+  "variants": zod.array(zod.object({
+  "id": zod.number().optional().describe('When present, updates an existing variant; otherwise a new one is created.'),
+  "name": zod.string().min(1),
+  "price": zod.number().min(createProductBodyVariantsItemPriceMin).nullish(),
+  "stockQuantity": zod.number().min(createProductBodyVariantsItemStockQuantityMin),
+  "isActive": zod.boolean().optional(),
+  "sortOrder": zod.number().optional()
+})).optional().describe('Optional variants. When provided, replaces the full set of variants for the product.')
 })
 
 
@@ -220,6 +263,11 @@ export const updateProductBodyPriceMin = 0;
 export const updateProductBodyStockQuantityMin = 0;
 
 
+export const updateProductBodyVariantsItemPriceMin = 0;
+
+export const updateProductBodyVariantsItemStockQuantityMin = 0;
+
+
 
 export const UpdateProductBody = zod.object({
   "name": zod.string().min(1),
@@ -233,10 +281,20 @@ export const UpdateProductBody = zod.object({
   "isActive": zod.boolean().optional(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
-  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon')
+  "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
+  "variants": zod.array(zod.object({
+  "id": zod.number().optional().describe('When present, updates an existing variant; otherwise a new one is created.'),
+  "name": zod.string().min(1),
+  "price": zod.number().min(updateProductBodyVariantsItemPriceMin).nullish(),
+  "stockQuantity": zod.number().min(updateProductBodyVariantsItemStockQuantityMin),
+  "isActive": zod.boolean().optional(),
+  "sortOrder": zod.number().optional()
+})).optional().describe('Optional variants. When provided, replaces the full set of variants for the product.')
 })
 
 export const updateProductResponseStockQuantityMin = 0;
+
+export const updateProductResponseVariantsItemStockQuantityMin = 0;
 
 
 
@@ -250,11 +308,19 @@ export const UpdateProductResponse = zod.object({
   "categoryName": zod.string().nullish(),
   "imageUrl": zod.string().nullish(),
   "inStock": zod.boolean(),
-  "stockQuantity": zod.number().min(updateProductResponseStockQuantityMin).describe('Remaining inventory. 0 means out of stock.'),
+  "stockQuantity": zod.number().min(updateProductResponseStockQuantityMin).describe('Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.'),
   "isActive": zod.boolean(),
   "isDropship": zod.boolean().optional(),
   "isFeatured": zod.boolean().optional(),
   "availabilityTag": zod.string().nullish().describe('Custom availability tag: new, sale, hot, bestseller, limited, coming_soon'),
+  "variants": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string().describe('Free-form variant label, e.g. \'Red — L\' or \'XXL\'.'),
+  "price": zod.number().nullish().describe('Optional price override. When null, the parent product\'s price is used.'),
+  "stockQuantity": zod.number().min(updateProductResponseVariantsItemStockQuantityMin),
+  "isActive": zod.boolean(),
+  "sortOrder": zod.number().optional()
+})),
   "createdAt": zod.coerce.date().nullish()
 })
 

@@ -42,7 +42,7 @@ function formatDate(iso: string) {
   });
 }
 
-interface CartItem { name: string; quantity: number; price: number; imageUrl?: string }
+interface CartItem { name: string; variantName?: string | null; quantity: number; price: number; imageUrl?: string }
 interface CartCustomer { name?: string; email?: string; address?: string }
 interface CartSnapshot { items?: CartItem[]; total?: number; customer?: CartCustomer }
 
@@ -101,7 +101,10 @@ export default function AdminOrderDetail() {
     msg += `*Date:* ${formatDate(order.createdAt)}\n\n`;
     if (items.length > 0) {
       msg += `*Items:*\n`;
-      items.forEach(i => { msg += `  - ${i.quantity}x ${i.name} — ${sym} ${(i.price * i.quantity).toLocaleString()}\n`; });
+      items.forEach(i => {
+        const name = i.variantName ? `${i.name} (${i.variantName})` : i.name;
+        msg += `  - ${i.quantity}x ${name} — ${sym} ${(i.price * i.quantity).toLocaleString()}\n`;
+      });
       msg += `\n`;
     }
     msg += `*Total: ${sym} ${order.amount.toLocaleString()}*\n\n`;
@@ -179,6 +182,9 @@ export default function AdminOrderDetail() {
                       }
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{item.name}</p>
+                        {item.variantName && (
+                          <p className="text-[10px] uppercase tracking-widest text-muted-foreground/80">{item.variantName}</p>
+                        )}
                         <p className="text-[11px] text-muted-foreground">Qty: {item.quantity} × KSh {item.price.toLocaleString()}</p>
                       </div>
                       <p className="text-xs font-semibold flex-shrink-0">KSh {(item.price * item.quantity).toLocaleString()}</p>

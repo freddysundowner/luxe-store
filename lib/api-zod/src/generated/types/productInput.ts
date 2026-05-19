@@ -5,6 +5,7 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductVariantInput } from './productVariantInput';
 
 export interface ProductInput {
   /** @minLength 1 */
@@ -30,4 +31,6 @@ export interface ProductInput {
      * @nullable
      */
   availabilityTag?: string | null;
+  /** Optional variants. When provided, replaces the full set of variants for the product. */
+  variants?: ProductVariantInput[];
 }

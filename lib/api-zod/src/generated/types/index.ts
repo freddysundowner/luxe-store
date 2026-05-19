@@ -33,5 +33,7 @@ export * from './paymentStatusResponseStatus';
 export * from './priceTier';
 export * from './product';
 export * from './productInput';
+export * from './productVariant';
+export * from './productVariantInput';
 export * from './storeSettings';
 export * from './storeSettingsInput';

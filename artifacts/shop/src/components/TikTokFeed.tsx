@@ -161,7 +161,13 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
 
   // ── Cart / gift / share ──
   const handleAddToCart = (product: Product) => {
-    addItem(product, 1);
+    // Variant products require an option selection — route to PDP rather than
+    // adding a base line item the customer didn't actually configure.
+    if ((product.variants ?? []).some((v) => v.isActive)) {
+      window.location.href = `/product/${product.id}`;
+      return;
+    }
+    addItem(product, { quantity: 1 });
     setCartAdded((prev) => new Set(prev).add(product.id));
     openCart();
   };

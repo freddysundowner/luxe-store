@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   Search, Sparkles, X, Gift, Heart, ShoppingBag, RefreshCw,
   MessageCircle, Share2, Droplets, Send
@@ -39,6 +39,7 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
   const [giftLink, setGiftLink] = useState("");
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
   const featured = useMemo(() => products, [products]);
@@ -143,7 +144,13 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
   };
 
   const handleCart = (product: Product) => {
-    addItem(product, 1);
+    // Products with variants must be added from the PDP so the customer picks
+    // an option. Send them there instead of silently adding a base line item.
+    if ((product.variants ?? []).some((v) => v.isActive)) {
+      setLocation(`/product/${product.id}`);
+      return;
+    }
+    addItem(product, { quantity: 1 });
     setCartAdded((prev) => new Set(prev).add(product.id));
     openCart();
   };

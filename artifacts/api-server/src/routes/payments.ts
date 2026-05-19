@@ -1,11 +1,22 @@
 import { Router } from "express";
 import { eq, desc, and, sql } from "drizzle-orm";
-import { db, storeSettingsTable, paymentsTable, productsTable } from "@workspace/db";
+import { db, storeSettingsTable, paymentsTable, productsTable, productVariantsTable } from "@workspace/db";
 import https from "node:https";
 import { sendOrderConfirmationEmail } from "../lib/email";
 
+interface OrderSnapshotItem {
+  id?: number;
+  productId?: number;
+  variantId?: number | null;
+  variantName?: string | null;
+  name: string;
+  quantity: number;
+  price: number | string;
+  imageUrl?: string | null;
+}
+
 interface OrderSnapshot {
-  items?: Array<{ id?: number; productId?: number; name: string; quantity: number; price: number | string; imageUrl?: string | null }>;
+  items?: OrderSnapshotItem[];
   total?: number | string;
   customer?: { name?: string; email?: string; address?: string };
 }
@@ -29,13 +40,32 @@ async function decrementStockForPayment(
   const snapshot = (payment.cartSnapshot ?? {}) as OrderSnapshot;
   const items = snapshot.items ?? [];
 
-  // Aggregate quantities per product in case the cart has duplicate lines.
+  // Aggregate quantities per variant and per product (for line items without
+  // a variant) so duplicate cart lines collapse into a single SQL update.
+  const perVariant = new Map<number, number>();
   const perProduct = new Map<number, number>();
   for (const item of items) {
-    const productId = item.productId ?? item.id;
     const qty = Number(item.quantity);
-    if (!productId || !Number.isFinite(qty) || qty <= 0) continue;
-    perProduct.set(productId, (perProduct.get(productId) ?? 0) + qty);
+    if (!Number.isFinite(qty) || qty <= 0) continue;
+    if (item.variantId != null) {
+      perVariant.set(item.variantId, (perVariant.get(item.variantId) ?? 0) + qty);
+    } else {
+      const productId = item.productId ?? item.id;
+      if (productId) perProduct.set(productId, (perProduct.get(productId) ?? 0) + qty);
+    }
+  }
+
+  for (const [variantId, qty] of perVariant) {
+    try {
+      await db
+        .update(productVariantsTable)
+        .set({
+          stockQuantity: sql`GREATEST(0, ${productVariantsTable.stockQuantity} - ${qty})`,
+        })
+        .where(eq(productVariantsTable.id, variantId));
+    } catch (err) {
+      log.warn({ err, variantId }, "Failed to decrement variant stock");
+    }
   }
 
   for (const [productId, qty] of perProduct) {

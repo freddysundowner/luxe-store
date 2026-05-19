@@ -1,6 +1,6 @@
 import { CheckCircle2, Clock, XCircle, MessageCircle, ShoppingBag, Store } from "lucide-react";
 
-interface CartItem { name: string; quantity: number; price: number; imageUrl?: string }
+interface CartItem { name: string; variantName?: string | null; quantity: number; price: number; imageUrl?: string }
 interface CartSnapshot { items?: CartItem[] }
 
 function formatPhone(phone: string) {
@@ -125,6 +125,9 @@ export function ReceiptCard({
                     }
                     <div className="flex-1 min-w-0">
                       <p className="text-zinc-200 text-xs font-light uppercase tracking-wide truncate">{item.name}</p>
+                      {item.variantName && (
+                        <p className="text-zinc-500 text-[10px] uppercase tracking-widest mt-0.5 truncate">{item.variantName}</p>
+                      )}
                       <p className="text-zinc-600 text-[11px] mt-0.5">Qty {item.quantity}</p>
                     </div>
                     <p className="text-zinc-300 text-xs shrink-0">{sym} {(item.price * item.quantity).toLocaleString()}</p>

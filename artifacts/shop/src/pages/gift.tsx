@@ -125,8 +125,10 @@ export default function GiftPage() {
       isDropship: false,
       isFeatured: false,
       availabilityTag: null,
+      stockQuantity: 1,
+      variants: [],
       createdAt: null,
-    }, 1);
+    }, { quantity: 1 });
     setAddedToCart(true);
     openCart();
     toast({ title: "Added to your bag!" });

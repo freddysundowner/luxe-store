@@ -604,9 +604,50 @@ components:
         imageUrl:
           type: string
 
+    ProductVariant:
+      type: object
+      required: [id, name, stockQuantity, isActive]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          description: "Free-form variant label, e.g. 'Red — L' or 'XXL'."
+        price:
+          type: ["number", "null"]
+          description: "Optional price override. When null, the parent product's price is used."
+        stockQuantity:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+
+    ProductVariantInput:
+      type: object
+      required: [name, stockQuantity]
+      properties:
+        id:
+          type: integer
+          description: "When present, updates an existing variant; otherwise a new one is created."
+        name:
+          type: string
+          minLength: 1
+        price:
+          type: ["number", "null"]
+          minimum: 0
+        stockQuantity:
+          type: integer
+          minimum: 0
+        isActive:
+          type: boolean
+        sortOrder:
+          type: integer
+
     Product:
       type: object
-      required: [id, name, price, inStock, isActive, stockQuantity]
+      required: [id, name, price, inStock, isActive, stockQuantity, variants]
       properties:
         id:
           type: integer
@@ -629,7 +670,7 @@ components:
         stockQuantity:
           type: integer
           minimum: 0
-          description: "Remaining inventory. 0 means out of stock."
+          description: "Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present."
         isActive:
           type: boolean
         isDropship:
@@ -639,6 +680,10 @@ components:
         availabilityTag:
           type: ["string", "null"]
           description: "Custom availability tag: new, sale, hot, bestseller, limited, coming_soon"
+        variants:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductVariant"
         createdAt:
           type: ["string", "null"]
           format: date-time
@@ -676,6 +721,11 @@ components:
         availabilityTag:
           type: ["string", "null"]
           description: "Custom availability tag: new, sale, hot, bestseller, limited, coming_soon"
+        variants:
+          type: array
+          description: "Optional variants. When provided, replaces the full set of variants for the product."
+          items:
+            $ref: "#/components/schemas/ProductVariantInput"
 
     PriceTier:
       type: object

@@ -5,6 +5,7 @@
  * WhatsApp-style ecommerce API
  * OpenAPI spec version: 0.1.0
  */
+import type { ProductVariant } from './productVariant';
 
 export interface Product {
   id: number;
@@ -22,7 +23,7 @@ export interface Product {
   imageUrl?: string | null;
   inStock: boolean;
   /**
-     * Remaining inventory. 0 means out of stock.
+     * Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.
      * @minimum 0
      */
   stockQuantity: number;
@@ -34,6 +35,7 @@ export interface Product {
      * @nullable
      */
   availabilityTag?: string | null;
+  variants: ProductVariant[];
   /** @nullable */
   createdAt?: Date | null;
 }

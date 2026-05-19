@@ -66,7 +66,7 @@ export default function AdminProducts() {
     setStockDraft(String(current));
   };
 
-  const saveStock = (product: { id: number; name: string; description?: string | null; price: number; originalPrice?: number | null; categoryId?: number | null; imageUrl?: string | null; inStock: boolean; isActive: boolean; isDropship: boolean; isFeatured: boolean; availabilityTag?: string | null; }) => {
+  const saveStock = (product: { id: number; name: string; description?: string | null; price: number; originalPrice?: number | null; categoryId?: number | null; imageUrl?: string | null; inStock: boolean; isActive: boolean; isDropship?: boolean; isFeatured?: boolean; availabilityTag?: string | null; }) => {
     const trimmed = stockDraft.trim();
     const n = Number(trimmed);
     if (trimmed === "" || !Number.isFinite(n) || n < 0 || !Number.isInteger(n)) {

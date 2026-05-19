@@ -1,4 +1,4 @@
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Heart, ShoppingBag, Trash2, ArrowLeft } from "lucide-react";
 import { useFavorites } from "@/lib/favorites-context";
 import { useCart } from "@/lib/cart-context";
@@ -11,9 +11,15 @@ export default function Favorites() {
   const { favorites, toggleFavorite, favoriteCount } = useFavorites();
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
   const handleAddToCart = (product: typeof favorites[0]) => {
-    addItem(product, 1);
+    // Variant products need an option selection; send to PDP.
+    if ((product.variants ?? []).some((v) => v.isActive)) {
+      setLocation(`/product/${product.id}`);
+      return;
+    }
+    addItem(product, { quantity: 1 });
     openCart();
   };
 

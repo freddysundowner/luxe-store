@@ -1,8 +1,8 @@
 import { useParams, Link } from "wouter";
 import { RootLayout } from "@/components/layout/RootLayout";
-import { useGetProduct, getGetProductQueryKey } from "@workspace/api-client-react";
+import { useGetProduct, getGetProductQueryKey, ProductVariant } from "@workspace/api-client-react";
 import { ShoppingBag, Minus, Plus } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useCart } from "@/lib/cart-context";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +13,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const productId = parseInt(id || "0", 10);
   const [quantity, setQuantity] = useState(1);
+  const [selectedVariantId, setSelectedVariantId] = useState<number | null>(null);
   const { addItem, openCart } = useCart();
   const { toast } = useToast();
 
@@ -20,9 +21,27 @@ export default function ProductDetail() {
     query: { queryKey: getGetProductQueryKey(productId), enabled: !!productId }
   });
 
+  const activeVariants = useMemo<ProductVariant[]>(
+    () => (product?.variants ?? []).filter((v) => v.isActive),
+    [product]
+  );
+  const hasVariants = activeVariants.length > 0;
+  const selectedVariant = activeVariants.find((v) => v.id === selectedVariantId) ?? null;
+
+  // Effective price/stock: variant overrides product when one is selected.
+  const effectivePrice = selectedVariant?.price ?? product?.price ?? 0;
+  const effectiveStock = selectedVariant
+    ? selectedVariant.stockQuantity
+    : (product?.stockQuantity ?? 0);
+  const canPurchase = product?.inStock && (hasVariants ? !!selectedVariant && effectiveStock > 0 : true);
+
   const handleAddToCart = () => {
-    if (!product) return;
-    addItem(product, quantity);
+    if (!product || !canPurchase) return;
+    if (hasVariants && !selectedVariant) {
+      toast({ title: "Choose an option", description: "Please select a variant before adding to bag." });
+      return;
+    }
+    addItem(product, { variant: selectedVariant ?? null, quantity });
     openCart();
   };
 
@@ -64,7 +83,20 @@ export default function ProductDetail() {
     ? Math.round((1 - product.price / product.originalPrice) * 100)
     : null;
 
-  const priceFormatted = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 }).format(product.price);
+  // "From KSh X" when active variants disagree on price
+  const variantPrices = activeVariants.map((v) => v.price ?? product.price);
+  const showFromPrice = hasVariants && new Set(variantPrices).size > 1 && !selectedVariant;
+  const headerPrice = selectedVariant ? effectivePrice : (showFromPrice ? Math.min(...variantPrices) : product.price);
+
+  const priceFormatted = formatter.format(headerPrice);
+
+  const addToBagLabel = !product.inStock
+    ? "Out of Stock"
+    : hasVariants && !selectedVariant
+      ? "Select an Option"
+      : effectiveStock <= 0
+        ? "Sold Out"
+        : `Add to Bag — ${formatter.format(effectivePrice * quantity)}`;
 
   return (
     <RootLayout showBack noMarquee title={product.name}>
@@ -125,11 +157,52 @@ export default function ProductDetail() {
               {product.name}
             </h1>
             <div className="flex items-end gap-4 mb-8 pb-8 border-b border-zinc-900">
-              <span className="text-3xl lg:text-4xl font-light text-[#D4AF37]">{formatter.format(product.price)}</span>
-              {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-3xl lg:text-4xl font-light text-[#D4AF37]">
+                {showFromPrice && <span className="text-sm uppercase tracking-widest text-zinc-500 mr-2 align-middle">From</span>}
+                {formatter.format(headerPrice)}
+              </span>
+              {!selectedVariant && product.originalPrice && product.originalPrice > product.price && (
                 <span className="text-lg text-zinc-700 line-through mb-1">{formatter.format(product.originalPrice)}</span>
               )}
             </div>
+
+            {/* Variant selector */}
+            {hasVariants && (
+              <div className="mb-8 pb-8 border-b border-zinc-900">
+                <h3 className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">
+                  Options {selectedVariant && <span className="text-zinc-400 normal-case">— {selectedVariant.name}</span>}
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {activeVariants.map((v) => {
+                    const isSelected = v.id === selectedVariantId;
+                    const isSoldOut = v.stockQuantity <= 0;
+                    const variantPrice = v.price ?? product.price;
+                    const priceDiffers = new Set(variantPrices).size > 1;
+                    return (
+                      <button
+                        key={v.id}
+                        onClick={() => !isSoldOut && setSelectedVariantId(v.id)}
+                        disabled={isSoldOut}
+                        className={`px-4 py-2.5 border text-xs uppercase tracking-wide transition-colors ${
+                          isSelected
+                            ? "bg-[#D4AF37] text-black border-[#D4AF37]"
+                            : isSoldOut
+                              ? "bg-transparent text-zinc-700 border-zinc-900 line-through cursor-not-allowed"
+                              : "bg-transparent text-zinc-300 border-zinc-800 hover:border-[#D4AF37]"
+                        }`}
+                      >
+                        <span>{v.name}</span>
+                        {priceDiffers && !isSelected && !isSoldOut && (
+                          <span className="ml-2 text-[10px] text-zinc-500">{formatter.format(variantPrice)}</span>
+                        )}
+                        {isSoldOut && <span className="ml-2 text-[10px]">Sold Out</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
             <div className="bg-zinc-900/60 border border-zinc-800/60 p-5 mb-6">
               <h3 className="text-[10px] uppercase tracking-widest text-zinc-600 mb-3">Description</h3>
               <p className="text-zinc-400 text-sm leading-relaxed whitespace-pre-line font-light">
@@ -139,18 +212,18 @@ export default function ProductDetail() {
             <div className="flex items-center justify-between p-4 bg-zinc-900/40 border border-zinc-900 mb-8">
               <span className="text-xs uppercase tracking-widest text-zinc-500">Quantity</span>
               <div className="flex items-center gap-5 border border-zinc-800 px-4 py-2">
-                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30" disabled={quantity <= 1 || !product.inStock}>
+                <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30" disabled={quantity <= 1 || !canPurchase}>
                   <Minus className="w-4 h-4" />
                 </button>
                 <span className="font-light text-zinc-200 w-6 text-center">{quantity}</span>
-                <button onClick={() => setQuantity(quantity + 1)} className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30" disabled={!product.inStock}>
+                <button onClick={() => setQuantity(quantity + 1)} className="text-zinc-600 hover:text-[#D4AF37] transition-colors disabled:opacity-30" disabled={!canPurchase}>
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
             </div>
             <div className="hidden lg:block">
-              <button onClick={handleAddToCart} disabled={!product.inStock} className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
-                {product.inStock ? `Add to Bag — ${formatter.format(product.price * quantity)}` : "Out of Stock"}
+              <button onClick={handleAddToCart} disabled={!canPurchase} className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-lg">
+                {addToBagLabel}
               </button>
             </div>
           </div>
@@ -162,8 +235,8 @@ export default function ProductDetail() {
       </div>
 
       <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-[#0a0a0a]/95 backdrop-blur border-t border-zinc-900 z-50">
-        <button onClick={handleAddToCart} disabled={!product.inStock} className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
-          {product.inStock ? `Add to Bag — ${formatter.format(product.price * quantity)}` : "Out of Stock"}
+        <button onClick={handleAddToCart} disabled={!canPurchase} className="w-full py-4 bg-[#D4AF37] text-black text-sm uppercase tracking-widest font-medium hover:bg-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+          {addToBagLabel}
         </button>
       </div>
     </RootLayout>

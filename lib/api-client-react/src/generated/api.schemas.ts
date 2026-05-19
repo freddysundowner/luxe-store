@@ -26,6 +26,37 @@ export interface CategoryInput {
   imageUrl?: string;
 }
 
+export interface ProductVariant {
+  id: number;
+  /** Free-form variant label, e.g. 'Red — L' or 'XXL'. */
+  name: string;
+  /**
+     * Optional price override. When null, the parent product's price is used.
+     * @nullable
+     */
+  price?: number | null;
+  /** @minimum 0 */
+  stockQuantity: number;
+  isActive: boolean;
+  sortOrder?: number;
+}
+
+export interface ProductVariantInput {
+  /** When present, updates an existing variant; otherwise a new one is created. */
+  id?: number;
+  /** @minLength 1 */
+  name: string;
+  /**
+     * @minimum 0
+     * @nullable
+     */
+  price?: number | null;
+  /** @minimum 0 */
+  stockQuantity: number;
+  isActive?: boolean;
+  sortOrder?: number;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -42,7 +73,7 @@ export interface Product {
   imageUrl?: string | null;
   inStock: boolean;
   /**
-     * Remaining inventory. 0 means out of stock.
+     * Remaining inventory of the base product. 0 means out of stock. Ignored when variants are present.
      * @minimum 0
      */
   stockQuantity: number;
@@ -54,6 +85,7 @@ export interface Product {
      * @nullable
      */
   availabilityTag?: string | null;
+  variants: ProductVariant[];
   /** @nullable */
   createdAt?: string | null;
 }
@@ -82,6 +114,8 @@ export interface ProductInput {
      * @nullable
      */
   availabilityTag?: string | null;
+  /** Optional variants. When provided, replaces the full set of variants for the product. */
+  variants?: ProductVariantInput[];
 }
 
 export interface PriceTier {
