@@ -48,7 +48,7 @@ function CardBg({ product, imageIndex = 0 }: { product: Product; imageIndex?: nu
   const cfg = getImageSettings(src, product.imageSettings);
   const isBundle = product.kind === "bundle";
   const bundleItemImages = (product.bundleProducts ?? []).map((bp) => bp.imageUrl);
-  const showBundleBox = !src && isBundle && bundleItemImages.some((u) => !!u);
+  const showBundleBox = !src && isBundle;
   return (
     <>
       {src ? (

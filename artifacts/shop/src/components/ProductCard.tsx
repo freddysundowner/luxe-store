@@ -81,7 +81,7 @@ export function ProductCard({
               imgClassName="transition-transform duration-700 ease-out opacity-85 group-hover:opacity-100 group-hover:scale-105"
               showFallback={false}
             />
-          ) : isBundle && (product.bundleProducts ?? []).some((bp) => !!bp.imageUrl) ? (
+          ) : isBundle ? (
             <BundleBoxCover
               alt={product.name}
               itemImages={(product.bundleProducts ?? []).map((bp) => bp.imageUrl)}
