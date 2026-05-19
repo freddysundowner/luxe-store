@@ -453,6 +453,7 @@ export async function validateBundleItems(raw: unknown): Promise<{ items: Bundle
 }
 
 router.post("/admin/products", async (req, res): Promise<void> => {
+  console.log("[POST /admin/products] req.body kind=", (req.body as { kind?: unknown })?.kind, "bundleItems=", JSON.stringify((req.body as { bundleItems?: unknown })?.bundleItems));
   const parsed = CreateProductBody.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: parsed.error.message });
