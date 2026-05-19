@@ -124,6 +124,29 @@ export default function AdminSettings() {
     });
   };
 
+  const onInvalid = (errors: Record<string, unknown>) => {
+    const flatten = (obj: unknown, path: string[] = []): string[] => {
+      if (!obj || typeof obj !== "object") return [];
+      const out: string[] = [];
+      for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+        if (v && typeof v === "object") {
+          if ("message" in (v as object) && typeof (v as { message?: unknown }).message === "string") {
+            out.push(`${[...path, k].join(".")}: ${(v as { message: string }).message}`);
+          } else {
+            out.push(...flatten(v, [...path, k]));
+          }
+        }
+      }
+      return out;
+    };
+    const messages = flatten(errors);
+    toast({
+      variant: "destructive",
+      title: "Cannot save — fix these fields:",
+      description: messages.slice(0, 4).join(" • ") || "Please check the form for errors.",
+    });
+  };
+
   if (isLoading) {
     return (
       <AdminLayout title="Store Settings">
@@ -135,7 +158,7 @@ export default function AdminSettings() {
   return (
     <AdminLayout title="Store Settings">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit, onInvalid)}>
           <Tabs defaultValue="general" className="space-y-6">
             {/* Tab bar */}
             <TabsList className="h-auto p-1 flex flex-wrap gap-1 w-full justify-start bg-muted/60 rounded-xl">
