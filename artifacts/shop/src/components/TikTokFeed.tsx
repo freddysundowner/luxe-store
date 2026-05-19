@@ -12,6 +12,7 @@ import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { isProductSoldOut } from "@/lib/stock";
 import { useAddBundleToCart } from "@/lib/bundle-add";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
+import { BundleBoxCover } from "@/components/BundleBoxCover";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
@@ -45,6 +46,9 @@ function CardBg({ product, imageIndex = 0 }: { product: Product; imageIndex?: nu
   const images = getImages(product);
   const src = images[Math.min(imageIndex, images.length - 1)] ?? null;
   const cfg = getImageSettings(src, product.imageSettings);
+  const isBundle = product.kind === "bundle";
+  const bundleItemImages = (product.bundleProducts ?? []).map((bp) => bp.imageUrl);
+  const showBundleBox = !src && isBundle && bundleItemImages.some((u) => !!u);
   return (
     <>
       {src ? (
@@ -56,6 +60,12 @@ function CardBg({ product, imageIndex = 0 }: { product: Product; imageIndex?: nu
           draggable={false}
           className="absolute inset-0 animate-in fade-in duration-300"
           showFallback={false}
+        />
+      ) : showBundleBox ? (
+        <BundleBoxCover
+          alt={product.name}
+          itemImages={bundleItemImages}
+          className="absolute inset-0"
         />
       ) : (
         <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">

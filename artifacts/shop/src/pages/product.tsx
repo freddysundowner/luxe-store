@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { RelatedProducts } from "@/components/RelatedProducts";
 import { Helmet } from "react-helmet-async";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
+import { BundleBoxCover } from "@/components/BundleBoxCover";
 import { useAddBundleToCart } from "@/lib/bundle-add";
 import { useToast } from "@/hooks/use-toast";
 
@@ -173,6 +174,11 @@ export default function ProductDetail() {
             soldOut={!product.inStock}
             featured={!!product.isFeatured}
             discount={discount}
+            bundleItemImages={
+              isBundle
+                ? (product.bundleProducts ?? []).map((bp) => bp.imageUrl)
+                : undefined
+            }
           />
 
           <div className="mt-8 lg:mt-0 flex flex-col">
@@ -328,9 +334,12 @@ interface ProductGalleryProps {
   soldOut: boolean;
   featured: boolean;
   discount: number | null;
+  // When provided and the gallery is empty, render a stylised gift-box cover
+  // with the bundle's component items inside instead of the plain placeholder.
+  bundleItemImages?: Array<string | null | undefined>;
 }
 
-function ProductGallery({ images, imageSettings, activeIdx, onChange, name, soldOut, featured, discount }: ProductGalleryProps) {
+function ProductGallery({ images, imageSettings, activeIdx, onChange, name, soldOut, featured, discount, bundleItemImages }: ProductGalleryProps) {
   // Track touch start so we can support horizontal swipe-to-paginate on mobile.
   const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const hasMultiple = images.length > 1;
@@ -373,7 +382,9 @@ function ProductGallery({ images, imageSettings, activeIdx, onChange, name, sold
               showFallback={false}
             />
           )
-          : <div className="w-full h-full flex items-center justify-center bg-zinc-900"><ShoppingBag className="w-16 h-16 text-zinc-700" /></div>
+          : bundleItemImages && bundleItemImages.some((u) => !!u)
+            ? <BundleBoxCover alt={name} itemImages={bundleItemImages} className="absolute inset-0" />
+            : <div className="w-full h-full flex items-center justify-center bg-zinc-900"><ShoppingBag className="w-16 h-16 text-zinc-700" /></div>
         }
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-40 pointer-events-none" />
         {soldOut && (

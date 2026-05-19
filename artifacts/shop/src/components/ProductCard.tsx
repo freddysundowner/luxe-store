@@ -7,6 +7,7 @@ import { isProductSoldOut } from "@/lib/stock";
 import { useAddBundleToCart } from "@/lib/bundle-add";
 import { Gift } from "lucide-react";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
+import { BundleBoxCover } from "@/components/BundleBoxCover";
 
 // Hoist the formatter so we allocate it once per app, not once per card per
 // render — the grid can have 30+ cards and rerenders during scroll.
@@ -84,6 +85,12 @@ export function ProductCard({
               className="absolute inset-0"
               imgClassName="transition-transform duration-700 ease-out opacity-85 group-hover:opacity-100 group-hover:scale-105"
               showFallback={false}
+            />
+          ) : isBundle && (product.bundleProducts ?? []).some((bp) => !!bp.imageUrl) ? (
+            <BundleBoxCover
+              alt={product.name}
+              itemImages={(product.bundleProducts ?? []).map((bp) => bp.imageUrl)}
+              className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-105"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-zinc-900">
