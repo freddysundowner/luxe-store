@@ -149,6 +149,10 @@ function FeaturedSwiper({
   // ── Touch drag (live) ──
   const handleTouchStart = (e: React.TouchEvent) => {
     if (isAnimating) return;
+    // Mirror the mouse-down guard: don't hijack drags that start on
+    // interactive elements (the pinned drop icon, action rail buttons, etc.).
+    const target = e.target as HTMLElement;
+    if (target.closest("button, a, input, textarea, select")) return;
     dragStartY.current = e.touches[0].clientY;
     liveOffset.current = 0;
     isDragging.current = true;
@@ -208,7 +212,7 @@ function FeaturedSwiper({
     if (isAnimating) return;
     // Don't hijack drags that start on interactive elements (buttons, links).
     const target = e.target as HTMLElement;
-    if (target.closest("button, a, input, textarea")) return;
+    if (target.closest("button, a, input, textarea, select")) return;
     dragStartY.current = e.clientY;
     liveOffset.current = 0;
     isDragging.current = true;
@@ -346,7 +350,6 @@ function FeaturedSwiper({
   // info panel). Inactive cards (the one sliding in behind/ahead) get
   // no-op interactions so a half-drag doesn't trigger purchases or shares.
   const renderCardContent = (p: Product, isActive: boolean) => {
-    const fav = isActive && isFavorite(p.id);
     const isSoldOut = isProductSoldOut(p);
     return (
       <>
@@ -366,40 +369,6 @@ function FeaturedSwiper({
             </div>
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/10 to-transparent pointer-events-none" />
-        </div>
-
-        {/* Top label — doubles as Save/Favorite toggle (active card only). */}
-        <div className="absolute top-3 left-0 right-0 flex justify-center z-10">
-          <button
-            type="button"
-            onClick={isActive ? () => {
-              const wasFavorited = fav;
-              toggleFavorite(p);
-              toast({
-                title: wasFavorited ? "Removed from saved" : "Saved!",
-                description: p.name,
-                duration: 1500,
-              });
-            } : undefined}
-            aria-label={fav ? "Remove from saved" : "Save to favorites"}
-            aria-pressed={fav}
-            tabIndex={isActive ? 0 : -1}
-            className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
-              fav
-                ? "bg-[#D4AF37]/25 border border-[#D4AF37]"
-                : "bg-black/60 border border-[#D4AF37]/40 hover:border-[#D4AF37]/80"
-            }`}
-            style={{ boxShadow: "0 0 12px rgba(212,175,55,0.25)" }}
-          >
-            <Droplets
-              className={`w-6 h-6 transition-transform duration-300 ${fav ? "scale-110" : ""}`}
-              style={
-                fav
-                  ? { color: "#D4AF37", fill: "#D4AF37", filter: "drop-shadow(0 0 6px rgba(212,175,55,0.7))" }
-                  : { animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }
-              }
-            />
-          </button>
         </div>
 
         {/* Action buttons */}
@@ -525,6 +494,50 @@ function FeaturedSwiper({
       >
         {renderCardContent(current, true)}
       </div>
+
+      {/* Pinned drop icon / favorite toggle — sits above the sliding cards
+          so it stays in place during drags and slide transitions. Always
+          reflects the currently-active product. */}
+      {(() => {
+        const fav = isFavorite(current.id);
+        return (
+          <div className="absolute top-3 left-0 right-0 flex justify-center z-30 pointer-events-none">
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                const wasFavorited = fav;
+                toggleFavorite(current);
+                toast({
+                  title: wasFavorited ? "Removed from saved" : "Saved!",
+                  description: current.name,
+                  duration: 1500,
+                });
+              }}
+              aria-label={fav ? "Remove from saved" : "Save to favorites"}
+              aria-pressed={fav}
+              className={`pointer-events-auto w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
+                fav
+                  ? "bg-[#D4AF37]/25 border border-[#D4AF37]"
+                  : "bg-black/60 border border-[#D4AF37]/40 hover:border-[#D4AF37]/80"
+              }`}
+              style={{ boxShadow: "0 0 12px rgba(212,175,55,0.25)" }}
+            >
+              <Droplets
+                className={`w-6 h-6 transition-transform duration-300 ${fav ? "scale-110" : ""}`}
+                style={
+                  fav
+                    ? { color: "#D4AF37", fill: "#D4AF37", filter: "drop-shadow(0 0 6px rgba(212,175,55,0.7))" }
+                    : { animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }
+                }
+              />
+            </button>
+          </div>
+        );
+      })()}
 
       {/* Scroll hint */}
       <div className="absolute bottom-0 left-0 right-0 flex justify-center pb-1 z-20 pointer-events-none">
