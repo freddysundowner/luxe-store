@@ -344,10 +344,10 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
         </div>
 
         {/* Thin gold progress bar — fills left→right over PROGRESS_DURATION_MS,
-            keyed on currentIndex so it resets on every swipe */}
+            keyed on currentIndex so it resets on every swipe. Flush to the
+            very top edge, edge-to-edge. */}
         <div
-          className="absolute left-4 right-4 z-10 h-0.5 bg-white/10 rounded-full overflow-hidden"
-          style={{ top: `${topOffset + 18}px` }}
+          className="absolute top-0 left-0 right-0 z-20 h-0.5 bg-white/10 overflow-hidden"
         >
           <div
             key={activeProductId ?? "none"}
