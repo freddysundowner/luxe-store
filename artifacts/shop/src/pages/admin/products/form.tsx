@@ -219,7 +219,6 @@ export default function ProductForm() {
     // Bundles surface through /api/hampers too — keep the legacy gift-finder
     // & admin-hampers pages in sync.
     queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && typeof q.queryKey[0] === "string" && q.queryKey[0].startsWith("/api/hampers") });
-    queryClient.invalidateQueries({ predicate: (q) => Array.isArray(q.queryKey) && typeof q.queryKey[0] === "string" && q.queryKey[0].startsWith("/api/admin/hampers") });
     if (isEditing) {
       queryClient.invalidateQueries({ queryKey: getGetProductQueryKey(productId) });
     }

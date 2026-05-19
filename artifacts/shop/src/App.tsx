@@ -24,8 +24,6 @@ import AdminProductForm from "@/pages/admin/products/form";
 import AdminCategories from "@/pages/admin/categories/index";
 import AdminSettings from "@/pages/admin/settings";
 import AdminGifts from "@/pages/admin/gifts";
-import AdminHampers from "@/pages/admin/hampers/index";
-import AdminHamperForm from "@/pages/admin/hampers/form";
 import AdminAvailabilityTags from "@/pages/admin/availability-tags";
 import AdminOrders from "@/pages/admin/orders";
 import AdminOrderDetail from "@/pages/admin/order-detail";
@@ -63,9 +61,6 @@ function Router() {
       <Route path="/admin/orders" component={AdminOrders} />
       <Route path="/admin/orders/:id" component={AdminOrderDetail} />
       <Route path="/admin/gifts" component={AdminGifts} />
-      <Route path="/admin/hampers" component={AdminHampers} />
-      <Route path="/admin/hampers/new" component={AdminHamperForm} />
-      <Route path="/admin/hampers/:id/edit" component={AdminHamperForm} />
       <Route path="/admin/availability-tags" component={AdminAvailabilityTags} />
       <Route path="/admin/settings" component={AdminSettings} />
 

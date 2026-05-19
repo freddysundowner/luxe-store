@@ -1,9 +1,8 @@
 /**
- * /api/hampers — legacy alias over kind='bundle' products. The hampers table
- * is no longer the source of truth; everything reads/writes products. We keep
- * this route for backward compatibility with the GiftFinder, the admin
- * hampers pages, and the AI suggest endpoint until those flows are migrated
- * to /api/products?kind=bundle.
+ * /api/hampers — read-only alias over kind='bundle' products. The hampers
+ * table is no longer the source of truth; everything reads from products.
+ * Admin CRUD has moved to /api/admin/products (with kind='bundle'); these
+ * public endpoints are retained for back-compat with GiftFinder.
  */
 import { Router } from "express";
 import { eq, and, inArray, desc } from "drizzle-orm";
@@ -129,108 +128,8 @@ router.get("/hampers/:id", async (req, res): Promise<void> => {
   res.json(toDto(row, availability));
 });
 
-router.get("/admin/hampers", async (_req, res) => {
-  const rows = await db
-    .select()
-    .from(productsTable)
-    .where(eq(productsTable.kind, "bundle"))
-    .orderBy(desc(productsTable.createdAt));
-  const allItems = rows.flatMap((r) => (r.bundleItems ?? []) as BundleItem[]);
-  const availability = await computeAvailabilityMap(allItems);
-  res.json(rows.map((r) => toDto(r, availability)));
-});
-
-interface HamperInputBody {
-  name?: unknown;
-  description?: unknown;
-  imageUrl?: unknown;
-  price?: unknown;
-  items?: unknown;
-  isActive?: unknown;
-  isFeatured?: unknown;
-}
-
-async function parseInput(body: HamperInputBody): Promise<{
-  name: string;
-  description: string | null;
-  imageUrl: string | null;
-  price: string;
-  items: BundleItem[];
-  isActive: boolean;
-  isFeatured: boolean;
-} | { error: string }> {
-  if (typeof body.name !== "string" || body.name.trim().length === 0) return { error: "name is required" };
-  const priceNum = typeof body.price === "number" ? body.price : Number(body.price);
-  if (!Number.isFinite(priceNum) || priceNum < 0) return { error: "price must be a non-negative number" };
-  // Delegate item validation to the shared bundle validator used by the
-  // products admin endpoints — this enforces existence + no-nested-bundles
-  // so the legacy /admin/hampers alias cannot create invalid data.
-  const validated = await validateBundleItems(body.items);
-  if ("error" in validated) return { error: validated.error };
-  return {
-    name: body.name.trim(),
-    description: typeof body.description === "string" ? body.description : null,
-    imageUrl: typeof body.imageUrl === "string" ? body.imageUrl : null,
-    price: priceNum.toFixed(2),
-    items: validated.items,
-    isActive: typeof body.isActive === "boolean" ? body.isActive : true,
-    isFeatured: typeof body.isFeatured === "boolean" ? body.isFeatured : false,
-  };
-}
-
-router.post("/admin/hampers", async (req, res): Promise<void> => {
-  const parsed = await parseInput(req.body ?? {});
-  if ("error" in parsed) { res.status(400).json({ error: parsed.error }); return; }
-  const [row] = await db.insert(productsTable).values({
-    name: parsed.name,
-    description: parsed.description,
-    imageUrl: parsed.imageUrl,
-    images: parsed.imageUrl ? [parsed.imageUrl] : [],
-    price: parsed.price,
-    isActive: parsed.isActive,
-    isFeatured: parsed.isFeatured,
-    kind: "bundle",
-    bundleItems: parsed.items,
-    stockQuantity: 0,
-    inStock: true,
-  }).returning();
-  const availability = await computeAvailabilityMap(parsed.items);
-  res.status(201).json(toDto(row, availability));
-});
-
-router.put("/admin/hampers/:id", async (req, res): Promise<void> => {
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const parsed = await parseInput(req.body ?? {});
-  if ("error" in parsed) { res.status(400).json({ error: parsed.error }); return; }
-  const [row] = await db
-    .update(productsTable)
-    .set({
-      name: parsed.name,
-      description: parsed.description,
-      imageUrl: parsed.imageUrl,
-      images: parsed.imageUrl ? [parsed.imageUrl] : [],
-      price: parsed.price,
-      isActive: parsed.isActive,
-      isFeatured: parsed.isFeatured,
-      bundleItems: parsed.items,
-    })
-    .where(and(eq(productsTable.id, id), eq(productsTable.kind, "bundle")))
-    .returning();
-  if (!row) { res.status(404).json({ error: "Not found" }); return; }
-  const availability = await computeAvailabilityMap(parsed.items);
-  res.json(toDto(row, availability));
-});
-
-router.delete("/admin/hampers/:id", async (req, res): Promise<void> => {
-  const id = Number(req.params.id);
-  if (!Number.isFinite(id)) { res.status(400).json({ error: "Invalid id" }); return; }
-  const [row] = await db
-    .delete(productsTable)
-    .where(and(eq(productsTable.id, id), eq(productsTable.kind, "bundle")))
-    .returning();
-  if (!row) { res.status(404).json({ error: "Not found" }); return; }
-  res.status(204).end();
-});
+// Admin hamper CRUD removed — bundles are now managed via /admin/products
+// (kind='bundle'). The public read-only /hampers endpoints above are kept
+// as a thin alias for GiftFinder/AI back-compat.
 
 export default router;

@@ -302,80 +302,6 @@ paths:
         "404":
           description: Not found
 
-  /admin/hampers:
-    get:
-      operationId: listAdminHampers
-      tags: [admin, hampers]
-      summary: List all hampers (admin)
-      responses:
-        "200":
-          description: List of hampers
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Hamper"
-    post:
-      operationId: createHamper
-      tags: [admin, hampers]
-      summary: Create a hamper
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/HamperInput"
-      responses:
-        "201":
-          description: Created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Hamper"
-
-  /admin/hampers/{id}:
-    put:
-      operationId: updateHamper
-      tags: [admin, hampers]
-      summary: Update a hamper
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/HamperInput"
-      responses:
-        "200":
-          description: Updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Hamper"
-        "404":
-          description: Not found
-    delete:
-      operationId: deleteHamper
-      tags: [admin, hampers]
-      summary: Delete a hamper
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      responses:
-        "204":
-          description: Deleted
-        "404":
-          description: Not found
-
   /settings:
     get:
       operationId: getSettings
@@ -966,30 +892,6 @@ components:
         createdAt:
           type: ["string", "null"]
           format: date-time
-
-    HamperInput:
-      type: object
-      required: [name, price, items]
-      properties:
-        name:
-          type: string
-          minLength: 1
-        description:
-          type: ["string", "null"]
-        imageUrl:
-          type: ["string", "null"]
-        price:
-          type: number
-          minimum: 0
-        items:
-          type: array
-          minItems: 1
-          items:
-            $ref: "#/components/schemas/HamperItem"
-        isActive:
-          type: boolean
-        isFeatured:
-          type: boolean
 
     PriceTier:
       type: object

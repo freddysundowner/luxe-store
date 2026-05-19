@@ -24,7 +24,6 @@ export function AdminLayout({ children, title }: { children: ReactNode; title: s
     { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
     { href: "/admin/products", label: "Products", icon: Package },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
-    { href: "/admin/hampers", label: "Hampers", icon: Gift },
     { href: "/admin/gifts", label: "Gifts", icon: Gift },
     { href: "/admin/availability-tags", label: "Avail. Tags", icon: Tag },
     { href: "/admin/settings", label: "Settings", icon: Settings },

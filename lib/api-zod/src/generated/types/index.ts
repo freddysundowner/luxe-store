@@ -22,7 +22,6 @@ export * from './giftInputPaymentMethod';
 export * from './giftPaymentMethod';
 export * from './giftStatus';
 export * from './hamper';
-export * from './hamperInput';
 export * from './hamperItem';
 export * from './healthStatus';
 export * from './imageDisplaySettings';

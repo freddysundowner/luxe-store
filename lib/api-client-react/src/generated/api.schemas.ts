@@ -242,21 +242,6 @@ export interface Hamper {
   createdAt?: string | null;
 }
 
-export interface HamperInput {
-  /** @minLength 1 */
-  name: string;
-  /** @nullable */
-  description?: string | null;
-  /** @nullable */
-  imageUrl?: string | null;
-  /** @minimum 0 */
-  price: number;
-  /** @minItems 1 */
-  items: HamperItem[];
-  isActive?: boolean;
-  isFeatured?: boolean;
-}
-
 export interface PriceTier {
   name: string;
   min: number;
