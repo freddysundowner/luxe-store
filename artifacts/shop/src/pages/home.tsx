@@ -26,7 +26,7 @@ const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES",
 
 // ── Desktop featured TikTok swiper (center column) ─────────────────────────
 
-function FeaturedSwiper({ products }: { products: Product[] }) {
+function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: () => void }) {
   const [index, setIndex] = useState(0);
   const [isFading, setIsFading] = useState(false);
   const [cartAdded, setCartAdded] = useState<Set<number>>(new Set());
@@ -164,8 +164,13 @@ function FeaturedSwiper({ products }: { products: Product[] }) {
 
   if (!current) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-[#0a0a0a]">
-        <ShoppingBag className="w-10 h-10 text-zinc-800" />
+      <div className="flex-1 flex items-center justify-center bg-[#0a0a0a] overflow-hidden">
+        <EmptyFeed
+          message="No products found"
+          sub="Try a different filter or category"
+          onClear={onClear}
+          clearLabel="Clear filters"
+        />
       </div>
     );
   }
@@ -703,7 +708,10 @@ export default function Home() {
         {/* Center — Featured swiper */}
         <div className="w-[460px] shrink-0 border-r border-zinc-900 flex flex-col overflow-hidden">
           {allProducts ? (
-            <FeaturedSwiper products={displayProducts} />
+            <FeaturedSwiper
+              products={displayProducts}
+              onClear={() => { clearSearch(); setSelectedCategory(undefined); setPriceRanges(new Set()); setAvailability(new Set()); }}
+            />
           ) : (
             <div className="flex-1 bg-[#0a0a0a] flex items-center justify-center">
               <Skeleton className="w-full h-full bg-zinc-900" />
