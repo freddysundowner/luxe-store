@@ -2,6 +2,42 @@ import { Router } from "express";
 import { eq, desc } from "drizzle-orm";
 import { db, storeSettingsTable, paymentsTable } from "@workspace/db";
 import https from "node:https";
+import { sendOrderConfirmationEmail } from "../lib/email";
+
+interface OrderSnapshot {
+  items?: Array<{ name: string; quantity: number; price: number | string; imageUrl?: string | null }>;
+  total?: number | string;
+  customer?: { name?: string; email?: string; address?: string };
+}
+
+async function sendOrderEmailForPayment(
+  payment: typeof paymentsTable.$inferSelect,
+  log: { info: (...a: unknown[]) => void; warn: (...a: unknown[]) => void; error: (...a: unknown[]) => void }
+): Promise<void> {
+  const snapshot = (payment.cartSnapshot ?? {}) as OrderSnapshot;
+  const customer = snapshot.customer ?? {};
+  if (!customer.email) {
+    log.info({ transactionId: payment.transactionId }, "Skipping order email — no customer email on record");
+    return;
+  }
+  const settings = await getSettings();
+  if (!settings) return;
+
+  const result = await sendOrderConfirmationEmail(
+    {
+      settings,
+      customer,
+      items: snapshot.items ?? [],
+      total: snapshot.total ?? payment.amount,
+      transactionId: payment.transactionId,
+      mpesaRef: payment.mpesaRef,
+    },
+    log
+  );
+  if (!result.sent) {
+    log.warn({ transactionId: payment.transactionId, reason: result.reason }, "Order confirmation email not sent");
+  }
+}
 
 const router = Router();
 
@@ -181,6 +217,11 @@ router.get("/payments/:transactionId/status", async (req, res): Promise<void> =>
               .where(eq(paymentsTable.transactionId, transactionId));
             payment.status = newStatus;
             payment.mpesaRef = remote.mpesaRef ?? null;
+            if (newStatus === "completed") {
+              sendOrderEmailForPayment(payment, req.log).catch((err) =>
+                req.log.error({ err }, "Order email task failed")
+              );
+            }
           }
         }
       } catch {
@@ -219,6 +260,19 @@ router.post("/webhooks/sunpay", async (req, res): Promise<void> => {
       })
       .where(eq(paymentsTable.transactionId, tid))
       .catch(() => {}); // non-fatal
+
+    if (status === "completed") {
+      const [updated] = await db
+        .select()
+        .from(paymentsTable)
+        .where(eq(paymentsTable.transactionId, tid))
+        .limit(1);
+      if (updated) {
+        sendOrderEmailForPayment(updated, req.log).catch((err) =>
+          req.log.error({ err }, "Order email task failed")
+        );
+      }
+    }
   }
 
   res.json({ received: true });
