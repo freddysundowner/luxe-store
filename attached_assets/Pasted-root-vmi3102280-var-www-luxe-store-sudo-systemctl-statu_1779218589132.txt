@@ -1,0 +1,54 @@
+root@vmi3102280:/var/www/luxe-store# sudo systemctl status luxe-shop --no-pager
+sudo journalctl -u luxe-shop -n 30 --no-pager
+sudo systemctl status luxe-api --no-pager
+● luxe-shop.service - Luxe Store — shop SSR server
+     Loaded: loaded (/etc/systemd/system/luxe-shop.service; enabled; preset: enabled)
+     Active: activating (auto-restart) (Result: exit-code) since Tue 2026-05-19 21:22:51 CEST; 2s ago
+    Process: 2886553 ExecStart=/var/www/luxe-store/node_modules/.bin/tsx ./ssr-server.ts (code=exited, status=203/EXEC)
+   Main PID: 2886553 (code=exited, status=203/EXEC)
+        CPU: 1ms
+
+May 19 21:22:51 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+May 19 21:22:14 vmi3102280 systemd[1]: luxe-shop.service: Main process exited, code=exited, status=203/EXEC
+May 19 21:22:14 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+May 19 21:22:19 vmi3102280 systemd[1]: luxe-shop.service: Scheduled restart job, restart counter is at 20.
+May 19 21:22:19 vmi3102280 systemd[1]: Started luxe-shop.service - Luxe Store — shop SSR server.
+May 19 21:22:19 vmi3102280 systemd[1]: luxe-shop.service: Main process exited, code=exited, status=203/EXEC
+May 19 21:22:19 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+May 19 21:22:24 vmi3102280 systemd[1]: luxe-shop.service: Scheduled restart job, restart counter is at 21.
+May 19 21:22:24 vmi3102280 systemd[1]: Started luxe-shop.service - Luxe Store — shop SSR server.
+May 19 21:22:24 vmi3102280 systemd[1]: luxe-shop.service: Main process exited, code=exited, status=203/EXEC
+May 19 21:22:24 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+May 19 21:22:30 vmi3102280 systemd[1]: luxe-shop.service: Scheduled restart job, restart counter is at 22.
+May 19 21:22:30 vmi3102280 systemd[1]: Started luxe-shop.service - Luxe Store — shop SSR server.
+May 19 21:22:30 vmi3102280 systemd[1]: luxe-shop.service: Main process exited, code=exited, status=203/EXEC
+May 19 21:22:30 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+May 19 21:22:35 vmi3102280 systemd[1]: luxe-shop.service: Scheduled restart job, restart counter is at 23.
+May 19 21:22:35 vmi3102280 systemd[1]: Started luxe-shop.service - Luxe Store — shop SSR server.
+May 19 21:22:35 vmi3102280 systemd[1]: luxe-shop.service: Main process exited, code=exited, status=203/EXEC
+May 19 21:22:35 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+May 19 21:22:40 vmi3102280 systemd[1]: luxe-shop.service: Scheduled restart job, restart counter is at 24.
+May 19 21:22:40 vmi3102280 systemd[1]: Started luxe-shop.service - Luxe Store — shop SSR server.
+May 19 21:22:40 vmi3102280 systemd[1]: luxe-shop.service: Main process exited, code=exited, status=203/EXEC
+May 19 21:22:40 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+May 19 21:22:45 vmi3102280 systemd[1]: luxe-shop.service: Scheduled restart job, restart counter is at 25.
+May 19 21:22:45 vmi3102280 systemd[1]: Started luxe-shop.service - Luxe Store — shop SSR server.
+May 19 21:22:45 vmi3102280 systemd[1]: luxe-shop.service: Main process exited, code=exited, status=203/EXEC
+May 19 21:22:45 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+May 19 21:22:51 vmi3102280 systemd[1]: luxe-shop.service: Scheduled restart job, restart counter is at 26.
+May 19 21:22:51 vmi3102280 systemd[1]: Started luxe-shop.service - Luxe Store — shop SSR server.
+May 19 21:22:51 vmi3102280 systemd[1]: luxe-shop.service: Main process exited, code=exited, status=203/EXEC
+May 19 21:22:51 vmi3102280 systemd[1]: luxe-shop.service: Failed with result 'exit-code'.
+● luxe-api.service - Luxe Store — API server
+     Loaded: loaded (/etc/systemd/system/luxe-api.service; enabled; preset: enabled)
+     Active: active (running) since Tue 2026-05-19 21:20:33 CEST; 2min 22s ago
+   Main PID: 2885990 (node)
+      Tasks: 11 (limit: 14307)
+     Memory: 38.3M (peak: 60.4M)
+        CPU: 847ms
+     CGroup: /system.slice/luxe-api.service
+             └─2885990 /usr/bin/node --enable-source-maps ./dist/index.mjs
+
+May 19 21:20:33 vmi3102280 systemd[1]: Started luxe-api.service - Luxe Store — API server.
+May 19 21:20:33 vmi3102280 node[2885990]: {"level":30,"time":1779218433743,"pid":2885990,"hostname":"vmi3102280","port":8081,"msg":"Server listening"}
+root@vmi3102280:/var/www/luxe-store# 
