@@ -804,7 +804,7 @@ export default function Home() {
       });
     }
 
-    if (availability.has("instock")) list = list.filter(p => p.inStock);
+    if (availability.has("instock")) list = list.filter(p => !isProductSoldOut(p));
     // "Gifts only" narrows the unified feed to bundle products (kind=bundle).
     if (availability.has("gifts")) list = list.filter(p => p.kind === "bundle");
     const tagFilters = ["new", "sale", "hot", "bestseller", "limited", "coming_soon"].filter(t => availability.has(t));
