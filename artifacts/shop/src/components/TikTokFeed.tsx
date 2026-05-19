@@ -701,17 +701,20 @@ function BottomPanel({
         }
         .gift-glow-btn { animation: gift-glow 2.4s ease-in-out infinite; }
       `}</style>
-      <div className="flex gap-2">
+      {(() => {
+        const isSoldOut = !product.inStock || product.stockQuantity === 0;
+        return (
+        <div className="flex gap-2">
         <button
-          onClick={isActive ? onAddToCart : undefined}
-          disabled={!product.inStock}
+          onClick={isActive && !isSoldOut ? onAddToCart : undefined}
+          disabled={isSoldOut}
           className={`flex-[3] py-3.5 text-sm uppercase tracking-widest font-semibold transition-all duration-200 ${
-            !product.inStock
+            isSoldOut
               ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
               : "bg-[#D4AF37] text-black hover:bg-white"
           }`}
         >
-          {!product.inStock ? "Sold Out" : "Buy Now →"}
+          {isSoldOut ? "Sold Out" : "Buy Now →"}
         </button>
         <button
           onClick={isActive ? onGift : undefined}
@@ -719,7 +722,9 @@ function BottomPanel({
         >
           <Sparkles className="w-3 h-3 shrink-0" />Surprise Someone
         </button>
-      </div>
+        </div>
+        );
+      })()}
     </div>
   );
 }

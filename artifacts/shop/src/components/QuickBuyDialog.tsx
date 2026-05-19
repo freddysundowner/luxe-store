@@ -64,13 +64,14 @@ export function QuickBuyDialog({ open, onOpenChange, product, initialVariantId =
   const showFromPrice = hasVariants && priceDiffers && !selectedVariant;
   const headerPrice = selectedVariant ? effectivePrice : (showFromPrice ? Math.min(...variantPrices) : product.price);
 
-  // For products without variants we trust the merchant's `inStock` flag —
-  // `stockQuantity` is often left unset on simple products. For products with
-  // variants we require the selected variant to have positive stock so a
-  // sold-out variant disables checkout.
+  // A `stockQuantity` of exactly 0 means the merchant has sold out (vs
+  // `null`/`undefined`, which is "not tracked" and treated as available).
+  // For variant products we always require positive stock on the chosen
+  // variant so a sold-out variant disables checkout.
+  const noVariantOutOfStock = !hasVariants && product.stockQuantity === 0;
   const canPurchase = hasVariants
     ? !!product.inStock && !!selectedVariant && effectiveStock > 0
-    : !!product.inStock;
+    : !!product.inStock && !noVariantOutOfStock;
 
   const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayApiKey;
   const whatsappEnabled = !!settings?.whatsappNumber;
