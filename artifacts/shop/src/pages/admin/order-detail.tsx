@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import {
@@ -8,6 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import {
   ShoppingBag, Phone, CheckCircle2, Clock, XCircle,
   Hash, Package, CreditCard, Calendar, RefreshCw,
@@ -68,6 +72,7 @@ function Row({
 export default function AdminOrderDetail() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
+  const [receiptOpen, setReceiptOpen] = useState(false);
 
   const { data: orders, isLoading } = useListAdminPayments({
     query: { queryKey: getListAdminPaymentsQueryKey() },
@@ -252,7 +257,7 @@ export default function AdminOrderDetail() {
               <Button
                 variant="outline"
                 className="flex-1 gap-1.5 h-9 text-xs"
-                onClick={() => window.open(receiptUrl, "_blank")}
+                onClick={() => setReceiptOpen(true)}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 Open Receipt
@@ -261,6 +266,24 @@ export default function AdminOrderDetail() {
           </div>
         </div>
       </div>
+
+      {/* Receipt preview modal */}
+      <Dialog open={receiptOpen} onOpenChange={setReceiptOpen}>
+        <DialogContent className="max-w-lg w-full p-0 overflow-hidden">
+          <DialogHeader className="px-4 py-3 border-b border-border">
+            <DialogTitle className="text-sm font-semibold">
+              Receipt — {order.externalRef ?? order.transactionId.slice(0, 20) + "…"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="h-[70vh]">
+            <iframe
+              src={receiptUrl}
+              className="w-full h-full border-0"
+              title="Order Receipt"
+            />
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }
