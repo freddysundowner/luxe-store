@@ -4,3 +4,4 @@ export * from "./settings";
 export * from "./payments";
 export * from "./gifts";
 export * from "./availability-tags";
+export * from "./hampers";

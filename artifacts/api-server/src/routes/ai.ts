@@ -1,7 +1,8 @@
 import { Router } from "express";
 import Anthropic from "@anthropic-ai/sdk";
 import { eq } from "drizzle-orm";
-import { db, productsTable, categoriesTable } from "@workspace/db";
+import { db, productsTable, categoriesTable, hampersTable } from "@workspace/db";
+import type { HamperItem } from "@workspace/db";
 
 const router = Router();
 
@@ -56,6 +57,33 @@ function buildCatalogText(products: Awaited<ReturnType<typeof getActiveProducts>
     .join("\n");
 }
 
+async function getActiveHampers() {
+  const rows = await db.select().from(hampersTable).where(eq(hampersTable.isActive, true));
+  return rows.map((h) => ({
+    id: h.id,
+    name: h.name,
+    description: h.description,
+    price: parseFloat(h.price as unknown as string),
+    items: (h.items ?? []) as HamperItem[],
+  }));
+}
+
+function buildHamperCatalogText(
+  hampers: Awaited<ReturnType<typeof getActiveHampers>>,
+  products: Awaited<ReturnType<typeof getActiveProducts>>,
+) {
+  if (hampers.length === 0) return "(no curated hampers available)";
+  const productNameById = new Map(products.map((p) => [p.id, p.name]));
+  return hampers
+    .map((h) => {
+      const contents = h.items
+        .map((i) => `${i.quantity}× ${productNameById.get(i.productId) ?? `product#${i.productId}`}`)
+        .join(", ");
+      return `HAMPER:${h.id} | "${h.name}" | Price: $${h.price.toFixed(2)} | Contains: ${contents} | ${h.description ? h.description.slice(0, 100) : ""}`;
+    })
+    .join("\n");
+}
+
 router.post("/ai/suggest", async (req, res): Promise<void> => {
   const { messages } = req.body as {
     messages: { role: "user" | "assistant"; content: string }[];
@@ -67,21 +95,33 @@ router.post("/ai/suggest", async (req, res): Promise<void> => {
   }
 
   try {
-    const products = await getActiveProducts();
+    const [products, hampers] = await Promise.all([getActiveProducts(), getActiveHampers()]);
     const catalog = buildCatalogText(products);
+    const hamperCatalog = buildHamperCatalogText(hampers, products);
     const client = getClient();
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 1024,
-      system: `You are a helpful gift advisor for a luxury dark-themed online store. 
-You help customers find the perfect product from the store's catalog.
-Reply in 2-4 short sentences. Recommend 1-3 specific products by name (exact match from catalog). 
-Always include the product ID like (ID:5) after each recommendation so the frontend can link to it.
-Be warm, concise and helpful. Do not make up products not in the catalog.
+      system: `You are a helpful gift advisor for a luxury dark-themed online store.
+You help customers find the perfect gift from the store's catalog of individual products and curated gift hampers (bundles).
 
-Current catalog:
-${catalog}`,
+How to recommend:
+- For most queries, suggest 1-3 individual products OR 1 curated hamper that fits the brief.
+- Prefer a curated hamper when one cleanly matches the recipient/occasion — hampers are pre-assembled gifts.
+- You may also suggest 2-3 products that would combine into a great custom hamper, and invite the customer to "build a hamper" with them.
+
+Output format:
+- Reply in 2-4 short sentences, warm and concise.
+- For a product, append its ID like (ID:5).
+- For a curated hamper, append its ID like (HAMPER:3).
+- Never invent products or hampers not in the catalog.
+
+Current product catalog:
+${catalog}
+
+Curated gift hampers:
+${hamperCatalog}`,
       messages,
     });
 

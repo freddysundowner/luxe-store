@@ -406,6 +406,160 @@ export const DeleteProductParams = zod.object({
 
 
 /**
+ * @summary List active hampers (public)
+ */
+
+
+
+export const ListHampersResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "price": zod.number(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})),
+  "isActive": zod.boolean(),
+  "isFeatured": zod.boolean(),
+  "inStock": zod.boolean().describe('True when every component product has stock available.'),
+  "createdAt": zod.coerce.date().nullish()
+})
+export const ListHampersResponse = zod.array(ListHampersResponseItem)
+
+
+/**
+ * @summary Get a hamper by id
+ */
+export const GetHamperParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+
+
+export const GetHamperResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "price": zod.number(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})),
+  "isActive": zod.boolean(),
+  "isFeatured": zod.boolean(),
+  "inStock": zod.boolean().describe('True when every component product has stock available.'),
+  "createdAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary List all hampers (admin)
+ */
+
+
+
+export const ListAdminHampersResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "price": zod.number(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})),
+  "isActive": zod.boolean(),
+  "isFeatured": zod.boolean(),
+  "inStock": zod.boolean().describe('True when every component product has stock available.'),
+  "createdAt": zod.coerce.date().nullish()
+})
+export const ListAdminHampersResponse = zod.array(ListAdminHampersResponseItem)
+
+
+/**
+ * @summary Create a hamper
+ */
+
+export const createHamperBodyPriceMin = 0;
+
+
+
+
+
+export const CreateHamperBody = zod.object({
+  "name": zod.string().min(1),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "price": zod.number().min(createHamperBodyPriceMin),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})).min(1),
+  "isActive": zod.boolean().optional(),
+  "isFeatured": zod.boolean().optional()
+})
+
+
+/**
+ * @summary Update a hamper
+ */
+export const UpdateHamperParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+export const updateHamperBodyPriceMin = 0;
+
+
+
+
+
+export const UpdateHamperBody = zod.object({
+  "name": zod.string().min(1),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "price": zod.number().min(updateHamperBodyPriceMin),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})).min(1),
+  "isActive": zod.boolean().optional(),
+  "isFeatured": zod.boolean().optional()
+})
+
+
+
+
+export const UpdateHamperResponse = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "description": zod.string().nullish(),
+  "imageUrl": zod.string().nullish(),
+  "price": zod.number(),
+  "items": zod.array(zod.object({
+  "productId": zod.number(),
+  "quantity": zod.number().min(1)
+})),
+  "isActive": zod.boolean(),
+  "isFeatured": zod.boolean(),
+  "inStock": zod.boolean().describe('True when every component product has stock available.'),
+  "createdAt": zod.coerce.date().nullish()
+})
+
+
+/**
+ * @summary Delete a hamper
+ */
+export const DeleteHamperParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+
+/**
  * @summary Get store settings
  */
 export const GetSettingsResponse = zod.object({

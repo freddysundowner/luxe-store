@@ -19,6 +19,8 @@ tags:
     description: Admin operations
   - name: gifts
     description: Gift operations
+  - name: hampers
+    description: Gift hampers (curated product bundles)
 
 paths:
   /healthz:
@@ -245,6 +247,116 @@ paths:
       operationId: deleteProduct
       tags: [admin, products]
       summary: Delete a product
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Not found
+
+  /hampers:
+    get:
+      operationId: listHampers
+      tags: [hampers]
+      summary: List active hampers (public)
+      responses:
+        "200":
+          description: List of hampers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Hamper"
+
+  /hampers/{id}:
+    get:
+      operationId: getHamper
+      tags: [hampers]
+      summary: Get a hamper by id
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Hamper
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hamper"
+        "404":
+          description: Not found
+
+  /admin/hampers:
+    get:
+      operationId: listAdminHampers
+      tags: [admin, hampers]
+      summary: List all hampers (admin)
+      responses:
+        "200":
+          description: List of hampers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Hamper"
+    post:
+      operationId: createHamper
+      tags: [admin, hampers]
+      summary: Create a hamper
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HamperInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hamper"
+
+  /admin/hampers/{id}:
+    put:
+      operationId: updateHamper
+      tags: [admin, hampers]
+      summary: Update a hamper
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HamperInput"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Hamper"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteHamper
+      tags: [admin, hampers]
+      summary: Delete a hamper
       parameters:
         - name: id
           in: path
@@ -768,6 +880,69 @@ components:
           description: "Optional variants. When provided, replaces the full set of variants for the product."
           items:
             $ref: "#/components/schemas/ProductVariantInput"
+
+    HamperItem:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+
+    Hamper:
+      type: object
+      required: [id, name, price, items, isActive, isFeatured, inStock]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        price:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/HamperItem"
+        isActive:
+          type: boolean
+        isFeatured:
+          type: boolean
+        inStock:
+          type: boolean
+          description: "True when every component product has stock available."
+        createdAt:
+          type: ["string", "null"]
+          format: date-time
+
+    HamperInput:
+      type: object
+      required: [name, price, items]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        description:
+          type: ["string", "null"]
+        imageUrl:
+          type: ["string", "null"]
+        price:
+          type: number
+          minimum: 0
+        items:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/HamperItem"
+        isActive:
+          type: boolean
+        isFeatured:
+          type: boolean
 
     PriceTier:
       type: object

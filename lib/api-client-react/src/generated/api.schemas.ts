@@ -171,6 +171,44 @@ export interface ProductInput {
   variants?: ProductVariantInput[];
 }
 
+export interface HamperItem {
+  productId: number;
+  /** @minimum 1 */
+  quantity: number;
+}
+
+export interface Hamper {
+  id: number;
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
+  price: number;
+  items: HamperItem[];
+  isActive: boolean;
+  isFeatured: boolean;
+  /** True when every component product has stock available. */
+  inStock: boolean;
+  /** @nullable */
+  createdAt?: string | null;
+}
+
+export interface HamperInput {
+  /** @minLength 1 */
+  name: string;
+  /** @nullable */
+  description?: string | null;
+  /** @nullable */
+  imageUrl?: string | null;
+  /** @minimum 0 */
+  price: number;
+  /** @minItems 1 */
+  items: HamperItem[];
+  isActive?: boolean;
+  isFeatured?: boolean;
+}
+
 export interface PriceTier {
   name: string;
   min: number;

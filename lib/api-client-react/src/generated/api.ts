@@ -30,6 +30,8 @@ import type {
   CategoryInput,
   Gift,
   GiftInput,
+  Hamper,
+  HamperInput,
   HealthStatus,
   ListProductsParams,
   PaymentInitiateBody,
@@ -947,6 +949,450 @@ export const useDeleteProduct = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteProductMutationOptions(options));
+    }
+
+export const getListHampersUrl = () => {
+
+
+
+
+  return `/api/hampers`
+}
+
+/**
+ * @summary List active hampers (public)
+ */
+export const listHampers = async ( options?: RequestInit): Promise<Hamper[]> => {
+
+  return customFetch<Hamper[]>(getListHampersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListHampersQueryKey = () => {
+    return [
+    `/api/hampers`
+    ] as const;
+    }
+
+
+export const getListHampersQueryOptions = <TData = Awaited<ReturnType<typeof listHampers>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listHampers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListHampersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listHampers>>> = ({ signal }) => listHampers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listHampers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListHampersQueryResult = NonNullable<Awaited<ReturnType<typeof listHampers>>>
+export type ListHampersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List active hampers (public)
+ */
+
+export function useListHampers<TData = Awaited<ReturnType<typeof listHampers>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listHampers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListHampersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetHamperUrl = (id: number,) => {
+
+
+
+
+  return `/api/hampers/${id}`
+}
+
+/**
+ * @summary Get a hamper by id
+ */
+export const getHamper = async (id: number, options?: RequestInit): Promise<Hamper> => {
+
+  return customFetch<Hamper>(getGetHamperUrl(id),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetHamperQueryKey = (id: number,) => {
+    return [
+    `/api/hampers/${id}`
+    ] as const;
+    }
+
+
+export const getGetHamperQueryOptions = <TData = Awaited<ReturnType<typeof getHamper>>, TError = ErrorType<void>>(id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getHamper>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetHamperQueryKey(id);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getHamper>>> = ({ signal }) => getHamper(id, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getHamper>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetHamperQueryResult = NonNullable<Awaited<ReturnType<typeof getHamper>>>
+export type GetHamperQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a hamper by id
+ */
+
+export function useGetHamper<TData = Awaited<ReturnType<typeof getHamper>>, TError = ErrorType<void>>(
+ id: number, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getHamper>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetHamperQueryOptions(id,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getListAdminHampersUrl = () => {
+
+
+
+
+  return `/api/admin/hampers`
+}
+
+/**
+ * @summary List all hampers (admin)
+ */
+export const listAdminHampers = async ( options?: RequestInit): Promise<Hamper[]> => {
+
+  return customFetch<Hamper[]>(getListAdminHampersUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListAdminHampersQueryKey = () => {
+    return [
+    `/api/admin/hampers`
+    ] as const;
+    }
+
+
+export const getListAdminHampersQueryOptions = <TData = Awaited<ReturnType<typeof listAdminHampers>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminHampers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListAdminHampersQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listAdminHampers>>> = ({ signal }) => listAdminHampers({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listAdminHampers>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListAdminHampersQueryResult = NonNullable<Awaited<ReturnType<typeof listAdminHampers>>>
+export type ListAdminHampersQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all hampers (admin)
+ */
+
+export function useListAdminHampers<TData = Awaited<ReturnType<typeof listAdminHampers>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listAdminHampers>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListAdminHampersQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateHamperUrl = () => {
+
+
+
+
+  return `/api/admin/hampers`
+}
+
+/**
+ * @summary Create a hamper
+ */
+export const createHamper = async (hamperInput: HamperInput, options?: RequestInit): Promise<Hamper> => {
+
+  return customFetch<Hamper>(getCreateHamperUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      hamperInput,)
+  }
+);}
+
+
+
+
+export const getCreateHamperMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createHamper>>, TError,{data: BodyType<HamperInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createHamper>>, TError,{data: BodyType<HamperInput>}, TContext> => {
+
+const mutationKey = ['createHamper'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createHamper>>, {data: BodyType<HamperInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createHamper(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateHamperMutationResult = NonNullable<Awaited<ReturnType<typeof createHamper>>>
+    export type CreateHamperMutationBody = BodyType<HamperInput>
+    export type CreateHamperMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Create a hamper
+ */
+export const useCreateHamper = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createHamper>>, TError,{data: BodyType<HamperInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createHamper>>,
+        TError,
+        {data: BodyType<HamperInput>},
+        TContext
+      > => {
+      return useMutation(getCreateHamperMutationOptions(options));
+    }
+
+export const getUpdateHamperUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/hampers/${id}`
+}
+
+/**
+ * @summary Update a hamper
+ */
+export const updateHamper = async (id: number,
+    hamperInput: HamperInput, options?: RequestInit): Promise<Hamper> => {
+
+  return customFetch<Hamper>(getUpdateHamperUrl(id),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      hamperInput,)
+  }
+);}
+
+
+
+
+export const getUpdateHamperMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateHamper>>, TError,{id: number;data: BodyType<HamperInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateHamper>>, TError,{id: number;data: BodyType<HamperInput>}, TContext> => {
+
+const mutationKey = ['updateHamper'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateHamper>>, {id: number;data: BodyType<HamperInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateHamper(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateHamperMutationResult = NonNullable<Awaited<ReturnType<typeof updateHamper>>>
+    export type UpdateHamperMutationBody = BodyType<HamperInput>
+    export type UpdateHamperMutationError = ErrorType<void>
+
+    /**
+ * @summary Update a hamper
+ */
+export const useUpdateHamper = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateHamper>>, TError,{id: number;data: BodyType<HamperInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateHamper>>,
+        TError,
+        {id: number;data: BodyType<HamperInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateHamperMutationOptions(options));
+    }
+
+export const getDeleteHamperUrl = (id: number,) => {
+
+
+
+
+  return `/api/admin/hampers/${id}`
+}
+
+/**
+ * @summary Delete a hamper
+ */
+export const deleteHamper = async (id: number, options?: RequestInit): Promise<void> => {
+
+  return customFetch<void>(getDeleteHamperUrl(id),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getDeleteHamperMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteHamper>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteHamper>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['deleteHamper'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteHamper>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  deleteHamper(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteHamperMutationResult = NonNullable<Awaited<ReturnType<typeof deleteHamper>>>
+
+    export type DeleteHamperMutationError = ErrorType<void>
+
+    /**
+ * @summary Delete a hamper
+ */
+export const useDeleteHamper = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteHamper>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteHamper>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDeleteHamperMutationOptions(options));
     }
 
 export const getGetSettingsUrl = () => {

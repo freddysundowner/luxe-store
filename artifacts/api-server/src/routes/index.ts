@@ -9,6 +9,7 @@ import paymentsRouter from "./payments";
 import uploadRouter from "./upload";
 import giftsRouter from "./gifts";
 import availabilityTagsRouter from "./availability-tags";
+import hampersRouter from "./hampers";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(paymentsRouter);
 router.use(uploadRouter);
 router.use(giftsRouter);
 router.use(availabilityTagsRouter);
+router.use(hampersRouter);
 
 export default router;
