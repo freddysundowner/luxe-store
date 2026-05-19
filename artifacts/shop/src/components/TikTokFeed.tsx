@@ -720,7 +720,7 @@ function BottomPanel({
           onClick={isActive ? onGift : undefined}
           className="gift-glow-btn flex-[2] py-3.5 text-[10px] uppercase tracking-widest font-semibold bg-black border border-[#D4AF37]/70 text-[#D4AF37] hover:bg-[#D4AF37]/5 transition-colors flex items-center justify-center gap-1.5"
         >
-          <Sparkles className="w-3 h-3 shrink-0" />Surprise Someone
+          <Sparkles className="w-3 h-3 shrink-0" />Find a Gift
         </button>
         </div>
         );
