@@ -52,7 +52,7 @@ function GiftBox({ opening }: { opening: boolean }) {
 }
 
 // ── Pending / not-paid state ─────────────────────────────────────────────────
-function PendingGift({ recipientName, senderName, storeName }: { recipientName?: string | null; senderName?: string | null; storeName: string }) {
+function PendingGift({ recipientName, senderName }: { recipientName?: string | null; senderName?: string | null }) {
   return (
     <div className="flex flex-col items-center gap-8 text-center px-6">
       <div className="w-20 h-20 rounded-full border border-zinc-800 flex items-center justify-center">
@@ -66,7 +66,7 @@ function PendingGift({ recipientName, senderName, storeName }: { recipientName?:
         </p>
       </div>
       <Link href="/" className="text-[10px] tracking-[0.3em] uppercase text-[#D4AF37]/40 hover:text-[#D4AF37]/70 transition-colors">
-        Browse {storeName}
+        Browse Luxe
       </Link>
     </div>
   );
@@ -76,7 +76,6 @@ function PendingGift({ recipientName, senderName, storeName }: { recipientName?:
 export default function GiftPage() {
   const { id: token } = useParams<{ id: string }>();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
-  const storeName = settings?.storeName ?? "Luxe Store";
 
   const { data: gift, isLoading, refetch } = useGetGift(token, {
     query: { queryKey: getGetGiftQueryKey(token), enabled: !!token, refetchInterval: false }
@@ -145,7 +144,7 @@ export default function GiftPage() {
             <Link href="/" className="text-[#D4AF37]/60 text-xs tracking-widest uppercase hover:text-[#D4AF37] transition-colors">Browse Store</Link>
           </div>
         ) : gift.status === "pending" ? (
-          <PendingGift recipientName={gift.recipientName} senderName={gift.senderName} storeName={storeName} />
+          <PendingGift recipientName={gift.recipientName} senderName={gift.senderName} />
         ) : phase !== "open" ? (
           /* ── WRAPPED ── */
           <div className="flex flex-col items-center gap-8">
@@ -279,7 +278,7 @@ export default function GiftPage() {
             <div className="flex items-center gap-2.5 border border-green-800/40 bg-green-950/20 px-4 py-2.5 w-full reveal-step" style={{ animationDelay: "0.7s" }}>
               <Check className="w-4 h-4 text-green-400 shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-green-300">Paid in full · {storeName} will be in touch</p>
+                <p className="text-xs font-medium text-green-300">Paid in full · Luxe will be in touch</p>
                 <p className="text-[10px] text-green-700/80">
                   {gift.paymentMethod === "mpesa" ? "Paid via M-Pesa" : "Paid via WhatsApp checkout"}
                   {gift.senderName ? ` · From ${gift.senderName}` : ""}
