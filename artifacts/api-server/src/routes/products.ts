@@ -571,19 +571,35 @@ router.put("/admin/products/:id", async (req, res): Promise<void> => {
     updateData.kind = kind;
     if (kind === "simple") updateData.bundleItems = [];
   }
-  if (bundleItems !== undefined) {
-    const result = await validateBundleItems(bundleItems);
-    if ("error" in result) { res.status(400).json({ error: result.error }); return; }
-    updateData.bundleItems = result.items;
-    // If kind wasn't explicitly set but items were supplied, ensure kind=bundle.
-    if (effectiveKind === undefined) {
-      effectiveKind = "bundle";
-      updateData.kind = "bundle";
+  // Only validate/store bundleItems when the client actually supplied items.
+  // The admin form posts `bundleItems: []` for simple products as a normaliser —
+  // treat that as "no bundle items to write" rather than a validation error.
+  if (bundleItems !== undefined && Array.isArray(bundleItems) && bundleItems.length > 0) {
+    if (effectiveKind === "simple") {
+      // Caller explicitly wants this product simple; ignore stray bundle items.
+      updateData.bundleItems = [];
+    } else {
+      const result = await validateBundleItems(bundleItems);
+      if ("error" in result) { res.status(400).json({ error: result.error }); return; }
+      updateData.bundleItems = result.items;
+      // If kind wasn't explicitly set but items were supplied, ensure kind=bundle.
+      if (effectiveKind === undefined) {
+        effectiveKind = "bundle";
+        updateData.kind = "bundle";
+      }
     }
   }
   // If the effective kind is bundle, the row must end up with a non-empty
-  // bundleItems array — either supplied in this request or already present.
-  // Reject attempts to promote a product to bundle without items.
+  // bundleItems array. An explicit empty array is always invalid for a bundle;
+  // an omitted field is fine as long as existing stored items are non-empty.
+  if (
+    effectiveKind === "bundle" &&
+    Array.isArray(bundleItems) &&
+    bundleItems.length === 0
+  ) {
+    res.status(400).json({ error: "bundleItems must be a non-empty array" });
+    return;
+  }
   if (effectiveKind === "bundle" && bundleItems === undefined) {
     const [existingBundle] = await db
       .select({ bundleItems: productsTable.bundleItems, kind: productsTable.kind })
