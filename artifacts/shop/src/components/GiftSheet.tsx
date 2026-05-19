@@ -10,6 +10,7 @@ import {
   getGetSettingsQueryKey,
 } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
+import { BundleBoxCover } from "@/components/BundleBoxCover";
 
 type Step = "form" | "phone" | "pending" | "success" | "failed";
 
@@ -230,12 +231,19 @@ export function GiftSheet({ open, product, onClose }: GiftSheetProps) {
           <div className="w-10 h-0.5 bg-zinc-700 rounded-full" />
         </div>
 
-        {/* Header */}
+        {/* Header — bundle gifts show the box-with-items cover so the
+            recipient (and sender) see what's inside at a glance. */}
         <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-900">
           <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
-            {product.imageUrl
-              ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
-              : <Gift className="w-6 h-6 text-zinc-700 m-auto mt-4" />}
+            {product.kind === "bundle" && !product.imageUrl
+              ? <BundleBoxCover
+                  itemImages={(product.bundleProducts ?? []).map((bp) => bp.imageUrl)}
+                  alt={product.name}
+                  className="w-full h-full"
+                />
+              : product.imageUrl
+                ? <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                : <Gift className="w-6 h-6 text-zinc-700 m-auto mt-4" />}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs uppercase tracking-wide text-zinc-300 font-light truncate">{product.name}</p>
