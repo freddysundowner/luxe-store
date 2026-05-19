@@ -1,7 +1,7 @@
 import { ReactNode, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { isAuthenticated, removeAdminToken } from "@/lib/auth";
-import { Store, LayoutDashboard, Package, FolderTree, Settings, LogOut, Menu, Gift, Tag } from "lucide-react";
+import { Store, LayoutDashboard, Package, FolderTree, Settings, LogOut, Menu, Gift, Tag, ShoppingBag } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 
@@ -21,6 +21,7 @@ export function AdminLayout({ children, title }: { children: ReactNode; title: s
 
   const navItems = [
     { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
     { href: "/admin/products", label: "Products", icon: Package },
     { href: "/admin/categories", label: "Categories", icon: FolderTree },
     { href: "/admin/gifts", label: "Gifts", icon: Gift },
