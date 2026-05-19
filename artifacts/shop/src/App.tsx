@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -33,6 +33,12 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function CartDrawerGuard() {
+  const [location] = useLocation();
+  if (location === "/cart") return null;
+  return <CartDrawer />;
+}
 
 function Router() {
   return (
@@ -86,8 +92,8 @@ function App({ ssrUrl }: AppProps) {
             <WouterRouter base={base} hook={locationHook}>
               <Router />
               {mounted && <GiftFinder />}
-              {/* CartDrawer has its own mounted guard */}
-              <CartDrawer />
+              {/* CartDrawer: suppress on /cart page to avoid double overlay */}
+              <CartDrawerGuard />
             </WouterRouter>
           </FavoritesProvider>
         </CartProvider>
