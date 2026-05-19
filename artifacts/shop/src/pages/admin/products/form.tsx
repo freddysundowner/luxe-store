@@ -218,15 +218,15 @@ export default function ProductForm() {
                 control={form.control}
                 name="availabilityTag"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Availability Tag</FormLabel>
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Availability</FormLabel>
                     <Select
                       onValueChange={(val) => field.onChange(val === "none" ? null : val)}
                       value={field.value ?? "none"}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a tag" />
+                          <SelectValue placeholder="No badge" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -237,7 +237,7 @@ export default function ProductForm() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormDescription>Badge shown on product cards in the store</FormDescription>
+                    <FormDescription>Badge displayed on the product card and used by the Availability filter (New Arrival, Sale, Hot / Trending, etc.)</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
