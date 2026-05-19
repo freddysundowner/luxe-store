@@ -19,7 +19,7 @@ export default function Cart() {
     maximumFractionDigits: 0,
   });
 
-  const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayApiKey;
+  const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayConfigured;
 
   const handleCheckout = () => {
     if (!settings?.whatsappNumber) return;

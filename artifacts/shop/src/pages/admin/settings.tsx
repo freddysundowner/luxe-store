@@ -8,10 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useGetSettings, getGetSettingsQueryKey, useUpdateSettings } from "@workspace/api-client-react";
+import {
+  useGetAdminSettings,
+  getGetAdminSettingsQueryKey,
+  getGetSettingsQueryKey,
+  useUpdateSettings,
+} from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
-import { Loader2, Plus, Trash2, Smartphone, Store, MessageCircle, Globe, Eye, EyeOff, Mail } from "lucide-react";
+import { Loader2, Plus, Trash2, Smartphone, Store, MessageCircle, Globe, Eye, EyeOff, Mail, Sparkles } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/ImageUpload";
 
@@ -41,6 +46,7 @@ const settingsSchema = z.object({
     .string()
     .optional()
     .refine((v) => !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), { message: "Enter a valid email address" }),
+  anthropicApiKey: z.string().optional(),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
@@ -57,9 +63,10 @@ export default function AdminSettings() {
   const queryClient = useQueryClient();
   const [showApiKey, setShowApiKey] = useState(false);
   const [showBrevoKey, setShowBrevoKey] = useState(false);
+  const [showAnthropicKey, setShowAnthropicKey] = useState(false);
 
-  const { data: settings, isLoading } = useGetSettings({
-    query: { queryKey: getGetSettingsQueryKey() }
+  const { data: settings, isLoading } = useGetAdminSettings({
+    query: { queryKey: getGetAdminSettingsQueryKey() }
   });
 
   const form = useForm<SettingsFormValues>({
@@ -78,6 +85,7 @@ export default function AdminSettings() {
       brevoSenderEmail: "",
       brevoSenderName: "",
       salesNotificationEmail: "",
+      anthropicApiKey: "",
     },
   });
 
@@ -102,6 +110,7 @@ export default function AdminSettings() {
         brevoSenderEmail: settings.brevoSenderEmail || "",
         brevoSenderName: settings.brevoSenderName || "",
         salesNotificationEmail: settings.salesNotificationEmail || "",
+        anthropicApiKey: settings.anthropicApiKey || "",
       });
     }
   }, [settings, form]);
@@ -110,6 +119,7 @@ export default function AdminSettings() {
     mutation: {
       onSuccess: () => {
         toast({ title: "Settings saved successfully" });
+        queryClient.invalidateQueries({ queryKey: getGetAdminSettingsQueryKey() });
         queryClient.invalidateQueries({ queryKey: getGetSettingsQueryKey() });
       },
       onError: () => toast({ variant: "destructive", title: "Failed to save settings" })
@@ -117,7 +127,7 @@ export default function AdminSettings() {
   });
 
   const onSubmit = (data: SettingsFormValues) => {
-    const { sunpayEnabled, sunpayApiKey, brevoApiKey, brevoSenderEmail, brevoSenderName, salesNotificationEmail, ...rest } = data;
+    const { sunpayEnabled, sunpayApiKey, brevoApiKey, brevoSenderEmail, brevoSenderName, salesNotificationEmail, anthropicApiKey, ...rest } = data;
     updateMutation.mutate({
       data: {
         ...rest,
@@ -127,6 +137,7 @@ export default function AdminSettings() {
         brevoSenderEmail: brevoSenderEmail || "",
         brevoSenderName: brevoSenderName || "",
         salesNotificationEmail: salesNotificationEmail || "",
+        anthropicApiKey: anthropicApiKey || "",
       } as Parameters<typeof updateMutation.mutate>[0]["data"]
     });
   };
@@ -184,6 +195,10 @@ export default function AdminSettings() {
               <TabsTrigger value="email" className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 <Mail className="w-4 h-4" />
                 Email
+              </TabsTrigger>
+              <TabsTrigger value="ai" className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                <Sparkles className="w-4 h-4" />
+                AI
               </TabsTrigger>
               <TabsTrigger value="localization" className="flex items-center gap-2 px-4 py-2 rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 <Globe className="w-4 h-4" />
@@ -479,6 +494,70 @@ export default function AdminSettings() {
                   <p className="text-muted-foreground">
                     After a customer pays via M-Pesa and the payment is confirmed, an order receipt is emailed to them automatically using these credentials. If a sales notification email is set, your team is BCC'd on the same message.
                   </p>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* ── AI Concierge ─────────────────────────────────────────── */}
+            <TabsContent value="ai">
+              <div className="bg-card border border-border rounded-xl shadow-sm p-6 space-y-6">
+                <div>
+                  <h3 className="font-semibold text-base flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-purple-400" />
+                    AI Concierge (Anthropic)
+                  </h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Powers the gift-finder chat and natural-language product search. Get a key at{" "}
+                    <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener noreferrer" className="underline hover:text-foreground transition-colors">
+                      console.anthropic.com
+                    </a>. Leave blank to disable the AI features.
+                  </p>
+                </div>
+
+                <FormField control={form.control} name="anthropicApiKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Anthropic API Key</FormLabel>
+                      {settings?.anthropicApiKey && !field.value && (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-purple-950/40 border border-purple-800/50 text-xs text-purple-400">
+                          <span className="font-semibold">✓ Key saved:</span>
+                          <code className="font-mono tracking-wide">
+                            {settings.anthropicApiKey.slice(0, 10)}••••••••{settings.anthropicApiKey.slice(-4)}
+                          </code>
+                          <span className="ml-auto text-purple-600 text-[10px]">Enter a new key below to replace</span>
+                        </div>
+                      )}
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showAnthropicKey ? "text" : "password"}
+                            placeholder={settings?.anthropicApiKey ? "Enter new key to replace…" : "sk-ant-api03-xxxxxxxxxxxxxxxx"}
+                            autoComplete="off"
+                            {...field}
+                            value={field.value ?? ""}
+                            className={settings?.anthropicApiKey && !field.value ? "border-purple-800/50 focus:border-purple-600" : ""}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowAnthropicKey(v => !v)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showAnthropicKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <FormDescription>
+                        Used by the AI gift advisor (Claude Haiku). Billing is handled by Anthropic.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="rounded-lg border border-purple-900/30 bg-purple-950/20 p-4 text-sm space-y-1">
+                  <p className="font-medium text-purple-400">What this powers</p>
+                  <p className="text-muted-foreground">The floating "Find a gift" chat on the storefront and the natural-language product search. If the key is missing, those features return a friendly "AI service unavailable" message and the rest of the shop keeps working normally.</p>
                 </div>
               </div>
             </TabsContent>

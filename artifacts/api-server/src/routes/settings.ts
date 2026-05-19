@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db, storeSettingsTable } from "@workspace/db";
+import type { StoreSettings } from "@workspace/db";
 import {
   GetSettingsResponse,
+  GetAdminSettingsResponse,
   UpdateSettingsBody,
   UpdateSettingsResponse,
 } from "@workspace/api-zod";
@@ -33,12 +35,37 @@ async function getOrCreateSettings() {
   return created;
 }
 
-router.get("/settings", async (req, res): Promise<void> => {
+// Public shape: never expose secret API keys. Replace them with boolean
+// "configured" flags so the storefront can decide whether to show the M-Pesa
+// button / AI features without learning the keys.
+function toPublicSettings(s: StoreSettings) {
+  const { sunpayApiKey, brevoApiKey, anthropicApiKey, ...rest } = s;
+  return {
+    ...rest,
+    priceTiers: s.priceTiers ?? DEFAULT_PRICE_TIERS,
+    sunpayConfigured: !!sunpayApiKey,
+    brevoConfigured: !!brevoApiKey,
+    anthropicConfigured: !!anthropicApiKey,
+  };
+}
+
+function toAdminSettings(s: StoreSettings) {
+  return {
+    ...toPublicSettings(s),
+    sunpayApiKey: s.sunpayApiKey,
+    brevoApiKey: s.brevoApiKey,
+    anthropicApiKey: s.anthropicApiKey,
+  };
+}
+
+router.get("/settings", async (_req, res): Promise<void> => {
   const settings = await getOrCreateSettings();
-  res.json(GetSettingsResponse.parse({
-    ...settings,
-    priceTiers: settings.priceTiers ?? DEFAULT_PRICE_TIERS,
-  }));
+  res.json(GetSettingsResponse.parse(toPublicSettings(settings)));
+});
+
+router.get("/admin/settings", async (_req, res): Promise<void> => {
+  const settings = await getOrCreateSettings();
+  res.json(GetAdminSettingsResponse.parse(toAdminSettings(settings)));
 });
 
 router.put("/admin/settings", async (req, res): Promise<void> => {
@@ -67,10 +94,7 @@ router.put("/admin/settings", async (req, res): Promise<void> => {
     .where(eq(storeSettingsTable.id, existing.id))
     .returning();
 
-  res.json(UpdateSettingsResponse.parse({
-    ...updated,
-    priceTiers: updated.priceTiers ?? DEFAULT_PRICE_TIERS,
-  }));
+  res.json(UpdateSettingsResponse.parse(toAdminSettings(updated)));
 });
 
 export default router;

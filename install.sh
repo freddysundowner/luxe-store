@@ -163,14 +163,10 @@ ADMIN_PASSWORD="admin123"
 # Log verbosity for the API server (trace|debug|info|warn|error)
 LOG_LEVEL="info"
 
-# --- AI Concierge -----------------------------------------------------------
-# Fill in ONE of these. ANTHROPIC_API_KEY is what the code reads.
-# Leave blank to disable the AI gift advisor entirely.
-ANTHROPIC_API_KEY=""
-
-# NOTE: Brevo (email), SunPay (M-Pesa) and the WhatsApp number are configured
-# from the admin Settings page in the shop — they are stored in the database,
-# not here. No need to set them in this file.
+# NOTE: All third-party API keys — WhatsApp number, SunPay (M-Pesa), Brevo
+# (email), and the Anthropic key for the AI Concierge — are configured from
+# the admin Settings page in the shop and stored in the database. Nothing
+# else needs to go in this file.
 ENV
   chown "${APP_USER}:${APP_USER}" "$ENV_FILE"
   chmod 600 "$ENV_FILE"
@@ -376,9 +372,8 @@ echo " Next steps:"
 echo "   1. Visit https://${DOMAIN}/admin and sign in"
 echo "      (default ADMIN_PASSWORD is in ${ENV_FILE} — change it!)."
 echo "   2. In the admin Settings page, fill in:"
-echo "        • WhatsApp number (for chat checkout)"
-echo "        • SunPay / M-Pesa keys (for STK-push)"
-echo "        • Brevo API key + sender email (for order receipts)"
-echo "   3. (Optional) For the AI Concierge, add ANTHROPIC_API_KEY to"
-echo "      ${ENV_FILE} and run:  sudo systemctl restart luxe-api"
+echo "        • WhatsApp number     (for chat checkout)"
+echo "        • SunPay / M-Pesa key (for STK-push)"
+echo "        • Brevo API key       (for order receipt emails)"
+echo "        • Anthropic API key   (optional — AI Concierge / gift finder)"
 echo "============================================================"

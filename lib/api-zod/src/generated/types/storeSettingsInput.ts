@@ -21,4 +21,5 @@ export interface StoreSettingsInput {
   brevoSenderEmail?: string;
   brevoSenderName?: string;
   salesNotificationEmail?: string;
+  anthropicApiKey?: string;
 }

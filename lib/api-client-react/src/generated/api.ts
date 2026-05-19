@@ -40,6 +40,7 @@ import type {
   Product,
   ProductInput,
   StoreSettings,
+  StoreSettingsAdmin,
   StoreSettingsInput
 } from './api.schemas';
 
@@ -1113,7 +1114,7 @@ export const getGetSettingsUrl = () => {
 }
 
 /**
- * @summary Get store settings
+ * @summary Get public store settings (no secret keys)
  */
 export const getSettings = async ( options?: RequestInit): Promise<StoreSettings> => {
 
@@ -1160,7 +1161,7 @@ export type GetSettingsQueryError = ErrorType<unknown>
 
 
 /**
- * @summary Get store settings
+ * @summary Get public store settings (no secret keys)
  */
 
 export function useGetSettings<TData = Awaited<ReturnType<typeof getSettings>>, TError = ErrorType<unknown>>(
@@ -2213,6 +2214,83 @@ export function useListAvailabilityTagsPublic<TData = Awaited<ReturnType<typeof 
 
 
 
+export const getGetAdminSettingsUrl = () => {
+
+
+
+
+  return `/api/admin/settings`
+}
+
+/**
+ * @summary Get full store settings including secret API keys (admin only)
+ */
+export const getAdminSettings = async ( options?: RequestInit): Promise<StoreSettingsAdmin> => {
+
+  return customFetch<StoreSettingsAdmin>(getGetAdminSettingsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetAdminSettingsQueryKey = () => {
+    return [
+    `/api/admin/settings`
+    ] as const;
+    }
+
+
+export const getGetAdminSettingsQueryOptions = <TData = Awaited<ReturnType<typeof getAdminSettings>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetAdminSettingsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getAdminSettings>>> = ({ signal }) => getAdminSettings({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getAdminSettings>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetAdminSettingsQueryResult = NonNullable<Awaited<ReturnType<typeof getAdminSettings>>>
+export type GetAdminSettingsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get full store settings including secret API keys (admin only)
+ */
+
+export function useGetAdminSettings<TData = Awaited<ReturnType<typeof getAdminSettings>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getAdminSettings>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetAdminSettingsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
 export const getUpdateSettingsUrl = () => {
 
 
@@ -2222,11 +2300,11 @@ export const getUpdateSettingsUrl = () => {
 }
 
 /**
- * @summary Update store settings
+ * @summary Update store settings (admin only)
  */
-export const updateSettings = async (storeSettingsInput: StoreSettingsInput, options?: RequestInit): Promise<StoreSettings> => {
+export const updateSettings = async (storeSettingsInput: StoreSettingsInput, options?: RequestInit): Promise<StoreSettingsAdmin> => {
 
-  return customFetch<StoreSettings>(getUpdateSettingsUrl(),
+  return customFetch<StoreSettingsAdmin>(getUpdateSettingsUrl(),
   {
     ...options,
     method: 'PUT',
@@ -2271,7 +2349,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type UpdateSettingsMutationError = ErrorType<unknown>
 
     /**
- * @summary Update store settings
+ * @summary Update store settings (admin only)
  */
 export const useUpdateSettings = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSettings>>, TError,{data: BodyType<StoreSettingsInput>}, TContext>, request?: SecondParameter<typeof customFetch>}

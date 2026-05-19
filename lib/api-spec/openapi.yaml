@@ -306,10 +306,10 @@ paths:
     get:
       operationId: getSettings
       tags: [settings]
-      summary: Get store settings
+      summary: Get public store settings (no secret keys)
       responses:
         "200":
-          description: Store settings
+          description: Public store settings
           content:
             application/json:
               schema:
@@ -560,10 +560,21 @@ paths:
                   $ref: "#/components/schemas/AvailabilityTag"
 
   /admin/settings:
+    get:
+      operationId: getAdminSettings
+      tags: [admin, settings]
+      summary: Get full store settings including secret API keys (admin only)
+      responses:
+        "200":
+          description: Full admin store settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreSettingsAdmin"
     put:
       operationId: updateSettings
       tags: [admin, settings]
-      summary: Update store settings
+      summary: Update store settings (admin only)
       requestBody:
         required: true
         content:
@@ -576,7 +587,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/StoreSettings"
+                $ref: "#/components/schemas/StoreSettingsAdmin"
 
   /admin/login:
     post:
@@ -930,10 +941,6 @@ components:
             $ref: "#/components/schemas/PriceTier"
         sunpayEnabled:
           type: string
-        sunpayApiKey:
-          type: ["string", "null"]
-        brevoApiKey:
-          type: ["string", "null"]
         brevoSenderEmail:
           type: ["string", "null"]
         brevoSenderName:
@@ -941,6 +948,28 @@ components:
         salesNotificationEmail:
           type: ["string", "null"]
           description: "Optional internal sales address that is BCC'd on every order confirmation email."
+        sunpayConfigured:
+          type: boolean
+          description: "True when a SunPay API key has been saved (used by the storefront to decide whether to show the M-Pesa button). The actual key is never exposed on this public endpoint."
+        brevoConfigured:
+          type: boolean
+          description: "True when a Brevo API key has been saved. The actual key is never exposed on this public endpoint."
+        anthropicConfigured:
+          type: boolean
+          description: "True when an Anthropic API key has been saved. The actual key is never exposed on this public endpoint."
+
+    StoreSettingsAdmin:
+      allOf:
+        - $ref: "#/components/schemas/StoreSettings"
+        - type: object
+          description: "Admin-only view of store settings that includes secret API keys. Returned exclusively from authenticated /admin/settings endpoints."
+          properties:
+            sunpayApiKey:
+              type: ["string", "null"]
+            brevoApiKey:
+              type: ["string", "null"]
+            anthropicApiKey:
+              type: ["string", "null"]
 
     StoreSettingsInput:
       type: object
@@ -973,6 +1002,8 @@ components:
         brevoSenderName:
           type: string
         salesNotificationEmail:
+          type: string
+        anthropicApiKey:
           type: string
 
     PaymentInitiateBody:

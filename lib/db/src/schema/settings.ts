@@ -17,6 +17,7 @@ export const storeSettingsTable = pgTable("store_settings", {
   brevoSenderEmail: text("brevo_sender_email"),
   brevoSenderName: text("brevo_sender_name"),
   salesNotificationEmail: text("sales_notification_email"),
+  anthropicApiKey: text("anthropic_api_key"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

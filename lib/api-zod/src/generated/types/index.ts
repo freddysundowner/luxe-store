@@ -47,4 +47,5 @@ export * from './productKind';
 export * from './productVariant';
 export * from './productVariantInput';
 export * from './storeSettings';
+export * from './storeSettingsAdmin';
 export * from './storeSettingsInput';

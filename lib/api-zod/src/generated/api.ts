@@ -530,7 +530,7 @@ export const GetHamperResponse = zod.object({
 
 
 /**
- * @summary Get store settings
+ * @summary Get public store settings (no secret keys)
  */
 export const GetSettingsResponse = zod.object({
   "storeName": zod.string(),
@@ -545,11 +545,12 @@ export const GetSettingsResponse = zod.object({
   "max": zod.number().nullish()
 })).optional(),
   "sunpayEnabled": zod.string().optional(),
-  "sunpayApiKey": zod.string().nullish(),
-  "brevoApiKey": zod.string().nullish(),
   "brevoSenderEmail": zod.string().nullish(),
   "brevoSenderName": zod.string().nullish(),
-  "salesNotificationEmail": zod.string().nullish().describe('Optional internal sales address that is BCC\'d on every order confirmation email.')
+  "salesNotificationEmail": zod.string().nullish().describe('Optional internal sales address that is BCC\'d on every order confirmation email.'),
+  "sunpayConfigured": zod.boolean().optional().describe('True when a SunPay API key has been saved (used by the storefront to decide whether to show the M-Pesa button). The actual key is never exposed on this public endpoint.'),
+  "brevoConfigured": zod.boolean().optional().describe('True when a Brevo API key has been saved. The actual key is never exposed on this public endpoint.'),
+  "anthropicConfigured": zod.boolean().optional().describe('True when an Anthropic API key has been saved. The actual key is never exposed on this public endpoint.')
 })
 
 
@@ -830,7 +831,36 @@ export const ListAvailabilityTagsPublicResponse = zod.array(ListAvailabilityTags
 
 
 /**
- * @summary Update store settings
+ * @summary Get full store settings including secret API keys (admin only)
+ */
+export const GetAdminSettingsResponse = zod.object({
+  "storeName": zod.string(),
+  "storeDescription": zod.string().nullish(),
+  "whatsappNumber": zod.string(),
+  "logoUrl": zod.string().nullish(),
+  "currency": zod.string().optional(),
+  "currencySymbol": zod.string().optional(),
+  "priceTiers": zod.array(zod.object({
+  "name": zod.string(),
+  "min": zod.number(),
+  "max": zod.number().nullish()
+})).optional(),
+  "sunpayEnabled": zod.string().optional(),
+  "brevoSenderEmail": zod.string().nullish(),
+  "brevoSenderName": zod.string().nullish(),
+  "salesNotificationEmail": zod.string().nullish().describe('Optional internal sales address that is BCC\'d on every order confirmation email.'),
+  "sunpayConfigured": zod.boolean().optional().describe('True when a SunPay API key has been saved (used by the storefront to decide whether to show the M-Pesa button). The actual key is never exposed on this public endpoint.'),
+  "brevoConfigured": zod.boolean().optional().describe('True when a Brevo API key has been saved. The actual key is never exposed on this public endpoint.'),
+  "anthropicConfigured": zod.boolean().optional().describe('True when an Anthropic API key has been saved. The actual key is never exposed on this public endpoint.')
+}).and(zod.object({
+  "sunpayApiKey": zod.string().nullish(),
+  "brevoApiKey": zod.string().nullish(),
+  "anthropicApiKey": zod.string().nullish()
+}).describe('Admin-only view of store settings that includes secret API keys. Returned exclusively from authenticated \/admin\/settings endpoints.'))
+
+
+/**
+ * @summary Update store settings (admin only)
  */
 export const UpdateSettingsBody = zod.object({
   "storeName": zod.string(),
@@ -849,7 +879,8 @@ export const UpdateSettingsBody = zod.object({
   "brevoApiKey": zod.string().optional(),
   "brevoSenderEmail": zod.string().optional(),
   "brevoSenderName": zod.string().optional(),
-  "salesNotificationEmail": zod.string().optional()
+  "salesNotificationEmail": zod.string().optional(),
+  "anthropicApiKey": zod.string().optional()
 })
 
 export const UpdateSettingsResponse = zod.object({
@@ -865,12 +896,17 @@ export const UpdateSettingsResponse = zod.object({
   "max": zod.number().nullish()
 })).optional(),
   "sunpayEnabled": zod.string().optional(),
-  "sunpayApiKey": zod.string().nullish(),
-  "brevoApiKey": zod.string().nullish(),
   "brevoSenderEmail": zod.string().nullish(),
   "brevoSenderName": zod.string().nullish(),
-  "salesNotificationEmail": zod.string().nullish().describe('Optional internal sales address that is BCC\'d on every order confirmation email.')
-})
+  "salesNotificationEmail": zod.string().nullish().describe('Optional internal sales address that is BCC\'d on every order confirmation email.'),
+  "sunpayConfigured": zod.boolean().optional().describe('True when a SunPay API key has been saved (used by the storefront to decide whether to show the M-Pesa button). The actual key is never exposed on this public endpoint.'),
+  "brevoConfigured": zod.boolean().optional().describe('True when a Brevo API key has been saved. The actual key is never exposed on this public endpoint.'),
+  "anthropicConfigured": zod.boolean().optional().describe('True when an Anthropic API key has been saved. The actual key is never exposed on this public endpoint.')
+}).and(zod.object({
+  "sunpayApiKey": zod.string().nullish(),
+  "brevoApiKey": zod.string().nullish(),
+  "anthropicApiKey": zod.string().nullish()
+}).describe('Admin-only view of store settings that includes secret API keys. Returned exclusively from authenticated \/admin\/settings endpoints.'))
 
 
 /**

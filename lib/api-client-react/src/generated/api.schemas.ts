@@ -266,10 +266,6 @@ export interface StoreSettings {
   priceTiers?: PriceTier[];
   sunpayEnabled?: string;
   /** @nullable */
-  sunpayApiKey?: string | null;
-  /** @nullable */
-  brevoApiKey?: string | null;
-  /** @nullable */
   brevoSenderEmail?: string | null;
   /** @nullable */
   brevoSenderName?: string | null;
@@ -278,7 +274,22 @@ export interface StoreSettings {
      * @nullable
      */
   salesNotificationEmail?: string | null;
+  /** True when a SunPay API key has been saved (used by the storefront to decide whether to show the M-Pesa button). The actual key is never exposed on this public endpoint. */
+  sunpayConfigured?: boolean;
+  /** True when a Brevo API key has been saved. The actual key is never exposed on this public endpoint. */
+  brevoConfigured?: boolean;
+  /** True when an Anthropic API key has been saved. The actual key is never exposed on this public endpoint. */
+  anthropicConfigured?: boolean;
 }
+
+export type StoreSettingsAdmin = StoreSettings & ({
+  /** @nullable */
+  sunpayApiKey?: string | null;
+  /** @nullable */
+  brevoApiKey?: string | null;
+  /** @nullable */
+  anthropicApiKey?: string | null;
+});
 
 export interface StoreSettingsInput {
   storeName: string;
@@ -294,6 +305,7 @@ export interface StoreSettingsInput {
   brevoSenderEmail?: string;
   brevoSenderName?: string;
   salesNotificationEmail?: string;
+  anthropicApiKey?: string;
 }
 
 export type PaymentInitiateBodyCartSnapshot = { [key: string]: unknown };

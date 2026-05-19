@@ -1,11 +1,11 @@
 import { Router } from "express";
-import { eq, and } from "drizzle-orm";
 import { db, productsTable, categoriesTable } from "@workspace/db";
 import {
   AdminLoginBody,
   AdminLoginResponse,
   GetAdminStatsResponse,
 } from "@workspace/api-zod";
+import { issueAdminToken } from "../middleware/require-admin";
 
 const router = Router();
 
@@ -23,7 +23,7 @@ router.post("/admin/login", async (req, res): Promise<void> => {
     return;
   }
 
-  const token = Buffer.from(`admin:${Date.now()}`).toString("base64");
+  const token = issueAdminToken();
   res.json(AdminLoginResponse.parse({ token, success: true }));
 });
 

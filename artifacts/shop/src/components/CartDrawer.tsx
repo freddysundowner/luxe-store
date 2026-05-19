@@ -396,7 +396,7 @@ export function CartDrawer() {
     maximumFractionDigits: 0,
   });
 
-  const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayApiKey;
+  const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayConfigured;
 
   // Reset checkout state when drawer closes
   useEffect(() => {

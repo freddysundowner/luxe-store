@@ -73,7 +73,7 @@ export function QuickBuyDialog({ open, onOpenChange, product, initialVariantId =
     ? !!product.inStock && !!selectedVariant && effectiveStock > 0
     : !!product.inStock && !noVariantOutOfStock;
 
-  const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayApiKey;
+  const mpesaEnabled = settings?.sunpayEnabled === "true" && !!settings?.sunpayConfigured;
   const whatsappEnabled = !!settings?.whatsappNumber;
 
   const handleCheckout = (method: CheckoutMethod) => {

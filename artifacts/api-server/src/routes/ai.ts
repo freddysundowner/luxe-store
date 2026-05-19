@@ -1,23 +1,30 @@
 import { Router } from "express";
 import Anthropic from "@anthropic-ai/sdk";
 import { and, eq } from "drizzle-orm";
-import { db, productsTable, categoriesTable } from "@workspace/db";
+import { db, productsTable, categoriesTable, storeSettingsTable } from "@workspace/db";
 import type { BundleItem } from "@workspace/db";
 
 const router = Router();
 
-function getClient() {
-  // Prefer Replit's managed Anthropic integration (no user-provided key
-  // needed; usage is billed to Replit credits). Fall back to a plain
-  // ANTHROPIC_API_KEY for self-hosted setups.
+async function getClient() {
+  // Prefer Replit's managed Anthropic integration when available (dev only —
+  // no user-provided key needed, usage billed to Replit credits).
   const integrationKey = process.env.AI_INTEGRATIONS_ANTHROPIC_API_KEY;
   const integrationBase = process.env.AI_INTEGRATIONS_ANTHROPIC_BASE_URL;
   if (integrationKey && integrationBase) {
     return new Anthropic({ apiKey: integrationKey, baseURL: integrationBase });
   }
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("Anthropic credentials are not configured");
-  return new Anthropic({ apiKey: key });
+  // Self-hosted: read the key from store_settings (admin Settings page).
+  const rows = await db
+    .select({ anthropicApiKey: storeSettingsTable.anthropicApiKey })
+    .from(storeSettingsTable)
+    .limit(1);
+  const dbKey = rows[0]?.anthropicApiKey?.trim();
+  if (dbKey) return new Anthropic({ apiKey: dbKey });
+  // Last-resort env fallback (legacy installs).
+  const envKey = process.env.ANTHROPIC_API_KEY;
+  if (envKey) return new Anthropic({ apiKey: envKey });
+  throw new Error("Anthropic credentials are not configured");
 }
 
 async function getActiveProducts() {
@@ -110,7 +117,7 @@ router.post("/ai/suggest", async (req, res): Promise<void> => {
     const [products, hampers] = await Promise.all([getActiveProducts(), getActiveHampers()]);
     const catalog = buildCatalogText(products);
     const hamperCatalog = buildHamperCatalogText(hampers, products);
-    const client = getClient();
+    const client = await getClient();
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5",
@@ -157,7 +164,7 @@ router.post("/ai/search", async (req, res): Promise<void> => {
   try {
     const products = await getActiveProducts();
     const catalog = buildCatalogText(products);
-    const client = getClient();
+    const client = await getClient();
 
     const response = await client.messages.create({
       model: "claude-haiku-4-5",
