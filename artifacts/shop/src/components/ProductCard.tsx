@@ -8,6 +8,10 @@ import { useAddBundleToCart } from "@/lib/bundle-add";
 import { Gift } from "lucide-react";
 import { ProductImage, getImageSettings } from "@/components/ProductImage";
 
+// Hoist the formatter so we allocate it once per app, not once per card per
+// render — the grid can have 30+ cards and rerenders during scroll.
+const PRICE_FMT = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
+
 const TAG_CONFIG: Record<string, { label: string; color: string; textColor: string }> = {
   new:         { label: "New",          color: "#D4AF37", textColor: "#000" },
   sale:        { label: "Sale",         color: "#ef4444", textColor: "#fff" },
@@ -60,8 +64,6 @@ export function ProductCard({
     openCart();
   };
 
-  const formatter = new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', maximumFractionDigits: 0 });
-
   // "From KSh X" pricing: collect every active variant's effective price and
   // show the minimum with a "from" prefix when the variants disagree on price.
   const variantPrices = activeVariants.map((v) => (v.price ?? product.price));
@@ -91,17 +93,21 @@ export function ProductCard({
 
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-50 pointer-events-none" />
 
-          {/* Shimmer */}
+          {/* Shimmer — uses transform (GPU-only) instead of `left` to avoid
+              triggering layout on every hover. During desktop scroll the
+              cursor passes over many cards; `left` transitions would each
+              reflow the card. translateX is composited and free. */}
           <div
-            className="absolute inset-y-0 w-1/3 pointer-events-none opacity-0 group-hover:opacity-100 -left-1/3 group-hover:left-full"
+            className="absolute inset-y-0 left-0 w-1/3 pointer-events-none opacity-0 group-hover:opacity-100 -translate-x-full group-hover:translate-x-[400%]"
             style={{
               background: "linear-gradient(90deg, transparent, rgba(212,175,55,0.15), transparent)",
-              transition: "left 0.75s ease-out, opacity 0.05s",
+              transition: "transform 0.75s ease-out, opacity 0.05s",
+              willChange: "transform",
             }}
           />
 
           {isSoldOut && (
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
+            <div className="absolute inset-0 bg-black/75 flex items-center justify-center">
               <span className="text-xs uppercase tracking-widest text-zinc-300 px-3 py-1 border border-zinc-700">Sold Out</span>
             </div>
           )}
@@ -146,10 +152,10 @@ export function ProductCard({
             <div className="text-right shrink-0">
               <div className="text-sm text-[#D4AF37] font-medium">
                 {showFromPrice && <span className="text-[10px] uppercase tracking-widest text-zinc-500 mr-1">From</span>}
-                {formatter.format(displayPrice)}
+                {PRICE_FMT.format(displayPrice)}
               </div>
               {!showFromPrice && product.originalPrice && product.originalPrice > product.price && (
-                <div className="text-xs text-zinc-600 line-through">{formatter.format(product.originalPrice)}</div>
+                <div className="text-xs text-zinc-600 line-through">{PRICE_FMT.format(product.originalPrice)}</div>
               )}
             </div>
           </div>
