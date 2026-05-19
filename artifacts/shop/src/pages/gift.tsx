@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useGetGift, useClaimGift, useGetSettings, getGetSettingsQueryKey, getGetGiftQueryKey } from "@workspace/api-client-react";
-import { Gift, Lock, RefreshCw, MessageCircle, Check } from "lucide-react";
+import { Gift, Lock, RefreshCw, Check, Sparkles } from "lucide-react";
+import { StoreLogo } from "@/components/StoreLogo";
 
 // ── Bubble particle ──────────────────────────────────────────────────────────
 interface Bubble {
@@ -104,26 +105,6 @@ export default function GiftPage() {
     }, 900);
   };
 
-  // The sender has already paid for this gift — the recipient never checks
-  // out again. To arrange delivery, they message the store on WhatsApp with
-  // a pre-filled note that includes the claim token so the merchant can
-  // look the order up.
-  const handleArrangeDelivery = () => {
-    if (!gift) return;
-    const number = (settings?.whatsappNumber ?? "").replace(/\D/g, "");
-    const itemSummary = (gift.items && gift.items.length > 0)
-      ? gift.items.map((it) => `• ${it.name}${it.quantity > 1 ? ` × ${it.quantity}` : ""}`).join("\n")
-      : `• ${gift.productName}`;
-    const msg =
-      `Hi ${storeName}! I'd like to arrange delivery for my gift.\n\n` +
-      `Claim code: ${gift.claimToken}\n\n` +
-      `Items:\n${itemSummary}`;
-    const url = number
-      ? `https://wa.me/${number}?text=${encodeURIComponent(msg)}`
-      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
-  };
-
   return (
     <div className="min-h-[100dvh] bg-[#0a0a0a] flex flex-col overflow-hidden relative">
       {/* Stars */}
@@ -135,10 +116,9 @@ export default function GiftPage() {
       </div>
 
       {/* Brand strip */}
-      <div className="relative z-10 flex justify-center pt-6 pb-2">
-        <Link href="/" className="flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
-          <span className="text-[10px] tracking-[0.35em] uppercase text-[#D4AF37]">{storeName}</span>
-          <div className="w-8 h-px bg-[#D4AF37]/40" />
+      <div className="relative z-10 flex justify-center pt-8 pb-2">
+        <Link href="/" className="opacity-80 hover:opacity-100 transition-opacity">
+          <StoreLogo />
         </Link>
       </div>
 
@@ -211,84 +191,106 @@ export default function GiftPage() {
           </div>
         ) : (
           /* ── REVEALED ── */
-          <div className="flex flex-col items-center gap-7 w-full max-w-sm" style={{ animation: "revealIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards" }}>
-            <div className="text-center space-y-1">
-              <p className="text-[10px] tracking-[0.35em] uppercase text-[#D4AF37]/60">🎁 Your gift is revealed</p>
-              {gift.recipientName && <p className="text-lg font-light text-white">Enjoy, {gift.recipientName}!</p>}
+          <div className="flex flex-col items-center gap-6 w-full max-w-sm">
+            {/* Header */}
+            <div className="text-center space-y-3 reveal-step" style={{ animationDelay: "0.05s" }}>
+              <div className="flex items-center justify-center gap-3">
+                <div className="h-px w-10 bg-gradient-to-r from-transparent to-[#D4AF37]/60" />
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" style={{ animation: "sparkleSpin 4s linear infinite" }} />
+                <p className="text-[10px] tracking-[0.4em] uppercase text-[#D4AF37]">Your gift is revealed</p>
+                <Sparkles className="w-3.5 h-3.5 text-[#D4AF37]" style={{ animation: "sparkleSpin 4s linear infinite reverse" }} />
+                <div className="h-px w-10 bg-gradient-to-l from-transparent to-[#D4AF37]/60" />
+              </div>
+              {gift.recipientName && (
+                <h1 className="text-3xl font-light text-white tracking-wide" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
+                  Enjoy, <span className="text-[#D4AF37]">{gift.recipientName}</span>
+                </h1>
+              )}
+              {gift.senderName && (
+                <p className="text-[10px] tracking-[0.35em] uppercase text-zinc-500">with love, from {gift.senderName}</p>
+              )}
             </div>
 
-            {/* Product card — single item OR multi-item list */}
-            {gift.items && gift.items.length > 0 ? (
-              <div className="w-full border border-[#D4AF37]/25 bg-zinc-950 overflow-hidden shadow-[0_0_60px_rgba(212,175,55,0.1)]"
-                style={{ animation: "zoomIn 0.8s cubic-bezier(0.16,1,0.3,1) forwards" }}>
-                <div className="px-5 py-4 border-b border-[#D4AF37]/15 flex items-center justify-between">
-                  <p className="text-[10px] uppercase tracking-[0.25em] text-[#D4AF37]/70">
-                    {gift.items.length} {gift.items.length === 1 ? "item" : "items"} inside
-                  </p>
-                  <p className="text-[#D4AF37] text-lg font-light">{fmt.format(gift.productPrice)}</p>
+            {/* Product card — ornate gold-bordered presentation */}
+            <div className="w-full reveal-step" style={{ animationDelay: "0.25s" }}>
+              <div className="relative">
+                {/* Gold corner ornaments */}
+                <div className="absolute -top-1 -left-1 w-5 h-5 border-t border-l border-[#D4AF37] z-10" />
+                <div className="absolute -top-1 -right-1 w-5 h-5 border-t border-r border-[#D4AF37] z-10" />
+                <div className="absolute -bottom-1 -left-1 w-5 h-5 border-b border-l border-[#D4AF37] z-10" />
+                <div className="absolute -bottom-1 -right-1 w-5 h-5 border-b border-r border-[#D4AF37] z-10" />
+                <div className="border border-[#D4AF37]/40 bg-zinc-950 overflow-hidden shadow-[0_0_80px_rgba(212,175,55,0.18)]">
+                  {gift.items && gift.items.length > 0 ? (
+                    <>
+                      <div className="px-5 py-3.5 border-b border-[#D4AF37]/20 flex items-center justify-between bg-gradient-to-r from-[#D4AF37]/10 via-transparent to-[#D4AF37]/10">
+                        <p className="text-[10px] uppercase tracking-[0.3em] text-[#D4AF37]">
+                          {gift.items.length} {gift.items.length === 1 ? "treasure" : "treasures"} inside
+                        </p>
+                        <p className="text-[#D4AF37] text-lg font-light" style={{ fontFamily: "Georgia, serif" }}>{fmt.format(gift.productPrice)}</p>
+                      </div>
+                      <ul className="divide-y divide-[#D4AF37]/10">
+                        {gift.items.map((it, idx) => (
+                          <li key={`${it.productId}-${idx}`} className="flex items-center gap-3 px-4 py-3 reveal-step" style={{ animationDelay: `${0.45 + idx * 0.1}s` }}>
+                            <div className="w-14 h-14 bg-zinc-900 border border-[#D4AF37]/20 overflow-hidden shrink-0">
+                              {it.imageUrl
+                                ? <img src={it.imageUrl} alt={it.name} className="w-full h-full object-cover" />
+                                : <Gift className="w-5 h-5 text-[#D4AF37]/40 m-auto mt-4" />}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-zinc-100 font-light truncate">{it.name}{it.quantity > 1 ? ` × ${it.quantity}` : ""}</p>
+                              <p className="text-[11px] text-[#D4AF37]/60 mt-0.5">{fmt.format(it.price * it.quantity)}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <>
+                      {gift.productImageUrl && (
+                        <div className="aspect-square overflow-hidden">
+                          <img src={gift.productImageUrl} alt={gift.productName} className="w-full h-full object-cover" style={{ animation: "zoomIn 0.9s cubic-bezier(0.16,1,0.3,1) 0.35s both" }} />
+                        </div>
+                      )}
+                      <div className="p-5 space-y-2 bg-gradient-to-b from-transparent to-[#D4AF37]/5">
+                        <h2 className="text-lg font-light text-white uppercase tracking-[0.15em]" style={{ fontFamily: "Georgia, serif" }}>{gift.productName}</h2>
+                        <p className="text-[#D4AF37] text-2xl font-light" style={{ fontFamily: "Georgia, serif" }}>{fmt.format(gift.productPrice)}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
-                <ul className="divide-y divide-zinc-900">
-                  {gift.items.map((it, idx) => (
-                    <li key={`${it.productId}-${idx}`} className="flex items-center gap-3 px-4 py-3">
-                      <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
-                        {it.imageUrl
-                          ? <img src={it.imageUrl} alt={it.name} className="w-full h-full object-cover" />
-                          : <Gift className="w-5 h-5 text-zinc-700 m-auto mt-4" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-zinc-200 font-light truncate">{it.name}{it.quantity > 1 ? ` × ${it.quantity}` : ""}</p>
-                        <p className="text-[11px] text-zinc-500 mt-0.5">{fmt.format(it.price * it.quantity)}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
               </div>
-            ) : (
-              <div className="w-full border border-[#D4AF37]/25 bg-zinc-950 overflow-hidden shadow-[0_0_60px_rgba(212,175,55,0.1)]">
-                {gift.productImageUrl && (
-                  <div className="aspect-square overflow-hidden">
-                    <img src={gift.productImageUrl} alt={gift.productName} className="w-full h-full object-cover" style={{ animation: "zoomIn 0.8s cubic-bezier(0.16,1,0.3,1) forwards" }} />
+            </div>
+
+            {/* Personal note */}
+            {gift.note && (
+              <div className="w-full reveal-step" style={{ animationDelay: "0.55s" }}>
+                <div className="relative border border-[#D4AF37]/20 bg-gradient-to-br from-[#D4AF37]/8 via-transparent to-[#D4AF37]/8 px-6 py-5">
+                  <div className="absolute -top-2 left-5 px-2 bg-[#0a0a0a]">
+                    <p className="text-[9px] tracking-[0.4em] uppercase text-[#D4AF37]/70">A note for you</p>
                   </div>
-                )}
-                <div className="p-5 space-y-3">
-                  <h2 className="text-lg font-light text-white uppercase tracking-wide">{gift.productName}</h2>
-                  <p className="text-[#D4AF37] text-xl font-light">{fmt.format(gift.productPrice)}</p>
+                  <p className="text-zinc-200 text-sm font-light italic leading-relaxed text-center" style={{ fontFamily: "Georgia, serif" }}>
+                    "{gift.note}"
+                  </p>
                 </div>
               </div>
             )}
 
             {/* Paid badge */}
-            <div className="flex items-center gap-2 border border-green-800/40 bg-green-950/30 px-4 py-2.5 w-full">
+            <div className="flex items-center gap-2.5 border border-green-800/40 bg-green-950/20 px-4 py-2.5 w-full reveal-step" style={{ animationDelay: "0.7s" }}>
               <Check className="w-4 h-4 text-green-400 shrink-0" />
-              <div>
-                <p className="text-xs font-medium text-green-300">This gift has been paid for</p>
-                <p className="text-[10px] text-green-700">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-medium text-green-300">Paid in full · {storeName} will be in touch</p>
+                <p className="text-[10px] text-green-700/80">
                   {gift.paymentMethod === "mpesa" ? "Paid via M-Pesa" : "Paid via WhatsApp checkout"}
                   {gift.senderName ? ` · From ${gift.senderName}` : ""}
                 </p>
               </div>
             </div>
 
-            {/* Personal note */}
-            {gift.note && (
-              <div className="w-full border border-[#D4AF37]/15 bg-[#D4AF37]/5 px-5 py-4">
-                <p className="text-[9px] tracking-[0.3em] uppercase text-[#D4AF37]/40 mb-2">Message for you</p>
-                <p className="text-zinc-300 text-sm font-light italic leading-relaxed">"{gift.note}"</p>
-              </div>
-            )}
-
-            {/* CTA — the gift is already paid for, so the recipient just
-                coordinates delivery with the store. No checkout, no payment. */}
-            <div className="w-full flex flex-col gap-3">
-              <button onClick={handleArrangeDelivery}
-                className="w-full py-4 flex items-center justify-center gap-2 text-xs uppercase tracking-widest font-semibold transition-all bg-[#D4AF37] text-black hover:bg-white">
-                <MessageCircle className="w-3.5 h-3.5" />Arrange delivery on WhatsApp
-              </button>
-              <p className="text-[10px] text-zinc-600 text-center tracking-widest uppercase">
-                Already paid · {storeName} will deliver
-              </p>
-              <Link href="/" className="w-full py-3 border border-zinc-800 text-zinc-600 text-xs uppercase tracking-widest text-center hover:border-[#D4AF37]/30 hover:text-zinc-400 transition-colors">
-                Browse the store
+            {/* Footer link */}
+            <div className="w-full reveal-step" style={{ animationDelay: "0.85s" }}>
+              <Link href="/" className="block w-full py-3 text-[10px] tracking-[0.35em] uppercase text-[#D4AF37]/50 hover:text-[#D4AF37] text-center transition-colors">
+                ✦ Browse the collection ✦
               </Link>
             </div>
           </div>
@@ -308,8 +310,10 @@ export default function GiftPage() {
         @keyframes fadeFloat { 0%,100% { transform: translateY(0); opacity: 0.6; } 50% { transform: translateY(-6px); opacity: 1; } }
         @keyframes pulseRing { 0%,100% { box-shadow: 0 0 0 0 rgba(212,175,55,0); } 50% { box-shadow: 0 0 0 18px rgba(212,175,55,0.07); } }
         @keyframes bubbleRise { 0% { transform: translateY(0) translateX(0) scale(1); opacity: 0.9; } 60% { opacity: 0.85; } 100% { transform: translateY(-85vh) translateX(var(--drift,0px)) scale(0.3); opacity: 0; } }
-        @keyframes revealIn { from { opacity: 0; transform: translateY(28px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes revealStep { from { opacity: 0; transform: translateY(20px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
         @keyframes zoomIn { from { transform: scale(1.08); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes sparkleSpin { from { transform: rotate(0deg); opacity: 0.6; } 50% { opacity: 1; } to { transform: rotate(360deg); opacity: 0.6; } }
+        .reveal-step { opacity: 0; animation: revealStep 0.7s cubic-bezier(0.16,1,0.3,1) forwards; }
       `}</style>
     </div>
   );
