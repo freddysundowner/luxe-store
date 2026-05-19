@@ -10,8 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetSettings, getGetSettingsQueryKey, useUpdateSettings } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
-import { Loader2, Plus, Trash2, Smartphone, Store, MessageCircle, Globe } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, Plus, Trash2, Smartphone, Store, MessageCircle, Globe, Eye, EyeOff } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/ImageUpload";
 
@@ -48,6 +48,7 @@ const DEFAULT_TIERS = [
 export default function AdminSettings() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const { data: settings, isLoading } = useGetSettings({
     query: { queryKey: getGetSettingsQueryKey() }
@@ -264,16 +265,29 @@ export default function AdminSettings() {
                     <FormItem>
                       <FormLabel>SunPay API Key</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          placeholder="sp_live_xxxxxxxxxxxxxxxx"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showApiKey ? "text" : "password"}
+                            placeholder="sp_live_xxxxxxxxxxxxxxxx"
+                            autoComplete="off"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowApiKey(v => !v)}
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            tabIndex={-1}
+                          >
+                            {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </FormControl>
                       <FormDescription>
                         Your SunPay secret key starting with{" "}
                         <code className="text-xs bg-muted px-1 rounded">sp_</code>.
                         Found in your SunPay dashboard under API Keys.
+                        {field.value ? <span className="text-green-500 ml-2">✓ Key saved</span> : null}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
