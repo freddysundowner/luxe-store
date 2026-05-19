@@ -22,6 +22,7 @@ import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
 import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { GiftSheet } from "@/components/GiftSheet";
+import { BundleBoxCover } from "@/components/BundleBoxCover";
 import { Helmet } from "react-helmet-async";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
@@ -334,6 +335,16 @@ function FeaturedSwiper({
               draggable={false}
               className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             />
+          ) : p.kind === "bundle" ? (
+            <div className="absolute inset-0 bg-zinc-950 flex items-center justify-center">
+              <div className="relative aspect-square w-[min(80%,420px)]">
+                <BundleBoxCover
+                  alt={p.name}
+                  itemImages={(p.bundleProducts ?? []).map((bp) => bp.imageUrl)}
+                  className="absolute inset-0"
+                />
+              </div>
+            </div>
           ) : (
             <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
               <ShoppingBag className="w-14 h-14 text-zinc-700" />

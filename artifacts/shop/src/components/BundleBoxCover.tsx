@@ -40,7 +40,7 @@ export function BundleBoxCover({ itemImages, alt, className = "" }: BundleBoxCov
     <div
       role="img"
       aria-label={alt}
-      className={`relative overflow-hidden ${className}`}
+      className={`overflow-hidden ${className}`}
       style={{
         background:
           "radial-gradient(ellipse at 50% 35%, #2a1c0a 0%, #150e07 55%, #0a0807 100%)",

@@ -334,7 +334,7 @@ export function GiftSheet({ open, product, onClose }: GiftSheetProps) {
 
         {/* Header */}
         <div className="flex items-center gap-3 px-5 py-3 border-b border-zinc-900 shrink-0">
-          <div className="w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
+          <div className="relative w-14 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden shrink-0">
             {extras.length > 0
               ? <BundleBoxCover itemImages={headerItemImages} alt="Gift bundle" className="w-full h-full" />
               : product.kind === "bundle" && !product.imageUrl
