@@ -1,9 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, Link } from "wouter";
 import { useGetGift, useClaimGift, useGetSettings, getGetSettingsQueryKey, getGetGiftQueryKey } from "@workspace/api-client-react";
-import { ShoppingBag, Gift, Check, Lock, RefreshCw } from "lucide-react";
-import { useCart } from "@/lib/cart-context";
-import { useToast } from "@/hooks/use-toast";
+import { Gift, Lock, RefreshCw, MessageCircle, Check } from "lucide-react";
 
 // ── Bubble particle ──────────────────────────────────────────────────────────
 interface Bubble {
@@ -84,12 +82,9 @@ export default function GiftPage() {
   });
 
   const claimMutation = useClaimGift();
-  const { addItem, openCart } = useCart();
-  const { toast } = useToast();
 
   const [phase, setPhase] = useState<"wrapped" | "opening" | "open">("wrapped");
   const [bubbles, setBubbles] = useState<Bubble[]>([]);
-  const [addedToCart, setAddedToCart] = useState(false);
   const bubblesRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: settings?.currency ?? "KES", maximumFractionDigits: 0 });
@@ -109,51 +104,24 @@ export default function GiftPage() {
     }, 900);
   };
 
-  const handleAddToCart = () => {
+  // The sender has already paid for this gift — the recipient never checks
+  // out again. To arrange delivery, they message the store on WhatsApp with
+  // a pre-filled note that includes the claim token so the merchant can
+  // look the order up.
+  const handleArrangeDelivery = () => {
     if (!gift) return;
-    // Multi-item gifts: drop every snapshot item into the bag. Single-item
-    // gifts: fall back to the primary product columns.
-    const cartItems = (gift.items && gift.items.length > 0)
-      ? gift.items.map((it) => ({
-          id: it.productId,
-          name: it.name,
-          price: it.price,
-          imageUrl: it.imageUrl ?? null,
-          quantity: it.quantity,
-        }))
-      : [{
-          id: gift.productId,
-          name: gift.productName,
-          price: gift.productPrice,
-          imageUrl: gift.productImageUrl ?? null,
-          quantity: 1,
-        }];
-
-    for (const it of cartItems) {
-      addItem({
-        id: it.id,
-        name: it.name,
-        price: it.price,
-        imageUrl: it.imageUrl,
-        description: null,
-        originalPrice: null,
-        categoryId: null,
-        categoryName: null,
-        inStock: true,
-        isActive: true,
-        isDropship: false,
-        isFeatured: false,
-        availabilityTag: null,
-        stockQuantity: it.quantity,
-        variants: [],
-        kind: "simple",
-        bundleItems: [],
-        createdAt: null,
-      }, { quantity: it.quantity });
-    }
-    setAddedToCart(true);
-    openCart();
-    toast({ title: cartItems.length > 1 ? `${cartItems.length} items added to your bag!` : "Added to your bag!" });
+    const number = (settings?.whatsappNumber ?? "").replace(/\D/g, "");
+    const itemSummary = (gift.items && gift.items.length > 0)
+      ? gift.items.map((it) => `• ${it.name}${it.quantity > 1 ? ` × ${it.quantity}` : ""}`).join("\n")
+      : `• ${gift.productName}`;
+    const msg =
+      `Hi ${storeName}! I'd like to arrange delivery for my gift.\n\n` +
+      `Claim code: ${gift.claimToken}\n\n` +
+      `Items:\n${itemSummary}`;
+    const url = number
+      ? `https://wa.me/${number}?text=${encodeURIComponent(msg)}`
+      : `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    window.open(url, "_blank");
   };
 
   return (
@@ -309,13 +277,16 @@ export default function GiftPage() {
               </div>
             )}
 
-            {/* CTA */}
+            {/* CTA — the gift is already paid for, so the recipient just
+                coordinates delivery with the store. No checkout, no payment. */}
             <div className="w-full flex flex-col gap-3">
-              <button onClick={handleAddToCart} disabled={addedToCart}
-                className="w-full py-4 flex items-center justify-center gap-2 text-xs uppercase tracking-widest font-semibold transition-all"
-                style={{ background: addedToCart ? "transparent" : "#D4AF37", color: addedToCart ? "#D4AF37" : "#000", border: addedToCart ? "1px solid #D4AF37" : "none" }}>
-                {addedToCart ? <><Check className="w-3.5 h-3.5" />Added to bag</> : <><ShoppingBag className="w-3.5 h-3.5" />Add to bag & checkout</>}
+              <button onClick={handleArrangeDelivery}
+                className="w-full py-4 flex items-center justify-center gap-2 text-xs uppercase tracking-widest font-semibold transition-all bg-[#D4AF37] text-black hover:bg-white">
+                <MessageCircle className="w-3.5 h-3.5" />Arrange delivery on WhatsApp
               </button>
+              <p className="text-[10px] text-zinc-600 text-center tracking-widest uppercase">
+                Already paid · {storeName} will deliver
+              </p>
               <Link href="/" className="w-full py-3 border border-zinc-800 text-zinc-600 text-xs uppercase tracking-widest text-center hover:border-[#D4AF37]/30 hover:text-zinc-400 transition-colors">
                 Browse the store
               </Link>
