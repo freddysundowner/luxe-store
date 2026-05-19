@@ -52,11 +52,11 @@ function Row({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 px-5 py-3.5">
-      <span className="text-sm text-muted-foreground flex items-center gap-2 flex-shrink-0 pt-0.5">
+    <div className="flex items-center justify-between gap-4 px-4 py-2">
+      <span className="text-xs text-muted-foreground flex items-center gap-1.5 flex-shrink-0">
         {icon}{label}
       </span>
-      <span className={`text-right break-all ${bold ? "font-semibold text-base" : small ? "text-[11px] font-mono text-muted-foreground" : mono ? "text-xs font-mono text-muted-foreground" : "text-sm"}`}>
+      <span className={`text-right break-all ${bold ? "font-semibold text-sm" : small ? "text-[10px] font-mono text-muted-foreground" : mono ? "text-xs font-mono text-muted-foreground" : "text-xs"}`}>
         {value}
       </span>
     </div>
@@ -134,18 +134,18 @@ export default function AdminOrderDetail() {
 
   return (
     <AdminLayout title="Order Details">
-      <div className="space-y-6">
+      <div className="space-y-3">
 
         {/* Back + header */}
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
             <button
               onClick={() => navigate("/admin/orders")}
-              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeft className="w-4 h-4" />Back to Orders
+              <ArrowLeft className="w-3.5 h-3.5" />Back
             </button>
-            <h1 className="text-xl font-semibold break-all font-mono">
+            <h1 className="text-base font-semibold break-all font-mono">
               {order.externalRef ?? order.transactionId}
             </h1>
           </div>
@@ -154,112 +154,101 @@ export default function AdminOrderDetail() {
 
         {/* Cart items */}
         {items.length > 0 && (
-          <section className="space-y-3">
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <Package className="w-4 h-4" />Items Ordered
+          <section className="space-y-1.5">
+            <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+              <Package className="w-3.5 h-3.5" />Items Ordered
             </h2>
-            <div className="rounded-xl border border-border overflow-hidden divide-y divide-border">
+            <div className="rounded-lg border border-border overflow-hidden divide-y divide-border">
               {items.map((item, i) => (
-                <div key={i} className="flex items-center gap-4 px-5 py-4">
+                <div key={i} className="flex items-center gap-3 px-4 py-2.5">
                   {item.imageUrl
-                    ? <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                    : <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0"><ShoppingBag className="w-5 h-5 text-muted-foreground" /></div>
+                    ? <img src={item.imageUrl} alt={item.name} className="w-9 h-9 rounded object-cover flex-shrink-0" />
+                    : <div className="w-9 h-9 rounded bg-muted flex items-center justify-center flex-shrink-0"><ShoppingBag className="w-4 h-4 text-muted-foreground" /></div>
                   }
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium">{item.name}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Qty: {item.quantity} × KSh {item.price.toLocaleString()}</p>
+                    <p className="text-[11px] text-muted-foreground">Qty: {item.quantity} × KSh {item.price.toLocaleString()}</p>
                   </div>
-                  <p className="text-sm font-semibold flex-shrink-0">KSh {(item.price * item.quantity).toLocaleString()}</p>
+                  <p className="text-xs font-semibold flex-shrink-0">KSh {(item.price * item.quantity).toLocaleString()}</p>
                 </div>
               ))}
-              <div className="flex justify-between items-center px-5 py-4 bg-muted/30">
-                <span className="font-semibold text-sm">Total</span>
-                <span className="font-bold text-base">KSh {order.amount.toLocaleString()}</span>
+              <div className="flex justify-between items-center px-4 py-2 bg-muted/30">
+                <span className="font-semibold text-xs">Total</span>
+                <span className="font-bold text-sm">KSh {order.amount.toLocaleString()}</span>
               </div>
             </div>
           </section>
         )}
 
-        <Separator />
-
         {/* Customer info */}
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Phone className="w-4 h-4" />Customer
+        <section className="space-y-1.5">
+          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <Phone className="w-3.5 h-3.5" />Customer
           </h2>
-          <div className="rounded-xl border border-border divide-y divide-border">
-            <Row label="Phone" value={formatPhone(order.phoneNumber)} mono icon={<Phone className="w-3.5 h-3.5" />} />
-            {customer?.name && <Row label="Name" value={customer.name} icon={<User className="w-3.5 h-3.5" />} />}
-            {customer?.email && <Row label="Email" value={customer.email} icon={<Mail className="w-3.5 h-3.5" />} />}
-            {customer?.address && <Row label="Delivery Address" value={customer.address} icon={<MapPin className="w-3.5 h-3.5" />} />}
+          <div className="rounded-lg border border-border divide-y divide-border">
+            <Row label="Phone" value={formatPhone(order.phoneNumber)} mono icon={<Phone className="w-3 h-3" />} />
+            {customer?.name && <Row label="Name" value={customer.name} icon={<User className="w-3 h-3" />} />}
+            {customer?.email && <Row label="Email" value={customer.email} icon={<Mail className="w-3 h-3" />} />}
+            {customer?.address && <Row label="Delivery Address" value={customer.address} icon={<MapPin className="w-3 h-3" />} />}
           </div>
         </section>
 
-        <Separator />
-
         {/* Payment info */}
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <CreditCard className="w-4 h-4" />Payment
+        <section className="space-y-1.5">
+          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <CreditCard className="w-3.5 h-3.5" />Payment
           </h2>
-          <div className="rounded-xl border border-border divide-y divide-border">
+          <div className="rounded-lg border border-border divide-y divide-border">
             <Row label="Amount" value={`KSh ${order.amount.toLocaleString()}`} bold />
             <Row label="Status" value={<span className="capitalize">{order.status}</span>} />
-            {order.mpesaRef && <Row label="M-Pesa Ref" value={order.mpesaRef} mono icon={<Hash className="w-3.5 h-3.5" />} />}
+            {order.mpesaRef && <Row label="M-Pesa Ref" value={order.mpesaRef} mono icon={<Hash className="w-3 h-3" />} />}
             {order.externalRef && <Row label="Order Ref" value={order.externalRef} mono />}
             <Row label="Transaction ID" value={order.transactionId} mono small />
             {order.checkoutRequestId && <Row label="Checkout ID" value={order.checkoutRequestId} mono small />}
           </div>
         </section>
 
-        <Separator />
-
         {/* Timestamps */}
-        <section className="space-y-3">
-          <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-            <Calendar className="w-4 h-4" />Timeline
+        <section className="space-y-1.5">
+          <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+            <Calendar className="w-3.5 h-3.5" />Timeline
           </h2>
-          <div className="rounded-xl border border-border divide-y divide-border">
+          <div className="rounded-lg border border-border divide-y divide-border">
             <Row label="Created" value={formatDate(order.createdAt)} />
             {order.updatedAt && order.updatedAt !== order.createdAt && (
-              <Row label="Last updated" value={formatDate(order.updatedAt)} icon={<RefreshCw className="w-3.5 h-3.5" />} />
+              <Row label="Last updated" value={formatDate(order.updatedAt)} icon={<RefreshCw className="w-3 h-3" />} />
             )}
           </div>
         </section>
 
         {/* Raw cart data (fallback when no parsed items) */}
         {cart && items.length === 0 && (
-          <>
-            <Separator />
-            <section className="space-y-2">
-              <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Cart Data</h2>
-              <pre className="text-[11px] bg-muted/50 rounded-xl p-4 overflow-x-auto text-muted-foreground">
-                {JSON.stringify(cart, null, 2)}
-              </pre>
-            </section>
-          </>
+          <section className="space-y-1.5">
+            <h2 className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Cart Data</h2>
+            <pre className="text-[10px] bg-muted/50 rounded-lg p-3 overflow-x-auto text-muted-foreground">
+              {JSON.stringify(cart, null, 2)}
+            </pre>
+          </section>
         )}
 
-        <Separator />
-
         {/* Actions */}
-        <section className="space-y-3 pb-8">
+        <section className="flex gap-2 pb-4">
           <Button
-            className="w-full gap-2 bg-[#25D366] hover:bg-[#1fba59] text-white border-0 h-11"
+            className="flex-1 gap-2 bg-[#25D366] hover:bg-[#1fba59] text-white border-0 h-9 text-xs"
             onClick={shareReceiptToWhatsApp}
             disabled={!settings?.whatsappNumber}
             title={!settings?.whatsappNumber ? "Set a WhatsApp number in Settings first" : undefined}
           >
-            <MessageCircle className="w-4 h-4" />
-            Share Receipt to Customer WhatsApp
+            <MessageCircle className="w-3.5 h-3.5" />
+            Share Receipt via WhatsApp
           </Button>
           <Button
             variant="outline"
-            className="w-full gap-2 h-11"
+            className="flex-1 gap-2 h-9 text-xs"
             onClick={() => window.open(receiptUrl, "_blank")}
           >
-            <ExternalLink className="w-4 h-4" />
-            Open Receipt Page
+            <ExternalLink className="w-3.5 h-3.5" />
+            Open Receipt
           </Button>
         </section>
       </div>
