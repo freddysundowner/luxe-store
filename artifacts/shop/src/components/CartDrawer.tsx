@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
-import { useCart } from "@/lib/cart-context";
+import { useCart, type CheckoutMethod } from "@/lib/cart-context";
 import {
   useGetSettings,
   getGetSettingsQueryKey,
@@ -17,7 +17,6 @@ import {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type CheckoutStep = "cart" | "customer-info" | "mpesa";
-type CheckoutMethod = "whatsapp" | "mpesa";
 
 interface CustomerInfo {
   name: string;
@@ -368,7 +367,11 @@ function MpesaFlow({
 // ── Cart Drawer ───────────────────────────────────────────────────────────────
 
 export function CartDrawer() {
-  const { items, updateQuantity, removeItem, clearCart, subtotal, isCartOpen, closeCart } = useCart();
+  const {
+    items, updateQuantity, removeItem, clearCart, subtotal,
+    isCartOpen, closeCart, quickCheckoutMethod, consumeQuickCheckout,
+    pendingQuickBuyLine, setPendingQuickBuyLine,
+  } = useCart();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const [step, setStep] = useState<CheckoutStep>("cart");
   const [checkoutMethod, setCheckoutMethod] = useState<CheckoutMethod>("whatsapp");
@@ -387,11 +390,42 @@ export function CartDrawer() {
   // Reset checkout state when drawer closes
   useEffect(() => {
     if (!isCartOpen) {
+      // If the customer abandoned a Quick Buy mid-flow, roll back ONLY the
+      // quantity Quick Buy added — not the whole line — so any pre-existing
+      // cart contents (e.g. the same SKU added earlier from the PDP) survive.
+      if (pendingQuickBuyLine) {
+        const { productId, variantId, addedQty } = pendingQuickBuyLine;
+        const existing = items.find(
+          (i) => i.product.id === productId && (i.variantId ?? null) === (variantId ?? null)
+        );
+        if (existing) {
+          const remaining = existing.quantity - addedQty;
+          if (remaining <= 0) {
+            removeItem(productId, variantId);
+          } else {
+            updateQuantity(productId, variantId, remaining);
+          }
+        }
+        setPendingQuickBuyLine(null);
+      }
       const t = setTimeout(() => { setStep("cart"); setCustomerInfo(null); }, 350);
       return () => clearTimeout(t);
     }
     return undefined;
+  // We intentionally only react to drawer open/close transitions, not every
+  // pendingQuickBuyLine change (which fires when QuickBuy registers the line).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCartOpen]);
+
+  // Honor quick-checkout intent: when set, skip the cart review and jump
+  // straight to the customer-info step using the requested payment method.
+  useEffect(() => {
+    if (isCartOpen && quickCheckoutMethod) {
+      setCheckoutMethod(quickCheckoutMethod);
+      setStep("customer-info");
+      consumeQuickCheckout();
+    }
+  }, [isCartOpen, quickCheckoutMethod, consumeQuickCheckout]);
 
   const cartSnapshot = {
     items: items.map((i) => ({
@@ -423,6 +457,8 @@ export function CartDrawer() {
       });
       msg += `\n*Total: ${formatter.format(subtotal)}*`;
       window.open(`https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`, "_blank");
+      // Order handed off — clear the rollback marker so the line persists.
+      setPendingQuickBuyLine(null);
       // Go back to cart (order sent)
       setStep("cart");
     } else {
@@ -432,11 +468,13 @@ export function CartDrawer() {
   };
 
   const handleMpesaSuccess = useCallback(() => {
+    // Payment confirmed — drop the rollback marker before clearing the cart.
+    setPendingQuickBuyLine(null);
     clearCart();
     setStep("cart");
     setCustomerInfo(null);
     closeCart();
-  }, [clearCart, closeCart]);
+  }, [clearCart, closeCart, setPendingQuickBuyLine]);
 
   // Determine header title for current step
   const headerTitle = step === "customer-info"

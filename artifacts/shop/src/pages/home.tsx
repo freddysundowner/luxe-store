@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import {
   Search, Sparkles, X, Gift, Heart, ShoppingBag, RefreshCw,
   MessageCircle, Share2, Droplets, Send
@@ -20,6 +20,7 @@ import { useFavorites } from "@/lib/favorites-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
+import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Helmet } from "react-helmet-async";
 
@@ -38,9 +39,8 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
   const [giftSender, setGiftSender] = useState("");
   const [giftStep, setGiftStep] = useState<"form" | "pay" | "done">("form");
   const [giftLink, setGiftLink] = useState("");
-  const { addItem, openCart } = useCart();
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
 
   const featured = useMemo(() => products, [products]);
@@ -145,15 +145,11 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
   };
 
   const handleCart = (product: Product) => {
-    // Products with variants must be added from the PDP so the customer picks
-    // an option. Send them there instead of silently adding a base line item.
-    if ((product.variants ?? []).some((v) => v.isActive)) {
-      setLocation(`/product/${product.id}`);
-      return;
-    }
-    addItem(product, { quantity: 1 });
+    // Skip the cart drawer entirely — open the QuickBuy modal which collects
+    // variant + quantity (if needed) and goes straight to the customer-info
+    // checkout step on confirm.
+    setQuickBuyProduct(product);
     setCartAdded((prev) => new Set(prev).add(product.id));
-    openCart();
   };
 
   const handleGift = () => {
@@ -432,6 +428,12 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
         open={shareTarget !== null}
         onOpenChange={(o) => { if (!o) setShareTarget(null); }}
         target={shareTarget}
+      />
+
+      <QuickBuyDialog
+        open={quickBuyProduct !== null}
+        onOpenChange={(o) => { if (!o) setQuickBuyProduct(null); }}
+        product={quickBuyProduct}
       />
     </div>
   );

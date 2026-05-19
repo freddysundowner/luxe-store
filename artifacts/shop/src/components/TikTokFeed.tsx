@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyFeed } from "@/components/EmptyFeed";
 import { ShareDialog, isCoarsePointer, type ShareTarget } from "@/components/ShareDialog";
+import { QuickBuyDialog } from "@/components/QuickBuyDialog";
 
 const fmt = new Intl.NumberFormat("en-KE", { style: "currency", currency: "KES", maximumFractionDigits: 0 });
 
@@ -67,7 +68,7 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
 
   const vh = containerH || (typeof window !== "undefined" ? window.innerHeight : 700);
 
-  const { addItem, openCart } = useCart();
+  useCart(); // cart context kept mounted (drawer reads it)
   const { toggleFavorite, isFavorite, favoriteCount } = useFavorites();
   const { toast } = useToast();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
@@ -161,16 +162,13 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
   }, [isAnimating, triggerSlide]);
 
   // ── Cart / gift / share ──
+  const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
+
   const handleAddToCart = (product: Product) => {
-    // Variant products require an option selection — route to PDP rather than
-    // adding a base line item the customer didn't actually configure.
-    if ((product.variants ?? []).some((v) => v.isActive)) {
-      window.location.href = `/product/${product.id}`;
-      return;
-    }
-    addItem(product, { quantity: 1 });
+    // Open the QuickBuy modal: it asks for variant (if any) + quantity and
+    // jumps straight to checkout. No more cart drawer review step.
+    setQuickBuyProduct(product);
     setCartAdded((prev) => new Set(prev).add(product.id));
-    openCart();
   };
 
   const handleGift = () => {
@@ -468,6 +466,12 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, topOffset = 
         open={shareTarget !== null}
         onOpenChange={(o) => { if (!o) setShareTarget(null); }}
         target={shareTarget}
+      />
+
+      <QuickBuyDialog
+        open={quickBuyProduct !== null}
+        onOpenChange={(o) => { if (!o) setQuickBuyProduct(null); }}
+        product={quickBuyProduct}
       />
     </div>
   );

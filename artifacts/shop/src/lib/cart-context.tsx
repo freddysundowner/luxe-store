@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
 import { Product, ProductVariant } from "@workspace/api-client-react";
+
+export type CheckoutMethod = "whatsapp" | "mpesa";
 
 export interface CartItem {
   product: Product;
@@ -25,6 +27,22 @@ interface CartContextType {
   isCartOpen: boolean;
   openCart: () => void;
   closeCart: () => void;
+  /**
+   * Quick-checkout intent set by Buy Now flows. When non-null, the CartDrawer
+   * should skip the cart-review step and jump straight to the customer-info
+   * step using this payment method. The drawer consumes and clears it.
+   */
+  quickCheckoutMethod: CheckoutMethod | null;
+  startQuickCheckout: (method: CheckoutMethod) => void;
+  consumeQuickCheckout: () => void;
+  /**
+   * Identifies the line that was added by the most recent Buy Now / Quick
+   * Checkout flow. If the customer dismisses the drawer before completing the
+   * order, the CartDrawer will roll this line back so abandoned quick-buys
+   * don't silently linger in the cart.
+   */
+  pendingQuickBuyLine: { productId: number; variantId: number | null; addedQty: number } | null;
+  setPendingQuickBuyLine: (line: { productId: number; variantId: number | null; addedQty: number } | null) => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -54,6 +72,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [quickCheckoutMethod, setQuickCheckoutMethod] = useState<CheckoutMethod | null>(null);
+  const [pendingQuickBuyLine, setPendingQuickBuyLine] = useState<{ productId: number; variantId: number | null; addedQty: number } | null>(null);
+
+  const startQuickCheckout = useCallback((method: CheckoutMethod) => {
+    setQuickCheckoutMethod(method);
+    setIsCartOpen(true);
+  }, []);
+
+  const consumeQuickCheckout = useCallback(() => {
+    setQuickCheckoutMethod(null);
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(items));
@@ -112,6 +141,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         items, addItem, removeItem, updateQuantity, clearCart,
         itemCount, subtotal,
         isCartOpen, openCart, closeCart,
+        quickCheckoutMethod, startQuickCheckout, consumeQuickCheckout,
+        pendingQuickBuyLine, setPendingQuickBuyLine,
       }}
     >
       {children}
