@@ -120,7 +120,7 @@ export default function AdminOrderDetail() {
   if (!order) {
     return (
       <AdminLayout title="Order Not Found">
-        <div className="max-w-4xl flex flex-col items-center justify-center py-24 gap-4 text-muted-foreground">
+        <div className="flex flex-col items-center justify-center py-24 gap-4 text-muted-foreground">
           <ShoppingBag className="w-14 h-14 opacity-20" />
           <p className="text-xl font-medium">Order not found</p>
           <p className="text-sm">No order matches ID: <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">{id}</code></p>
@@ -134,7 +134,7 @@ export default function AdminOrderDetail() {
 
   return (
     <AdminLayout title="Order Details">
-      <div className="max-w-4xl space-y-6">
+      <div className="space-y-6">
 
         {/* Back + header */}
         <div className="flex items-start justify-between gap-4">
