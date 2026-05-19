@@ -41,6 +41,7 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
   const { toast } = useToast();
   const [quickBuyProduct, setQuickBuyProduct] = useState<Product | null>(null);
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const featured = useMemo(() => products, [products]);
 
@@ -212,12 +213,42 @@ function FeaturedSwiper({ products, onClear }: { products: Product[]; onClear?: 
         <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/10 to-transparent" />
       </div>
 
-      {/* Top label */}
-      <div className="absolute top-3 left-0 right-0 flex justify-center z-10 pointer-events-none">
-        <div className="w-11 h-11 rounded-full bg-black/60 border border-[#D4AF37]/40 flex items-center justify-center"
-          style={{ boxShadow: "0 0 12px rgba(212,175,55,0.25)" }}>
-          <Droplets className="w-6 h-6" style={{ animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }} />
-        </div>
+      {/* Top label — doubles as Save/Favorite toggle for the current product. */}
+      <div className="absolute top-3 left-0 right-0 flex justify-center z-10">
+        {current && (() => {
+          const fav = isFavorite(current.id);
+          return (
+            <button
+              type="button"
+              onClick={() => {
+                const wasFavorited = fav;
+                toggleFavorite(current);
+                toast({
+                  title: wasFavorited ? "Removed from saved" : "Saved!",
+                  description: current.name,
+                  duration: 1500,
+                });
+              }}
+              aria-label={fav ? "Remove from saved" : "Save to favorites"}
+              aria-pressed={fav}
+              className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-300 ${
+                fav
+                  ? "bg-[#D4AF37]/25 border border-[#D4AF37]"
+                  : "bg-black/60 border border-[#D4AF37]/40 hover:border-[#D4AF37]/80"
+              }`}
+              style={{ boxShadow: "0 0 12px rgba(212,175,55,0.25)" }}
+            >
+              <Droplets
+                className={`w-6 h-6 transition-transform duration-300 ${fav ? "scale-110" : ""}`}
+                style={
+                  fav
+                    ? { color: "#D4AF37", fill: "#D4AF37", filter: "drop-shadow(0 0 6px rgba(212,175,55,0.7))" }
+                    : { animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }
+                }
+              />
+            </button>
+          );
+        })()}
       </div>
 
 

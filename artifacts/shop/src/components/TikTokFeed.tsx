@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { Link } from "wouter";
-import { Gift, Heart, MessageCircle, Share2, ShoppingBag, Sparkles, X, Send, SlidersHorizontal, Droplets } from "lucide-react";
+import { Gift, MessageCircle, Share2, ShoppingBag, Sparkles, X, Send, SlidersHorizontal, Droplets } from "lucide-react";
 import { Product, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { useCart } from "@/lib/cart-context";
 import { useFavorites } from "@/lib/favorites-context";
@@ -478,20 +478,47 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
           </>
         )}
 
-        {/* Drop icon — absolutely centered at the top, independent of the
-            filter button on either side. Fades in once the final segment of
-            the progress bar completes. */}
-        <div
-          className="absolute left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full bg-black/60 border border-[#D4AF37]/40 flex items-center justify-center transition-opacity duration-500 pointer-events-none"
+        {/* Drop icon — absolutely centered at the top. Doubles as the
+            Save/Favorite control: tap to toggle favorite on the current
+            product. Fades in once the final segment of the progress bar
+            completes. */}
+        <button
+          type="button"
+          onClick={() => {
+            if (!progressDone) return;
+            const wasFavorited = isFavorite(current.id);
+            toggleFavorite(current);
+            toast({
+              title: wasFavorited ? "Removed from saved" : "Saved!",
+              description: current.name,
+              duration: 1500,
+            });
+          }}
+          aria-label={isFavorite(current.id) ? "Remove from saved" : "Save to favorites"}
+          aria-pressed={isFavorite(current.id)}
+          aria-hidden={!progressDone}
+          tabIndex={progressDone ? 0 : -1}
+          className={`absolute left-1/2 -translate-x-1/2 z-10 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 ${
+            isFavorite(current.id)
+              ? "bg-[#D4AF37]/25 border border-[#D4AF37]"
+              : "bg-black/60 border border-[#D4AF37]/40 hover:border-[#D4AF37]/80"
+          }`}
           style={{
             top: `${topOffset - 4}px`,
             opacity: progressDone ? 1 : 0,
             boxShadow: progressDone ? "0 0 12px rgba(212,175,55,0.25)" : "none",
+            pointerEvents: progressDone ? "auto" : "none",
           }}
-          aria-hidden={!progressDone}
         >
-          <Droplets className="w-5 h-5" style={{ animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }} />
-        </div>
+          <Droplets
+            className={`w-5 h-5 transition-transform duration-300 ${isFavorite(current.id) ? "scale-110" : ""}`}
+            style={
+              isFavorite(current.id)
+                ? { color: "#D4AF37", fill: "#D4AF37", filter: "drop-shadow(0 0 6px rgba(212,175,55,0.7))" }
+                : { animation: "goldShimmer 2s ease-in-out infinite", color: "#D4AF37" }
+            }
+          />
+        </button>
 
         <style>{`
           @keyframes tiktokProgress {
@@ -509,16 +536,6 @@ export function TikTokFeed({ products, isLoading, onOpenGiftFinder, onOpenFilter
           className="absolute right-2 z-10 flex flex-col gap-3"
           style={{ bottom: "170px", filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.55))" }}
         >
-          <button
-            onClick={() => { toggleFavorite(current); toast({ title: isFavorite(current.id) ? "Removed from saved" : "Saved!", description: current.name, duration: 1500 }); }}
-            className="flex flex-col items-center gap-1"
-          >
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center shadow-xl ring-1 ring-black/30 transition-all duration-200 ${isFavorite(current.id) ? "bg-[#D4AF37]/25 border border-[#D4AF37]" : "bg-black/70 backdrop-blur-md border border-white/30 hover:border-[#D4AF37]/60"}`}>
-              <Heart className={`w-5 h-5 transition-all duration-200 ${isFavorite(current.id) ? "fill-[#D4AF37] text-[#D4AF37] scale-110" : "text-white"}`} />
-            </div>
-            <span className="text-[9px] font-medium text-white" style={{ textShadow: "0 1px 2px rgba(0,0,0,0.7)" }}>Save</span>
-          </button>
-
           <button onClick={() => openGiftSheet(current)} className="flex flex-col items-center gap-1">
             <div className="w-12 h-12 rounded-full bg-black/70 backdrop-blur-md border border-[#D4AF37]/70 ring-1 ring-black/30 flex items-center justify-center shadow-xl transition-all duration-200 hover:bg-[#D4AF37]/25">
               <Gift className="w-5 h-5 text-[#D4AF37]" />
