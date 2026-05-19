@@ -159,7 +159,7 @@ export default function ProductDetail() {
                 count={gallery.length}
                 activeIdx={Math.min(activeImageIdx, gallery.length - 1)}
                 durationMs={4000}
-                onComplete={() => setActiveImageIdx((i) => (i + 1) % gallery.length)}
+                onComplete={() => setActiveImageIdx((i) => Math.min(i + 1, gallery.length - 1))}
               />
             )}
             {product.categoryName && (
@@ -283,10 +283,13 @@ function ProductGallery({ images, activeIdx, onChange, name, soldOut, featured, 
   // products on the same route).
   useEffect(() => { if (activeIdx >= images.length) onChange(0); }, [images.length, activeIdx, onChange]);
 
+  // Clamp instead of wrapping: the gallery should not loop back to the first
+  // image after the last (or jump to the last when pressing previous on the
+  // first). The chevrons get visually disabled at the boundaries below.
   const go = (delta: number) => {
     if (images.length === 0) return;
-    const next = (activeIdx + delta + images.length) % images.length;
-    onChange(next);
+    const next = Math.max(0, Math.min(images.length - 1, activeIdx + delta));
+    if (next !== activeIdx) onChange(next);
   };
 
   return (
@@ -327,7 +330,8 @@ function ProductGallery({ images, activeIdx, onChange, name, soldOut, featured, 
               type="button"
               onClick={() => go(-1)}
               aria-label="Previous image"
-              className="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 border border-white/15 text-white items-center justify-center hover:border-[#D4AF37]/60 transition-colors"
+              disabled={activeIdx <= 0}
+              className="hidden lg:flex absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 border border-white/15 text-white items-center justify-center hover:border-[#D4AF37]/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-white/15"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -335,7 +339,8 @@ function ProductGallery({ images, activeIdx, onChange, name, soldOut, featured, 
               type="button"
               onClick={() => go(1)}
               aria-label="Next image"
-              className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 border border-white/15 text-white items-center justify-center hover:border-[#D4AF37]/60 transition-colors"
+              disabled={activeIdx >= images.length - 1}
+              className="hidden lg:flex absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-full bg-black/60 border border-white/15 text-white items-center justify-center hover:border-[#D4AF37]/60 transition-colors disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:border-white/15"
             >
               <ChevronRight className="w-5 h-5" />
             </button>
