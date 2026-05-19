@@ -61,8 +61,7 @@ export interface ProductInput {
   price: number;
   /** @nullable */
   originalPrice?: number | null;
-  /** @nullable */
-  categoryId?: number | null;
+  categoryId: number;
   imageUrl?: string;
   inStock?: boolean;
   isActive?: boolean;

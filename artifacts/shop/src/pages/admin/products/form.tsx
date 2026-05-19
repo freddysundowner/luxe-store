@@ -31,7 +31,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   price: z.coerce.number().min(0, "Price must be positive"),
   originalPrice: z.coerce.number().optional().nullable(),
-  categoryId: z.coerce.number().optional().nullable(),
+  categoryId: z.coerce.number({ required_error: "Category is required" }).min(1, "Category is required"),
   imageUrl: z.string().optional().or(z.literal("")),
   inStock: z.boolean().default(true),
   isActive: z.boolean().default(true),
@@ -65,7 +65,7 @@ export default function ProductForm() {
       description: "",
       price: 0,
       originalPrice: null,
-      categoryId: null,
+      categoryId: undefined,
       imageUrl: "",
       inStock: true,
       isActive: true,
@@ -82,7 +82,7 @@ export default function ProductForm() {
         description: product.description || "",
         price: product.price,
         originalPrice: product.originalPrice,
-        categoryId: product.categoryId,
+        categoryId: product.categoryId ?? undefined,
         imageUrl: product.imageUrl || "",
         inStock: product.inStock,
         isActive: product.isActive,
@@ -119,7 +119,7 @@ export default function ProductForm() {
     const payload = {
       ...data,
       originalPrice: data.originalPrice || null,
-      categoryId: data.categoryId || null,
+      categoryId: data.categoryId,
       imageUrl: data.imageUrl || undefined,
       availabilityTag: data.availabilityTag === "none" ? null : (data.availabilityTag || null),
     };
@@ -191,14 +191,14 @@ export default function ProductForm() {
                 name="categoryId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Category</FormLabel>
+                    <FormLabel>Category <span className="text-destructive">*</span></FormLabel>
                     <Select
                       onValueChange={(val) => field.onChange(parseInt(val, 10))}
                       value={field.value ? field.value.toString() : ""}
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a category" />
+                          <SelectValue placeholder="Select a category (required)" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
