@@ -252,6 +252,7 @@ export function CartDrawer() {
 
       {/* Drawer panel */}
       <div
+        style={{ willChange: "transform" }}
         className={`fixed top-0 right-0 h-full z-[160] w-full sm:w-[420px] bg-[#0f0f0f] border-l border-zinc-800 flex flex-col transition-transform duration-300 ease-out ${
           isCartOpen ? "translate-x-0" : "translate-x-full"
         }`}

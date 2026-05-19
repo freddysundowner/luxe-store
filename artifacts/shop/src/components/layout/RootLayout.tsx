@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { ShoppingBag, ArrowLeft } from "lucide-react";
 import { useCart } from "@/lib/cart-context";
 import { useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
@@ -18,7 +18,6 @@ const MARQUEE_TEXT = "Free WhatsApp ordering\u2002·\u2002Curated luxury collect
 
 export function RootLayout({ children, title, showBack, searchBar, noHeader, noMarquee }: RootLayoutProps) {
   const { itemCount, subtotal, openCart } = useCart();
-  const [location] = useLocation();
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const [scrolled, setScrolled] = useState(false);
 
@@ -85,10 +84,7 @@ export function RootLayout({ children, title, showBack, searchBar, noHeader, noM
 
               {/* Right: cart */}
               <div className="flex items-center gap-3 flex-shrink-0">
-                <button
-                  onClick={location === "/cart" ? undefined : openCart}
-                  className="relative flex items-center p-2 -mr-2 text-zinc-500 hover:text-[#D4AF37] transition-colors"
-                >
+                <button onClick={openCart} className="relative flex items-center p-2 -mr-2 text-zinc-500 hover:text-[#D4AF37] transition-colors">
                   <ShoppingBag className="w-6 h-6" />
                   {itemCount > 0 && (
                     <>

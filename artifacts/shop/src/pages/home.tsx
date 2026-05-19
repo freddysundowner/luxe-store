@@ -443,7 +443,7 @@ export default function Home() {
     return () => window.removeEventListener("resize", check);
   }, []);
 
-  const { itemCount } = useCart();
+  const { itemCount, openCart } = useCart();
   const { favoriteCount } = useFavorites();
 
   const { data: storeSettings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
@@ -551,9 +551,9 @@ export default function Home() {
             </span>
           )}
         </Link>
-        <Link
-          href="/cart"
-          className="flex items-center gap-2 bg-[#0a0a0a]/80 backdrop-blur border border-zinc-800 rounded-full px-3 py-2 text-zinc-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-all"
+        <button
+          onClick={openCart}
+          className="flex items-center gap-2 bg-[#0a0a0a]/80 border border-zinc-800 rounded-full px-3 py-2 text-zinc-300 hover:text-[#D4AF37] hover:border-[#D4AF37]/40 transition-all"
         >
           <ShoppingBag className="w-4 h-4" />
           {itemCount > 0 && (
@@ -561,7 +561,7 @@ export default function Home() {
               {itemCount}
             </span>
           )}
-        </Link>
+        </button>
       </div>
 
       {/* ── Desktop: 3-column TikTok layout ── */}

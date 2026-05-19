@@ -36,9 +36,9 @@ export default function Favorites() {
               </span>
             )}
           </div>
-          <Link href="/cart" className="text-zinc-600 hover:text-[#D4AF37] transition-colors">
+          <button onClick={openCart} className="text-zinc-600 hover:text-[#D4AF37] transition-colors">
             <ShoppingBag className="w-5 h-5" />
-          </Link>
+          </button>
         </div>
         <div className="h-px w-full bg-gradient-to-r from-transparent via-[#D4AF37]/20 to-transparent" />
       </header>
