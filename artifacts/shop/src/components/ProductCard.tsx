@@ -20,9 +20,14 @@ export function ProductCard({ product }: { product: Product }) {
   const activeVariants = (product.variants ?? []).filter((v) => v.isActive);
   const hasVariants = activeVariants.length > 0;
 
+  // `stockQuantity` of exactly 0 means sold out (vs `null`/`undefined`, which
+  // is "not tracked" and treated as available). Mirrors the rule used in the
+  // mobile feed and Quick Buy dialog so the desktop grid stays consistent.
+  const isSoldOut = !product.inStock || product.stockQuantity === 0;
+
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!product.inStock || hasVariants) return;
+    if (isSoldOut || hasVariants) return;
     addItem(product, { quantity: 1 });
     openCart();
   };
@@ -65,14 +70,14 @@ export function ProductCard({ product }: { product: Product }) {
             }}
           />
 
-          {!product.inStock && (
+          {isSoldOut && (
             <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center">
               <span className="text-xs uppercase tracking-widest text-zinc-300 px-3 py-1 border border-zinc-700">Sold Out</span>
             </div>
           )}
 
           {/* Availability tag badge — top right */}
-          {tag && product.inStock && (
+          {tag && !isSoldOut && (
             <div
               className="absolute top-2 right-2 px-2 py-0.5 text-[10px] uppercase tracking-widest font-semibold"
               style={{ background: tag.color, color: tag.textColor }}
@@ -82,13 +87,13 @@ export function ProductCard({ product }: { product: Product }) {
           )}
 
           {/* Fallback: show Sale badge only when no custom tag is set */}
-          {!tag && product.originalPrice && product.originalPrice > product.price && product.inStock && (
+          {!tag && product.originalPrice && product.originalPrice > product.price && !isSoldOut && (
             <div className="absolute top-2 right-2 px-2 py-0.5 bg-black/80 border border-[#D4AF37]/30 text-[10px] uppercase tracking-widest text-[#D4AF37]">
               Sale
             </div>
           )}
 
-          {product.inStock && (
+          {!isSoldOut && (
             <div className="absolute bottom-0 left-0 right-0 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out">
               <button
                 onClick={handleAddToCart}
