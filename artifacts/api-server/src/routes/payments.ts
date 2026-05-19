@@ -5,7 +5,7 @@ import https from "node:https";
 
 const router = Router();
 
-const SUNPAY_BASE = "https://api.sunpay.co.ke";
+const SUNPAY_BASE = "https://sunpay.co.ke";
 
 // SunPay's TLS cert doesn't match their hostname — bypass cert validation for their domain only
 const sunpayAgent = new https.Agent({ rejectUnauthorized: false });
