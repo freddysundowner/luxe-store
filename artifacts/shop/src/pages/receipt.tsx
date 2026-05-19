@@ -26,17 +26,17 @@ export default function ReceiptPage() {
     const receiptUrl = `${window.location.origin}${import.meta.env.BASE_URL}receipt/${transactionId}`;
     const items = (receipt.cartSnapshot as { items?: { name: string; quantity: number; price: number }[] } | null)?.items ?? [];
     let msg = `*Order Receipt — ${receipt.storeName}*\n\n`;
-    msg += `📋 *Ref:* ${receipt.externalRef ?? receipt.transactionId}\n`;
-    if (receipt.mpesaRef) msg += `✅ *M-Pesa Ref:* ${receipt.mpesaRef}\n`;
-    msg += `📱 *Phone:* ${receipt.phoneNumber}\n`;
-    msg += `📅 *Date:* ${new Date(receipt.createdAt).toLocaleString("en-KE")}\n\n`;
+    msg += `*Ref:* ${receipt.externalRef ?? receipt.transactionId}\n`;
+    if (receipt.mpesaRef) msg += `*M-Pesa Ref:* ${receipt.mpesaRef}\n`;
+    msg += `*Phone:* ${receipt.phoneNumber}\n`;
+    msg += `*Date:* ${new Date(receipt.createdAt).toLocaleString("en-KE")}\n\n`;
     if (items.length > 0) {
       msg += `*Items:*\n`;
-      items.forEach(i => { msg += `  • ${i.quantity}× ${i.name} — ${sym} ${(i.price * i.quantity).toLocaleString()}\n`; });
+      items.forEach(i => { msg += `  - ${i.quantity}x ${i.name} — ${sym} ${(i.price * i.quantity).toLocaleString()}\n`; });
       msg += `\n`;
     }
     msg += `*Total: ${sym} ${receipt.amount.toLocaleString()}*\n\n`;
-    msg += `🔗 View receipt: ${receiptUrl}`;
+    msg += `*View receipt:* ${receiptUrl}`;
     return `https://wa.me/${settings.whatsappNumber}?text=${encodeURIComponent(msg)}`;
   };
 

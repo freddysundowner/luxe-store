@@ -212,16 +212,16 @@ function MpesaFlow({
   const handleShareOnWhatsApp = () => {
     if (!whatsappNumber) return;
     const sym = formatter.format(subtotal).replace(/[^0-9.,]/g, "");
-    let msg = `*New M-Pesa Order — ${storeName ?? "Store"}* ✅\n\n`;
-    msg += `👤 *Name:* ${customerInfo.name}\n`;
-    if (customerInfo.email) msg += `📧 *Email:* ${customerInfo.email}\n`;
-    msg += `📍 *Delivery:* ${customerInfo.address}\n`;
-    msg += `📱 *Paid from:* ${phone}\n`;
-    if (mpesaRef) msg += `✅ *M-Pesa Ref:* ${mpesaRef}\n`;
-    msg += `💰 *Amount:* KSh ${sym}\n`;
+    let msg = `*New M-Pesa Order — ${storeName ?? "Store"}*\n\n`;
+    msg += `*Name:* ${customerInfo.name}\n`;
+    if (customerInfo.email) msg += `*Email:* ${customerInfo.email}\n`;
+    msg += `*Delivery:* ${customerInfo.address}\n`;
+    msg += `*Paid from:* ${phone}\n`;
+    if (mpesaRef) msg += `*M-Pesa Ref:* ${mpesaRef}\n`;
+    msg += `*Amount:* KSh ${sym}\n`;
     if (transactionId) {
       const base = window.location.origin + (import.meta.env.BASE_URL?.replace(/\/$/, "") ?? "");
-      msg += `🔗 Receipt: ${base}/receipt/${transactionId}`;
+      msg += `\n*Receipt:* ${base}/receipt/${transactionId}`;
     }
     window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, "_blank");
   };
@@ -403,9 +403,9 @@ export function CartDrawer() {
       // Build and send WhatsApp message immediately
       if (!settings?.whatsappNumber) return;
       let msg = `*New Order — ${settings.storeName || "Store"}*\n\n`;
-      msg += `👤 *Name:* ${info.name}\n`;
-      if (info.email) msg += `📧 *Email:* ${info.email}\n`;
-      msg += `📍 *Deliver to:* ${info.address}\n\n`;
+      msg += `*Name:* ${info.name}\n`;
+      if (info.email) msg += `*Email:* ${info.email}\n`;
+      msg += `*Deliver to:* ${info.address}\n\n`;
       msg += `*Items:*\n`;
       items.forEach((item) => {
         msg += `  • ${item.quantity}× ${item.product.name} — ${formatter.format(item.product.price * item.quantity)}\n`;

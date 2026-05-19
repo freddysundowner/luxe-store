@@ -85,19 +85,19 @@ export function OrderDetailPanel({ order, twoColumn = false }: Props) {
     if (!settings?.whatsappNumber) return;
     const sym = settings.currencySymbol ?? "KSh";
     let msg = `*Order Receipt — ${settings.storeName ?? "Store"}*\n\n`;
-    msg += `📋 *Ref:* ${order.externalRef ?? order.transactionId}\n`;
-    if (order.mpesaRef) msg += `✅ *M-Pesa Ref:* ${order.mpesaRef}\n`;
-    msg += `📱 *Phone:* ${formatPhone(order.phoneNumber)}\n`;
-    if (customer?.name) msg += `👤 *Name:* ${customer.name}\n`;
-    if (customer?.address) msg += `📍 *Deliver to:* ${customer.address}\n`;
-    msg += `📅 *Date:* ${formatDate(order.createdAt)}\n\n`;
+    msg += `*Ref:* ${order.externalRef ?? order.transactionId}\n`;
+    if (order.mpesaRef) msg += `*M-Pesa Ref:* ${order.mpesaRef}\n`;
+    msg += `*Phone:* ${formatPhone(order.phoneNumber)}\n`;
+    if (customer?.name) msg += `*Name:* ${customer.name}\n`;
+    if (customer?.address) msg += `*Deliver to:* ${customer.address}\n`;
+    msg += `*Date:* ${formatDate(order.createdAt)}\n\n`;
     if (items.length > 0) {
       msg += `*Items:*\n`;
-      items.forEach(i => { msg += `  • ${i.quantity}× ${i.name} — ${sym} ${(i.price * i.quantity).toLocaleString()}\n`; });
+      items.forEach(i => { msg += `  - ${i.quantity}x ${i.name} — ${sym} ${(i.price * i.quantity).toLocaleString()}\n`; });
       msg += `\n`;
     }
     msg += `*Total: ${sym} ${order.amount.toLocaleString()}*\n\n`;
-    msg += `🔗 View receipt: ${receiptUrl}`;
+    msg += `*View receipt:* ${receiptUrl}`;
     window.open(`https://wa.me/${order.phoneNumber}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
