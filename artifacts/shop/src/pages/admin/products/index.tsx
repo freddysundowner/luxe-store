@@ -1,5 +1,5 @@
 import { AdminLayout } from "@/components/layout/AdminLayout";
-import { useListAdminProducts, getListAdminProductsQueryKey, useDeleteProduct } from "@workspace/api-client-react";
+import { useListAdminProducts, getListAdminProductsQueryKey, useDeleteProduct, useGetSettings, getGetSettingsQueryKey } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Plus, Edit, Trash2, Search, Package } from "lucide-react";
@@ -29,6 +29,9 @@ export default function AdminProducts() {
   const { data: products, isLoading } = useListAdminProducts({
     query: { queryKey: getListAdminProductsQueryKey() }
   });
+
+  const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
+  const currencySymbol = settings?.currencySymbol || "KSh";
 
   const deleteMutation = useDeleteProduct({
     mutation: {
@@ -110,7 +113,7 @@ export default function AdminProducts() {
                     </TableCell>
                     <TableCell className="font-medium">{product.name}</TableCell>
                     <TableCell>{product.categoryName || "Uncategorized"}</TableCell>
-                    <TableCell>${product.price.toFixed(2)}</TableCell>
+                    <TableCell>{currencySymbol} {Number(product.price).toFixed(2)}</TableCell>
                     <TableCell>
                       <div className="flex gap-1 flex-wrap">
                         {product.isActive ? (
