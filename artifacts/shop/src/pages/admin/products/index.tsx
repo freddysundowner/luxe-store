@@ -70,9 +70,10 @@ export default function AdminProducts() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: products, isLoading } = useListAdminProducts({
+  const { data: products, isLoading, error: productsError, refetch: refetchProducts } = useListAdminProducts({
     query: { queryKey: getListAdminProductsQueryKey() }
   });
+  const productsStatus = (productsError as { status?: number } | null)?.status;
 
   const { data: settings } = useGetSettings({ query: { queryKey: getGetSettingsQueryKey() } });
   const currencySymbol = settings?.currencySymbol || "KSh";
@@ -307,16 +308,47 @@ export default function AdminProducts() {
       <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center text-muted-foreground">Loading products...</div>
+        ) : productsError ? (
+          <div className="p-12 text-center flex flex-col items-center">
+            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+              <Package className="w-8 h-8 text-destructive" />
+            </div>
+            <h3 className="font-semibold text-lg">
+              {productsStatus === 401 ? "Session expired" : "Couldn't load products"}
+            </h3>
+            <p className="text-muted-foreground mb-4 max-w-md">
+              {productsStatus === 401
+                ? "Your admin session is no longer valid. Sign in again to continue."
+                : "The API returned an error. Try again, and if it keeps happening check the API server logs."}
+            </p>
+            {productsStatus === 401 ? (
+              <Link href="/admin">
+                <Button variant="outline">Go to login</Button>
+              </Link>
+            ) : (
+              <Button variant="outline" onClick={() => refetchProducts()}>Retry</Button>
+            )}
+          </div>
         ) : filteredProducts.length === 0 ? (
           <div className="p-12 text-center flex flex-col items-center">
             <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mb-4">
               <Package className="w-8 h-8 text-muted-foreground" />
             </div>
-            <h3 className="font-semibold text-lg">No products found</h3>
-            <p className="text-muted-foreground mb-4">Add some products to your catalog.</p>
-            <Link href="/admin/products/new">
-              <Button variant="outline">Create Product</Button>
-            </Link>
+            <h3 className="font-semibold text-lg">
+              {(products?.length ?? 0) === 0 ? "No products yet" : "No matches"}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {(products?.length ?? 0) === 0
+                ? "Add your first product to get started."
+                : "No products match the current search. Clear the filter to see everything."}
+            </p>
+            {(products?.length ?? 0) === 0 ? (
+              <Link href="/admin/products/new">
+                <Button variant="outline">Create Product</Button>
+              </Link>
+            ) : (
+              <Button variant="outline" onClick={() => setSearch("")}>Clear search</Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
