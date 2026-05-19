@@ -139,7 +139,7 @@ export default function ProductForm() {
 
   return (
     <AdminLayout title={isEditing ? "Edit Product" : "New Product"}>
-      <div className="max-w-2xl bg-card border border-border rounded-xl shadow-sm p-6">
+      <div className="w-full bg-card border border-border rounded-xl shadow-sm p-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
