@@ -336,8 +336,8 @@ function FeaturedSwiper({
               className="absolute inset-0 w-full h-full object-cover pointer-events-none"
             />
           ) : p.kind === "bundle" ? (
-            <div className="absolute inset-0 bg-zinc-950 flex items-center justify-center">
-              <div className="relative aspect-square w-[min(80%,420px)]">
+            <div className="absolute inset-0 bg-zinc-950 flex items-center justify-center pr-16">
+              <div className="relative aspect-square w-[min(65%,360px)]">
                 <BundleBoxCover
                   alt={p.name}
                   itemImages={(p.bundleProducts ?? []).map((bp) => bp.imageUrl)}

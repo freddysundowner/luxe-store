@@ -62,11 +62,15 @@ function CardBg({ product, imageIndex = 0 }: { product: Product; imageIndex?: nu
           showFallback={false}
         />
       ) : showBundleBox ? (
-        <BundleBoxCover
-          alt={product.name}
-          itemImages={bundleItemImages}
-          className="absolute inset-0"
-        />
+        <div className="absolute inset-0 bg-zinc-950 flex items-center justify-center pr-16">
+          <div className="relative aspect-square w-[min(70%,360px)]">
+            <BundleBoxCover
+              alt={product.name}
+              itemImages={bundleItemImages}
+              className="absolute inset-0"
+            />
+          </div>
+        </div>
       ) : (
         <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
           <ShoppingBag className="w-16 h-16 text-zinc-700" />
