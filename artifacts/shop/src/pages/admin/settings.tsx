@@ -264,14 +264,25 @@ export default function AdminSettings() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>SunPay API Key</FormLabel>
+                      {/* Saved key banner — driven by server data, not form state */}
+                      {settings?.sunpayApiKey && !field.value && (
+                        <div className="flex items-center gap-2 px-3 py-2 rounded-md bg-green-950/40 border border-green-800/50 text-xs text-green-400">
+                          <span className="font-semibold">✓ Key saved:</span>
+                          <code className="font-mono tracking-wide">
+                            {settings.sunpayApiKey.slice(0, 10)}••••••••{settings.sunpayApiKey.slice(-4)}
+                          </code>
+                          <span className="ml-auto text-green-600 text-[10px]">Enter a new key below to replace</span>
+                        </div>
+                      )}
                       <FormControl>
                         <div className="relative">
                           <Input
                             type={showApiKey ? "text" : "password"}
-                            placeholder="sp_live_xxxxxxxxxxxxxxxx"
+                            placeholder={settings?.sunpayApiKey ? "Enter new key to replace…" : "sp_live_xxxxxxxxxxxxxxxx"}
                             autoComplete="off"
                             {...field}
                             value={field.value ?? ""}
+                            className={settings?.sunpayApiKey && !field.value ? "border-green-800/50 focus:border-green-600" : ""}
                           />
                           <button
                             type="button"
@@ -284,10 +295,7 @@ export default function AdminSettings() {
                         </div>
                       </FormControl>
                       <FormDescription>
-                        Your SunPay secret key starting with{" "}
-                        <code className="text-xs bg-muted px-1 rounded">sp_</code>.
                         Found in your SunPay dashboard under API Keys.
-                        {field.value ? <span className="text-green-500 ml-2">✓ Key saved</span> : null}
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
